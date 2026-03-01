@@ -38,8 +38,20 @@ export function getEffectiveStr(k) {
 
 export function resolveClash() {
   const k1 = joust.k1, k2 = joust.k2;
-  let h1 = rollHit(getEffectiveStr(k1), k2.def);
-  let h2 = rollHit(getEffectiveStr(k2), k1.def);
+  
+  let h1, h2;
+
+  // Direct unhorse logic: if one hits and the other is in low guard
+  if (k2.guard === 'low' && k1.guard === 'high') {
+    h1 = HIT_TABLE.find(h => h.type === 'unhorse');
+    h2 = HIT_TABLE.find(h => h.type === 'miss');
+  } else if (k1.guard === 'low' && k2.guard === 'high') {
+    h1 = HIT_TABLE.find(h => h.type === 'miss');
+    h2 = HIT_TABLE.find(h => h.type === 'unhorse');
+  } else {
+    h1 = rollHit(getEffectiveStr(k1), k2.def);
+    h2 = rollHit(getEffectiveStr(k2), k1.def);
+  }
 
   if (h1.type === 'lanceTip' || h2.type === 'lanceTip') {
     const lt = HIT_TABLE.find(h => h.type === 'lanceTip');
@@ -132,6 +144,9 @@ export function applyHitEffect(hit, defender) {
   if (hpPct < 0.25) stunChance += 0.20;
   if (stunChance > 0 && !defender.stunned && Math.random() < stunChance) {
     defender.stunned = true;
-    defender.stunTimer = 90 + Math.floor(Math.random() * 80);
+    const rnd = Math.random();
+    if (rnd < 0.60) defender.stunRounds = 1;
+    else if (rnd < 0.90) defender.stunRounds = 2;
+    else defender.stunRounds = 3;
   }
 }

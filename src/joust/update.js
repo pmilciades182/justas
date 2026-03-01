@@ -19,19 +19,12 @@ export function updateJoust() {
   if (joust.shakeAmt > 0.3) joust.shakeAmt *= 0.85; else joust.shakeAmt = 0;
   if (joust.flashAlpha > 0) joust.flashAlpha -= 0.045;
 
+  // No frame-based countdown for stun anymore, handled by venidas
   // Decay wobble
   for (const k of [k1, k2]) {
     if (k && !k.fallen && Math.abs(k.wobble) > 0.001) {
       k.wobble *= (1 - k.wobbleDecay);
       if (Math.abs(k.wobble) < 0.002) k.wobble = 0;
-    }
-  }
-
-  // Countdown del aturdimiento
-  for (const k of [k1, k2]) {
-    if (k && k.stunned && k.stunTimer > 0) {
-      k.stunTimer--;
-      if (k.stunTimer <= 0) k.stunned = false;
     }
   }
 
@@ -193,6 +186,15 @@ export function updateJoust() {
         joust.k2Hit = null;
         k1.speed = 0;
         k2.speed = 0;
+
+        // Aturdimiento decrece por venida
+        for (const k of [k1, k2]) {
+          if (k.stunned) {
+            k.stunRounds--;
+            if (k.stunRounds <= 0) k.stunned = false;
+          }
+        }
+
         setSubPhase('charge');
       }
     }

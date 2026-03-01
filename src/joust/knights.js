@@ -41,9 +41,12 @@ export function makeJoustKnight(knightId, side, equipData) {
     hp: 100,
     maxHp: 100,
     stunned: false,
-    stunTimer: 0,
+    stunRounds: 0,
     bloodMarks: [],
     side: side,
+    phase: 'charge', // ready | charge | clash | pass | turn | stop
+    phaseT: 0,
+    guard: 'low',    // high | low
   };
 }
 
