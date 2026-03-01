@@ -38,7 +38,19 @@ export function renderHome() {
   }
 
   $('#btn-quick-joust').disabled = player.team.length < 1;
+  if (player.team.length < 1) {
+    $('#btn-quick-joust').innerHTML = '⚔ FORMAR ESCUADRÓN';
+    $('#btn-quick-joust').onclick = () => switchScreen('team');
+  } else {
+    $('#btn-quick-joust').innerHTML = '🏇 ¡A JUSTAR!';
+    $('#btn-quick-joust').onclick = () => switchScreen('joust');
+  }
   $('#btn-go-designer').onclick = () => switchScreen('designer');
-}
 
-$('#btn-quick-joust').onclick = () => switchScreen('joust');
+  $('#btn-reset-game').onclick = () => {
+    if (confirm('¿Estás seguro de que quieres borrar todos los datos? Esta acción no se puede deshacer.')) {
+      localStorage.clear();
+      location.reload();
+    }
+  };
+}

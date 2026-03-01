@@ -18,6 +18,10 @@ export function updateJoustHUD() {
   // Puntuaciones
   _set('jhud-k1-pts', joust.k1Points);
   _set('jhud-k2-pts', joust.k2Points);
+  
+  // Global Match Score
+  _set('jhud-global-p1', joust.playerMatchWins);
+  _set('jhud-global-p2', joust.enemyMatchWins);
 
   // HP bars
   _updateHpBar('jhud-k1-hp-fill', 'jhud-k1-hp-text', k1);

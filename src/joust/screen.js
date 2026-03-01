@@ -16,20 +16,176 @@ export function initJoustScreen() {
   joust.playerTeam = player.team.map(kid => ({
     knightId: kid,
     equip: player.equip[kid] || { armor: null, horse: null, squire: null },
+    hp: 100,
+    maxHp: 100
   }));
-  joust.enemyTeam = generateEnemy(joust.playerTeam.length);
+  joust.enemyTeam = generateEnemy(4).map(e => ({ ...e, hp: 100, maxHp: 100 }));
 
   joust.matchIdx = 0;
   joust.playerMatchWins = 0;
   joust.enemyMatchWins = 0;
+  joust.totalMatches = 4;
 
-  showMatchIntro();
+  // Reset ground marks ONLY at the start of the tournament
+  joust.groundBlood = [];
+  joust.groundSplinters = [];
+  joust.hoofPrints = [];
+
+  updateGlobalHUD();
+  showKnightSelection();
+}
+
+function updateGlobalHUD() {
+  const p1 = document.getElementById('jhud-global-p1');
+  const p2 = document.getElementById('jhud-global-p2');
+  if (p1) p1.textContent = joust.playerMatchWins;
+  if (p2) p2.textContent = joust.enemyMatchWins;
+}
+
+export function showKnightSelection() {
+  const overlay = document.getElementById('joust-overlay');
+  overlay.style.pointerEvents = 'auto';
+
+  // Check if any side has no HP left to continue
+  const playerHasHp = joust.playerTeam.some(k => k.hp > 0);
+  const enemyHasHp = joust.enemyTeam.some(k => k.hp > 0);
+
+  if (!playerHasHp) {
+    handleWalkover('player');
+    return;
+  }
+  if (!enemyHasHp) {
+    handleWalkover('enemy');
+    return;
+  }
+
+  // Check for walkover: if one side doesn't have 4 knights it's handled by selection or game start.
+  // Actually, the user says if they don't have enough knights "pierde por walkover ese punto".
+  // This means if joust.matchIdx < 4 but we can't fulfill it.
+
+  let html = `
+    <div class="card text-center" style="padding:20px; border: 4px double var(--gold); background-color: var(--card); max-width: 420px; width: 95%;">
+      <div style="font-family:MedievalSharp; font-size:18px; color:var(--red); margin-bottom:10px">
+        COMBATE ${joust.matchIdx + 1} DE ${joust.totalMatches}
+      </div>
+      <div style="font-family:Almendra; font-size:13px; color:#5d4037; margin-bottom:15px">
+        Selecciona un caballero para este duelo. Los que no tengan HP no pueden luchar.
+      </div>
+
+      <div style="display:flex; gap:10px; margin-bottom:20px;">
+        <div style="flex:1; background:rgba(0,0,0,0.05); padding:10px; border-radius:4px;">
+          <div style="font-size:11px; font-weight:bold; margin-bottom:5px">TU ESCUADRÓN</div>
+          <div id="selection-player-list" style="display:flex; flex-direction:column; gap:5px">`;
+
+  joust.playerTeam.forEach((k, idx) => {
+    const kd = getKnightData(k.knightId);
+    const disabled = k.hp <= 0;
+    html += `
+      <div class="selection-item ${disabled ? 'disabled' : ''}" data-idx="${idx}" style="display:flex; align-items:center; gap:8px; padding:5px; border:1px solid ${disabled ? '#ccc' : 'var(--gold)'}; background:${disabled ? '#eee' : '#fff'}; cursor:${disabled ? 'default' : 'pointer'}; border-radius:4px; opacity:${disabled ? 0.6 : 1}">
+        <span style="font-size:20px">${kd.icon}</span>
+        <div style="text-align:left; flex:1">
+          <div style="font-size:11px; font-weight:bold">${kd.name}</div>
+          <div style="font-size:9px">HP: ${k.hp}/100</div>
+        </div>
+      </div>`;
+  });
+
+  html += `</div>
+        </div>
+        <div style="flex:1; background:rgba(0,0,0,0.05); padding:10px; border-radius:4px;">
+          <div style="font-size:11px; font-weight:bold; margin-bottom:5px">RIVALES</div>
+          <div style="display:flex; flex-direction:column; gap:5px">`;
+
+  joust.enemyTeam.forEach((k, idx) => {
+    const kd = getKnightData(k.knightId);
+    const disabled = k.hp <= 0;
+    html += `
+      <div style="display:flex; align-items:center; gap:8px; padding:5px; border:1px solid #ccc; background:${disabled ? '#eee' : '#fff'}; border-radius:4px; opacity:${disabled ? 0.6 : 1}">
+        <span style="font-size:20px">${kd.icon}</span>
+        <div style="text-align:left; flex:1">
+          <div style="font-size:11px; font-weight:bold">${kd.name}</div>
+          <div style="font-size:9px">HP: ${k.hp}/100</div>
+        </div>
+      </div>`;
+  });
+
+  html += `</div>
+        </div>
+      </div>
+      <div id="selection-error" style="color:var(--red); font-size:12px; margin-bottom:10px; min-height:1.2em"></div>
+      <button class="btn btn-gold btn-lg" id="btn-confirm-selection" disabled>¡A LA LIZA!</button>
+    </div>`;
+
+  overlay.innerHTML = html;
+
+  let selectedIdx = -1;
+  const items = overlay.querySelectorAll('.selection-item');
+  items.forEach(item => {
+    if (item.classList.contains('disabled')) return;
+    item.addEventListener('click', () => {
+      items.forEach(i => i.style.borderColor = 'var(--gold)');
+      item.style.borderColor = 'var(--red)';
+      item.style.backgroundColor = '#fff9e6';
+      selectedIdx = parseInt(item.dataset.idx);
+      document.getElementById('btn-confirm-selection').disabled = false;
+    });
+  });
+
+  document.getElementById('btn-confirm-selection').addEventListener('click', () => {
+    joust.selectedPlayerKnightIdx = selectedIdx;
+    
+    // Enemy AI selection: pick a random one with HP
+    const validEnemies = joust.enemyTeam.map((k, i) => k.hp > 0 ? i : -1).filter(i => i !== -1);
+    if (validEnemies.length === 0) {
+      handleWalkover('enemy'); // Enemy has no one left
+      return;
+    }
+    joust.selectedEnemyKnightIdx = validEnemies[Math.floor(Math.random() * validEnemies.length)];
+
+    overlay.innerHTML = '';
+    overlay.style.pointerEvents = 'none';
+    showMatchIntro();
+  });
+}
+
+function handleWalkover(side) {
+  const overlay = document.getElementById('joust-overlay');
+  let winnerText, winnerColor;
+  if (side === 'enemy') {
+    joust.playerMatchWins++;
+    winnerText = '¡VICTORIA POR WALKOVER!';
+    winnerColor = 'var(--green)';
+  } else {
+    joust.enemyMatchWins++;
+    winnerText = '¡DERROTA POR WALKOVER!';
+    winnerColor = 'var(--red)';
+  }
+  updateGlobalHUD();
+
+  const isLast = joust.matchIdx >= joust.totalMatches - 1;
+  const btnText = isLast ? '🏆 VER VERDICTO FINAL' : '➡ SIGUIENTE DUELO';
+
+  overlay.innerHTML = `
+    <div class="card text-center" style="padding:25px; border: 4px double var(--gold); background-color: var(--card);">
+      <div style="font-family:MedievalSharp; font-size:24px; color:${winnerColor}; margin-bottom:15px">${winnerText}</div>
+      <p style="font-family:Almendra; margin-bottom:20px">El oponente no tiene caballeros aptos para luchar.</p>
+      <button class="btn btn-gold btn-lg" id="btn-next-walkover">${btnText}</button>
+    </div>`;
+  
+  document.getElementById('btn-next-walkover').addEventListener('click', () => {
+    if (isLast) {
+      showTourneyResult();
+    } else {
+      joust.matchIdx++;
+      showKnightSelection();
+    }
+  });
 }
 
 export function showMatchIntro() {
   const overlay = document.getElementById('joust-overlay');
-  const pkData = joust.playerTeam[joust.matchIdx];
-  const ekData = joust.enemyTeam[joust.matchIdx];
+  const pkData = joust.playerTeam[joust.selectedPlayerKnightIdx];
+  const ekData = joust.enemyTeam[joust.selectedEnemyKnightIdx];
   const pkd = getKnightData(pkData.knightId);
   const ekd = getKnightData(ekData.knightId);
   const pc = KNIGHT_COLORS[pkd.colorIdx];
@@ -39,7 +195,7 @@ export function showMatchIntro() {
   overlay.innerHTML = `
     <div class="card text-center" style="padding:30px 20px; border: 4px double var(--gold); background-color: var(--card); max-width: 360px; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
       <div style="font-family:MedievalSharp; font-size:14px; color:var(--text-dim); margin-bottom:15px; letter-spacing: 1px;">
-        ORDEN DE COMBATE: DUELO ${joust.matchIdx + 1} / ${joust.playerTeam.length}
+        ORDEN DE COMBATE: DUELO ${joust.matchIdx + 1} / ${joust.totalMatches}
       </div>
 
       <div style="display:flex; align-items:flex-start; justify-content:center; gap:15px; margin:20px 0">
@@ -47,7 +203,8 @@ export function showMatchIntro() {
           <div style="font-size:55px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2))">${pkd.icon}</div>
           <div style="font-family:MedievalSharp; font-size:16px; color:${pc.plume}; margin-top:8px; font-weight:bold">${pkd.name}</div>
           <div style="font-family:Almendra; font-size:11px; color:#5d4037; margin-top:4px">
-            FUE ${pkd.str} · DEF ${pkd.def} · MON ${pkd.hor}
+            HP: ${pkData.hp}/100<br>
+            FUE ${pkd.str} · DEF ${pkd.def}
           </div>
         </div>
 
@@ -57,7 +214,8 @@ export function showMatchIntro() {
           <div style="font-size:55px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2))">${ekd.icon}</div>
           <div style="font-family:MedievalSharp; font-size:16px; color:${ec.plume}; margin-top:8px; font-weight:bold">${ekd.name}</div>
           <div style="font-family:Almendra; font-size:11px; color:#5d4037; margin-top:4px">
-            FUE ${ekd.str} · DEF ${ekd.def} · MON ${ekd.hor}
+            HP: ${ekData.hp}/100<br>
+            FUE ${ekd.str} · DEF ${ekd.def}
           </div>
         </div>
       </div>
@@ -79,11 +237,15 @@ export function showMatchIntro() {
 }
 
 export function startMatch() {
-  const pk = joust.playerTeam[joust.matchIdx];
-  const ek = joust.enemyTeam[joust.matchIdx];
+  const pk = joust.playerTeam[joust.selectedPlayerKnightIdx];
+  const ek = joust.enemyTeam[joust.selectedEnemyKnightIdx];
 
   joust.k1 = makeJoustKnight(pk.knightId, 'left', pk.equip);
+  joust.k1.hp = pk.hp; // Restore persistent HP
+  
   joust.k2 = makeJoustKnight(ek.knightId, 'right', ek.equip);
+  joust.k2.hp = ek.hp; // Restore persistent HP
+  
   joust.squire1 = makeSquire('left', joust.k1.squireEff);
   joust.squire2 = makeSquire('right', joust.k2.squireEff);
 
@@ -96,9 +258,7 @@ export function startMatch() {
   joust.sparks = [];
   joust.dust = [];
   joust.splinters = [];
-  joust.groundBlood = [];
-  joust.groundSplinters = [];
-  joust.hoofPrints = [];
+  // groundBlood, groundSplinters, and hoofPrints are NOT reset here to persist across matches
   joust.shakeAmt = 0;
   joust.flashAlpha = 0;
   joust.t = 0;
@@ -112,6 +272,10 @@ export function startMatch() {
 export function showMatchResult() {
   joust.active = false;
   const k1 = joust.k1, k2 = joust.k2;
+
+  // Persist HP back to the teams
+  joust.playerTeam[joust.selectedPlayerKnightIdx].hp = k1.hp;
+  joust.enemyTeam[joust.selectedEnemyKnightIdx].hp = k2.hp;
 
   const k1Unhorsed = joust.history.some(h => h.k2Hit.type === 'unhorse');
   const k2Unhorsed = joust.history.some(h => h.k1Hit.type === 'unhorse');
@@ -138,8 +302,10 @@ export function showMatchResult() {
   if (playerWon) joust.playerMatchWins++;
   else if (winnerName !== 'EMPATE') joust.enemyMatchWins++;
 
-  const isLast = joust.matchIdx >= joust.playerTeam.length - 1;
-  const btnText = isLast ? '🏆 VER VERDICTO FINAL' : '➡ SIGUIENTE DUELO';
+  updateGlobalHUD();
+
+  const isLast = joust.matchIdx >= joust.totalMatches - 1;
+  const btnText = isLast ? '🏆 VER VERDICTO FINAL' : '➡ SIGUIENTE SELECCIÓN';
 
   const overlay = document.getElementById('joust-overlay');
   overlay.style.pointerEvents = 'auto';
@@ -175,7 +341,7 @@ export function showMatchResult() {
       joust.matchIdx++;
       overlay.innerHTML = '';
       overlay.style.pointerEvents = 'none';
-      showMatchIntro();
+      showKnightSelection();
     }
   });
 }

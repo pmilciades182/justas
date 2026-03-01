@@ -20,10 +20,17 @@ export const joust = {
   shakeAmt: 0, flashAlpha: 0,
   resultText: '',
   resultColor: '#fff',
-  playerTeam: [],
-  enemyTeam: [],
+  
+  // Team Match State
+  playerTeam: [], // { knightId, equip, hp }
+  enemyTeam: [],  // { knightId, equip, hp }
   playerMatchWins: 0,
   enemyMatchWins: 0,
+  totalMatches: 4, // Standard 4 knights per squad
+  
+  // Current Match Selection
+  selectedPlayerKnightIdx: -1,
+  selectedEnemyKnightIdx: -1,
 };
 
 export function setSubPhase(p) {
