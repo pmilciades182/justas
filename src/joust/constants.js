@@ -33,7 +33,7 @@ export const HIT_TABLE = [
   { type: 'arm',      prob: 0.12, pts: 1,  brk: false, label: 'Golpe en brazo' },
   { type: 'shield',   prob: 0.30, pts: 2,  brk: false, label: 'Choque en escudo' },
   { type: 'helmet',   prob: 0.18, pts: 3,  brk: false, label: 'Golpe en yelmo' },
-  { type: 'lanceTip', prob: 0.05, pts: 5,  brk: false, label: 'Punta contra punta' },
+  { type: 'lanceTip', prob: 0.00, pts: 5,  brk: false, label: 'Punta contra punta' },
   { type: 'unhorse',  prob: 0.12, pts: 10, brk: false, label: '¡Desmontado!' },
 ];
 

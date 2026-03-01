@@ -41,21 +41,26 @@ export function resolveClash() {
   
   let h1, h2;
 
-  // Direct unhorse logic: if one hits and the other is in low guard
-  if (k2.guard === 'low' && k1.guard === 'high' && k1.lanceIntact) {
-    h1 = HIT_TABLE.find(h => h.type === 'unhorse');
-    h2 = HIT_TABLE.find(h => h.type === 'miss');
-  } else if (k1.guard === 'low' && k2.guard === 'high' && k2.lanceIntact) {
-    h1 = HIT_TABLE.find(h => h.type === 'miss');
-    h2 = HIT_TABLE.find(h => h.type === 'unhorse');
-  } else {
-    h1 = k1.lanceIntact ? rollHit(getEffectiveStr(k1), k2.def) : HIT_TABLE.find(h => h.type === 'miss');
-    h2 = k2.lanceIntact ? rollHit(getEffectiveStr(k2), k1.def) : HIT_TABLE.find(h => h.type === 'miss');
-  }
+  // MECÁNICA: 10% Punta contra Punta, 90% Choque contra cuerpo/escudo
+  const isTipToTip = Math.random() < 0.10 && k1.lanceIntact && k2.lanceIntact;
 
-  if (h1.type === 'lanceTip' || h2.type === 'lanceTip') {
+  if (isTipToTip) {
     const lt = HIT_TABLE.find(h => h.type === 'lanceTip');
     h1 = lt; h2 = lt;
+  } else {
+    // 90% Lógica normal de cuerpo/escudo
+    // Direct unhorse logic: if one hits and the other is in low guard
+    if (k2.guard === 'low' && k1.guard === 'high' && k1.lanceIntact) {
+      h1 = HIT_TABLE.find(h => h.type === 'unhorse');
+      h2 = HIT_TABLE.find(h => h.type === 'miss');
+    } else if (k1.guard === 'low' && k2.guard === 'high' && k2.lanceIntact) {
+      h1 = HIT_TABLE.find(h => h.type === 'miss');
+      h2 = HIT_TABLE.find(h => h.type === 'unhorse');
+    } else {
+      // Normal roll (lanceTip is prob 0 in normal table now)
+      h1 = k1.lanceIntact ? rollHit(getEffectiveStr(k1), k2.def) : HIT_TABLE.find(h => h.type === 'miss');
+      h2 = k2.lanceIntact ? rollHit(getEffectiveStr(k2), k1.def) : HIT_TABLE.find(h => h.type === 'miss');
+    }
   }
 
   joust.k1Hit = h1;
@@ -65,7 +70,11 @@ export function resolveClash() {
   joust.history.push({ venida: joust.venida, k1Hit: h1, k2Hit: h2 });
 
   const impactX = LANE_X;
-  const impactY = (k1.y + k2.y) / 2;
+  // Visual impact point should be at the defender's center for more realism
+  let impactY = (k1.y + k2.y) / 2;
+  if (h1.pts > h2.pts) impactY = k2.y;
+  else if (h2.pts > h1.pts) impactY = k1.y;
+  
   const maxPts = Math.max(h1.pts, h2.pts);
 
   if (maxPts === 0 && h1.type === 'miss' && h2.type === 'miss') {
@@ -95,7 +104,6 @@ export function resolveClash() {
   const stunBefore1 = k1.stunned;
   const stunBefore2 = k2.stunned;
   const totalImpactSpeed = k1.speed + k2.speed;
-  // Standard speed is around 4-5. Let's make a multiplier (1.0 at speed 4.5)
   const damageMult = totalImpactSpeed / 4.5;
 
   applyHitEffect(h1, k2, damageMult);
@@ -126,8 +134,8 @@ export function applyHitEffect(hit, defender, damageMult = 1.0) {
     case 'unhorse':  
       defender.fallen = true; 
       defender.hp = 0;
-      defender.speed *= 0.2; // Immediate slowdown on impact
-      defender.tilt = 0.4 * s; // Instant heavy tilt
+      defender.speed *= 0.2;
+      defender.tilt = 0.4 * s;
       defender.wobble = 0.6 * s;
       break;
   }
@@ -142,13 +150,6 @@ export function applyHitEffect(hit, defender, damageMult = 1.0) {
     const markY = -10 + Math.random() * 30;
     if (defender.bloodMarks.length < 10) {
       defender.bloodMarks.push({ x: markX, y: markY, r: 2 + Math.random() * 3 });
-      if (Math.random() < 0.5) {
-        defender.bloodMarks.push({
-          x: markX + (Math.random() - 0.5) * 8,
-          y: markY + (Math.random() - 0.5) * 6,
-          r: 1.2 + Math.random() * 2,
-        });
-      }
     }
   }
 

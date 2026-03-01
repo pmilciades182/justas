@@ -61,15 +61,39 @@ export function updateJoust() {
     });
   }
 
-  // CLASH DETECTION (When they cross paths or meet)
+  // CLASH DETECTION (Tip-to-Center Precision with Orientation Check)
   if (joust.subPhase !== 'clash' && joust.subPhase !== 'result' && !k1.fallen && !k2.fallen) {
-    const distY = Math.abs(k1.y - k2.y);
-    // Mandatory distance check: must be within lance range (~80px, using 60px for safety)
-    const nearEnough = distY < 60;
-    // Check if they have crossed each other's Y position
-    const crossed = (k1.baseDir === 1) ? (k1.y >= k2.y) : (k1.y <= k2.y);
+    const lanceReach = 95;
+    const bodyReach = 25;
     
-    if (nearEnough && crossed && (k1.phase === 'charge' || k2.phase === 'charge')) {
+    const r1 = k1.lanceIntact ? lanceReach : bodyReach;
+    const r2 = k2.lanceIntact ? lanceReach : bodyReach;
+
+    // Approaching check: must be moving towards each other
+    const k1Approaching = (k1.baseDir === 1 && k1.y < k2.y) || (k1.baseDir === -1 && k1.y > k2.y);
+    const k2Approaching = (k2.baseDir === 1 && k2.y < k1.y) || (k2.baseDir === -1 && k2.y > k1.y);
+
+    // Orientation check: rotation must match direction (0/PI with small tolerance for wobble)
+    const k1FacingFront = Math.abs(Math.sin(k1.rotation)) < 0.5; 
+    const k2FacingFront = Math.abs(Math.sin(k2.rotation)) < 0.5;
+
+    let clashTriggered = false;
+
+    if (k1FacingFront && k2FacingFront && (k1.phase === 'charge' || k2.phase === 'charge')) {
+      // Check if K1's lance/body reaches K2's center
+      if (k1Approaching) {
+        const dist = k1.baseDir === 1 ? (k2.y - k1.y) : (k1.y - k2.y);
+        if (dist <= r1) clashTriggered = true;
+      }
+      
+      // Check if K2's lance/body reaches K1's center
+      if (!clashTriggered && k2Approaching) {
+        const dist = k2.baseDir === 1 ? (k1.y - k2.y) : (k2.y - k1.y);
+        if (dist <= r2) clashTriggered = true;
+      }
+    }
+    
+    if (clashTriggered) {
       resolveClash();
       setSubPhase('clash');
       k1.phase = 'clash'; k1.phaseT = 0;
