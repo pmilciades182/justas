@@ -241,10 +241,14 @@ export function startMatch() {
   const ek = joust.enemyTeam[joust.selectedEnemyKnightIdx];
 
   joust.k1 = makeJoustKnight(pk.knightId, 'left', pk.equip);
-  joust.k1.hp = pk.hp; // Restore persistent HP
+  joust.k1.hp = pk.hp; 
+  joust.k1.lanceIntact = true; // Start with lance
+  joust.k1.lanceLoading = 0;
   
   joust.k2 = makeJoustKnight(ek.knightId, 'right', ek.equip);
-  joust.k2.hp = ek.hp; // Restore persistent HP
+  joust.k2.hp = ek.hp;
+  joust.k2.lanceIntact = true; // Start with lance
+  joust.k2.lanceLoading = 0;
   
   joust.squire1 = makeSquire('left', joust.k1.squireEff);
   joust.squire2 = makeSquire('right', joust.k2.squireEff);

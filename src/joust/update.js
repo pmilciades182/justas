@@ -2,7 +2,7 @@
 // BUCLE DE ACTUALIZACIÓN DE LA JUSTA
 // ══════════════════════════════════════
 
-import { TRACK_TOP, TRACK_BOT, HORSE_H, MAX_VENIDAS } from './constants.js';
+import { TRACK_TOP, TRACK_BOT, HORSE_H, MAX_VENIDAS, DELIVERY_ZONE_PCT } from './constants.js';
 import { joust, setSubPhase } from './state.js';
 import { spawnDust, spawnHoofPrint, updateParticles } from './particles.js';
 import { resolveClash } from './physics.js';
@@ -19,7 +19,6 @@ export function updateJoust() {
   if (joust.shakeAmt > 0.3) joust.shakeAmt *= 0.85; else joust.shakeAmt = 0;
   if (joust.flashAlpha > 0) joust.flashAlpha -= 0.045;
 
-  // No frame-based countdown for stun anymore, handled by venidas
   // Decay wobble
   for (const k of [k1, k2]) {
     if (k && !k.fallen && Math.abs(k.wobble) > 0.001) {
@@ -42,19 +41,20 @@ export function updateJoust() {
   // Update Squires
   updateSquireTracking(joust.squire1, k1);
   updateSquireTracking(joust.squire2, k2);
-  updateSquireDelivery(joust.squire1, k1);
-  updateSquireDelivery(joust.squire2, k2);
 
   // Individual Knight Logic
   updateKnight(k1, joust.squire1);
   updateKnight(k2, joust.squire2);
 
-  // CLASH DETECTION (When they cross paths)
+  // CLASH DETECTION (When they cross paths or meet)
   if (joust.subPhase !== 'clash' && joust.subPhase !== 'result' && !k1.fallen && !k2.fallen) {
-    const dist = Math.abs(k1.y - k2.y);
-    const meeting = (k1.baseDir === 1) ? (k1.y >= k2.y - 20) : (k1.y <= k2.y + 20);
+    const distY = Math.abs(k1.y - k2.y);
+    // Mandatory distance check: must be within lance range (~80px, using 60px for safety)
+    const nearEnough = distY < 60;
+    // Check if they have crossed each other's Y position
+    const crossed = (k1.baseDir === 1) ? (k1.y >= k2.y) : (k1.y <= k2.y);
     
-    if (meeting && k1.phase === 'charge' && k2.phase === 'charge') {
+    if (nearEnough && crossed && (k1.phase === 'charge' || k2.phase === 'charge')) {
       resolveClash();
       setSubPhase('clash');
       k1.phase = 'clash'; k1.phaseT = 0;
@@ -121,10 +121,20 @@ function updateKnight(k, sq) {
 
   switch (k.phase) {
     case 'ready':
-      // Ready to charge as soon as we are here? No, we wait for next venida to be triggered
-      // Actually, user says: "una vez llega a la zona de inicio directamente arremete"
-      // So if match is active and we are ready, we charge.
-      if (joust.subPhase === 'charge' || joust.subPhase === 'pass' || joust.subPhase === 'turn') {
+      // Knights MUST wait for delivery if they don't have a lance
+      if (!k.lanceIntact) {
+        // Squire efficiency affects delivery speed - Reduced by 20%
+        const deliverySpeed = (0.015 + (k.squireEff / 10) * 0.035) * 0.8;
+        k.lanceLoading = Math.min(1, k.lanceLoading + deliverySpeed);
+        if (k.lanceLoading >= 1) {
+          k.lanceIntact = true;
+          k.lanceStub = false;
+        }
+      }
+
+      // Transition to charge only if we have a lance and match is active
+      const canCharge = k.lanceIntact && (joust.subPhase === 'charge' || joust.subPhase === 'pass' || joust.subPhase === 'turn');
+      if (canCharge) {
          k.phase = 'charge';
          k.phaseT = 0;
       }
@@ -136,6 +146,14 @@ function updateKnight(k, sq) {
       k.speed = Math.min(k.speed + acc, cap);
       k.y += k.speed * k.baseDir;
       
+      // MAXIMUM ADVANCE LIMIT (Past the other end)
+      const trackLimit = k.baseDir === 1 ? TRACK_BOT - 40 : TRACK_TOP + 40;
+      const reachedLimit = k.baseDir === 1 ? (k.y >= trackLimit) : (k.y <= trackLimit);
+      if (reachedLimit && joust.subPhase === 'charge') {
+         k.phase = 'pass';
+         k.phaseT = 0;
+      }
+
       if (joust.t % 3 === 0) spawnDust(k.x, k.y - k.baseDir * (HORSE_H/2 + 4));
       if (joust.t % 16 === 0) spawnHoofPrint(k);
       break;
@@ -183,6 +201,7 @@ function updateKnight(k, sq) {
         k.rotation = k.targetRotation;
         k.phase = 'ready';
         k.phaseT = 0;
+        
         // Aturdimiento decrece al terminar de girar (fin de su venida)
         if (k.stunned) {
           k.stunRounds--;

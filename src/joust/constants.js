@@ -9,11 +9,12 @@ export const ctx = canvas.getContext('2d');
 export let W = 390;
 export let H = 844;
 export let LANE_X   = W / 2;
-export let TRACK_X  = LANE_X - 50; // LANE_X - TRACK_W/2
-export let TRACK_BOT = H - 60;
+export let TRACK_X  = LANE_X - 50; 
+export let TRACK_TOP = H * 0.05; // 5% margin top
+export let TRACK_BOT = H * 0.95; // 5% margin bottom (90% total)
 
 export const TRACK_W    = 100;
-export const TRACK_TOP  = 60;
+export const DELIVERY_ZONE_PCT = 0.20; // 20% of track length
 export const LANCE_LEN  = 80;
 export const KNIGHT_BW  = 26;
 export const KNIGHT_BH  = 42;
@@ -29,11 +30,11 @@ export const COL = {
 export const HIT_TABLE = [
   { type: 'miss',     prob: 0.10, pts: 0,  brk: false, label: 'Fallo' },
   { type: 'attaint',  prob: 0.13, pts: 0,  brk: false, label: 'Toque sin romper' },
-  { type: 'arm',      prob: 0.12, pts: 1,  brk: true,  label: 'Golpe en brazo' },
-  { type: 'shield',   prob: 0.30, pts: 2,  brk: true,  label: 'Lanza rota en escudo' },
-  { type: 'helmet',   prob: 0.18, pts: 3,  brk: true,  label: 'Golpe en yelmo' },
-  { type: 'lanceTip', prob: 0.05, pts: 5,  brk: true,  label: 'Punta contra punta' },
-  { type: 'unhorse',  prob: 0.12, pts: 10, brk: true,  label: '¡Desmontado!' },
+  { type: 'arm',      prob: 0.12, pts: 1,  brk: false, label: 'Golpe en brazo' },
+  { type: 'shield',   prob: 0.30, pts: 2,  brk: false, label: 'Choque en escudo' },
+  { type: 'helmet',   prob: 0.18, pts: 3,  brk: false, label: 'Golpe en yelmo' },
+  { type: 'lanceTip', prob: 0.05, pts: 5,  brk: false, label: 'Punta contra punta' },
+  { type: 'unhorse',  prob: 0.12, pts: 10, brk: false, label: '¡Desmontado!' },
 ];
 
 export const HP_DAMAGE = {
@@ -53,5 +54,6 @@ export function resizeCanvas() {
   H = sh;
   LANE_X = W / 2;
   TRACK_X = LANE_X - TRACK_W / 2;
-  TRACK_BOT = H - 60;
+  TRACK_TOP = H * 0.05;
+  TRACK_BOT = H * 0.95;
 }

@@ -7,6 +7,7 @@ import {
   ctx, W, H, LANE_X, TRACK_X, TRACK_W,
   COL,
   HORSE_W, HORSE_H, KNIGHT_BW, KNIGHT_BH, LANCE_LEN,
+  TRACK_TOP, TRACK_BOT, DELIVERY_ZONE_PCT
 } from './constants.js';
 import { joust } from './state.js';
 
@@ -106,6 +107,38 @@ function drawTrack() {
 
   // ── Decales persistentes (antes de la valla) ─────────────────────────────
   drawGroundMarks();
+
+  // ── Zonas de Entrega (Escuderos) ──
+  ctx.save();
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = '#d4a017';
+  const trackH = (TRACK_BOT - TRACK_TOP);
+  const zoneH = trackH * DELIVERY_ZONE_PCT;
+  
+  // Relleno de zona
+  ctx.fillRect(TRACK_X, TRACK_TOP, TRACK_W, zoneH);
+  ctx.fillRect(TRACK_X, TRACK_BOT - zoneH, TRACK_W, zoneH);
+  
+  // Líneas divisorias
+  ctx.globalAlpha = 0.4;
+  ctx.strokeStyle = '#ffd54f';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  
+  // Límites 90%
+  ctx.beginPath();
+  ctx.moveTo(TRACK_X, TRACK_TOP); ctx.lineTo(TRACK_X + TRACK_W, TRACK_TOP);
+  ctx.moveTo(TRACK_X, TRACK_BOT); ctx.lineTo(TRACK_X + TRACK_W, TRACK_BOT);
+  ctx.stroke();
+
+  // Límites 20%
+  ctx.beginPath();
+  ctx.moveTo(TRACK_X, TRACK_TOP + zoneH); ctx.lineTo(TRACK_X + TRACK_W, TRACK_TOP + zoneH);
+  ctx.moveTo(TRACK_X, TRACK_BOT - zoneH); ctx.lineTo(TRACK_X + TRACK_W, TRACK_BOT - zoneH);
+  ctx.stroke();
+  
+  ctx.setLineDash([]);
+  ctx.restore();
 
   // ── Valla / palizada ─────────────────────────────────────────────────────
   ctx.strokeStyle = COL.railLine;
@@ -275,4 +308,36 @@ function drawJoustUI() {
   }
 
   // 7. Resultado flotante (Eliminado, ahora en HUD ribbons)
+  
+  // 8. Indicadores de entrega de lanza
+  drawDeliveryIndicators(k1);
+  drawDeliveryIndicators(k2);
+}
+
+function drawDeliveryIndicators(k) {
+  if (k.lanceIntact || k.fallen || (k.phase !== 'charge' && k.phase !== 'ready')) return;
+  if (k.lanceLoading <= 0) return;
+
+  const cx = k.x;
+  const cy = k.y - 45;
+  const radius = 10;
+
+  ctx.save();
+  // Fondo del círculo
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Arco de progreso
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, -Math.PI/2, -Math.PI/2 + (Math.PI * 2 * k.lanceLoading));
+  ctx.strokeStyle = COL.gold || '#d4a017';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  ctx.restore();
 }

@@ -332,6 +332,105 @@
       z-index: 20;
     }
 
+    /* ===== TEAM SELECT SCREEN ===== */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .team-slot {
+      aspect-ratio: 1/1.2;
+      background: rgba(0,0,0,0.15);
+      border: 2px dashed var(--gold-dim);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .team-slot.filled {
+      background: var(--card);
+      border: 2px solid var(--gold);
+      border-image: none;
+    }
+    .team-slot .slot-icon { font-size: 32px; }
+    .team-slot .slot-name { 
+      font-size: 10px; 
+      font-family: 'MedievalSharp'; 
+      text-transform: uppercase;
+      margin-top: 5px;
+      text-align: center;
+      padding: 0 4px;
+    }
+    .team-slot .slot-remove {
+      position: absolute; top: -5px; right: -5px;
+      background: var(--red); color: #fff;
+      width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: bold; border: 1px solid #fff;
+    }
+    
+    .section-label {
+      font-family: 'MedievalSharp';
+      color: var(--gold);
+      font-size: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--gold-dim); opacity: 0.3; }
+
+    #pick-knight-list {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .pick-item {
+      background: #fff;
+      border: 1px solid #d4c4a8;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+    }
+    .pick-item:hover { border-color: var(--gold); background: #fff9e6; }
+    .pick-item .pick-name { font-size: 11px; font-weight: bold; margin-top: 5px; }
+
+    /* ===== HUD RIBBON EFFECTS ===== */
+    .jhud-ribbon {
+      position: absolute;
+      top: 100%; left: 5px; right: 5px;
+      height: 32px;
+      background: var(--gold);
+      color: #2c1e16;
+      font-family: 'MedievalSharp';
+      font-size: 11px;
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+      justify-content: center;
+      line-height: 1.1;
+      transform: translateY(-100%);
+      clip-path: polygon(0% 0%, 100% 0%, 95% 50%, 100% 100%, 0% 100%, 5% 50%);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 10;
+      pointer-events: none;
+      text-transform: uppercase;
+      font-weight: bold;
+      border: 1px solid rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .jhud-ribbon.show { opacity: 1; transform: translateY(4px); }
+    .jhud-ribbon.right { clip-path: polygon(0% 0%, 100% 0%, 95% 50%, 100% 100%, 0% 100%, 5% 50%); }
+
     /* ===== JOUST SCREEN ===== */
     #screen-joust {
       padding: 0;
@@ -352,6 +451,8 @@
       border-bottom: 3px solid #d4a017;
       padding: 8px 10px;
       height: 95px;
+      position: relative;
+      z-index: 30; /* Above arena and its overlays */
     }
     .jhud-knight { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
     .jhud-top-row { display: flex; align-items: center; gap: 6px; }
@@ -484,7 +585,7 @@
     .mt-16 { margin-top: 16px; }
     .mt-8 { margin-top: 8px; }
   </style>
-  <script type="module" crossorigin src="/assets/index-DTbw6Xs_.js"></script>
+  <script type="module" crossorigin src="/assets/index-Cyphd67f.js"></script>
 </head>
 <body>
   <div id="app">
@@ -519,6 +620,7 @@
       <div class="mt-16 text-center" style="display: flex; flex-direction: column; gap: 12px;">
         <button class="btn btn-gold btn-lg" id="btn-quick-joust">🏇 ¡A JUSTAR!</button>
         <button class="btn btn-ghost" id="btn-go-designer" style="width: 100%; border: 1px solid var(--gold-dim);">🎨 DISEÑO DE CABALLERO</button>
+        <button class="btn btn-red" id="btn-reset-game" style="font-size: 11px; padding: 8px; margin-top: 20px; opacity: 0.7;">⚠️ RESETEAR DATOS (DEBUG)</button>
       </div>
       <p class="text-center text-dim text-sm mt-8">Selecciona tu equipo y enfrenta a una casa rival</p>
     </div>
@@ -546,18 +648,15 @@
     <!-- ===== SCREEN: TEAM SELECT ===== -->
     <div id="screen-team" class="screen">
       <div class="screen-title">👥 Equipo de Justa</div>
-      <div class="screen-subtitle">Selecciona hasta 6 caballeros para el torneo</div>
+      <div class="screen-subtitle">Selecciona hasta 4 caballeros para tu escuadrón</div>
       <div class="team-slots" id="team-slots"></div>
-      <div class="mt-8 text-center">
-        <button class="btn btn-gold btn-lg" id="btn-start-joust" disabled>⚔ INICIAR JUSTA</button>
-      </div>
     </div>
 
     <!-- ===== SCREEN: JOUST ===== -->
     <div id="screen-joust" class="screen">
       <!-- HUD separado del campo de juego -->
       <div id="joust-hud">
-        <div class="jhud-knight">
+        <div class="jhud-knight" style="position:relative">
           <div class="jhud-top-row">
             <span id="jhud-k1-icon" class="jhud-icon">⚔</span>
             <div class="jhud-info">
@@ -571,17 +670,20 @@
           <div class="jhud-hp-track">
             <div id="jhud-k1-hp-fill" class="jhud-hp-fill jhud-hp-green" style="width:100%"></div>
           </div>
-          <div id="jhud-k1-hp-text" class="jhud-hp-text">HP —</div>
-          <div id="jhud-k1-stun" class="jhud-stun" style="visibility:hidden">!! ATURDIDO !!</div>
+          <div id="jhud-k1-ribbon" class="jhud-ribbon">GOLPE</div>
         </div>
 
         <div class="jhud-center">
-          <div class="jhud-venida-lbl">VENIDA</div>
-          <div id="jhud-venida-val" class="jhud-venida-num">—</div>
+          <div style="font-family: 'MedievalSharp'; font-size: 10px; color: var(--gold); margin-bottom: 2px; letter-spacing:1px">MARCADOR</div>
+          <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
+            <div id="jhud-global-p1" style="font-family: 'MedievalSharp'; font-size: 22px; color: #fff;">0</div>
+            <div style="font-size: 12px; color: var(--gold-dim);">VS</div>
+            <div id="jhud-global-p2" style="font-family: 'MedievalSharp'; font-size: 22px; color: #fff;">0</div>
+          </div>
           <div id="jhud-shields-row" class="jhud-shields"></div>
         </div>
 
-        <div class="jhud-knight">
+        <div class="jhud-knight" style="position:relative">
           <div class="jhud-top-row jhud-right">
             <span id="jhud-k2-icon" class="jhud-icon">⚔</span>
             <div class="jhud-info right">
@@ -595,8 +697,7 @@
           <div class="jhud-hp-track">
             <div id="jhud-k2-hp-fill" class="jhud-hp-fill right jhud-hp-green" style="width:100%"></div>
           </div>
-          <div id="jhud-k2-hp-text" class="jhud-hp-text right">HP —</div>
-          <div id="jhud-k2-stun" class="jhud-stun" style="visibility:hidden; text-align:right">!! ATURDIDO !!</div>
+          <div id="jhud-k2-ribbon" class="jhud-ribbon right">GOLPE</div>
         </div>
       </div>
 

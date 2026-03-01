@@ -42,15 +42,15 @@ export function resolveClash() {
   let h1, h2;
 
   // Direct unhorse logic: if one hits and the other is in low guard
-  if (k2.guard === 'low' && k1.guard === 'high') {
+  if (k2.guard === 'low' && k1.guard === 'high' && k1.lanceIntact) {
     h1 = HIT_TABLE.find(h => h.type === 'unhorse');
     h2 = HIT_TABLE.find(h => h.type === 'miss');
-  } else if (k1.guard === 'low' && k2.guard === 'high') {
+  } else if (k1.guard === 'low' && k2.guard === 'high' && k2.lanceIntact) {
     h1 = HIT_TABLE.find(h => h.type === 'miss');
     h2 = HIT_TABLE.find(h => h.type === 'unhorse');
   } else {
-    h1 = rollHit(getEffectiveStr(k1), k2.def);
-    h2 = rollHit(getEffectiveStr(k2), k1.def);
+    h1 = k1.lanceIntact ? rollHit(getEffectiveStr(k1), k2.def) : HIT_TABLE.find(h => h.type === 'miss');
+    h2 = k2.lanceIntact ? rollHit(getEffectiveStr(k2), k1.def) : HIT_TABLE.find(h => h.type === 'miss');
   }
 
   if (h1.type === 'lanceTip' || h2.type === 'lanceTip') {
@@ -83,8 +83,14 @@ export function resolveClash() {
     joust.shakeAmt = 20; joust.flashAlpha = 0.9;
   }
 
-  if (h1.brk) { k1.lanceIntact = false; k1.lanceStub = true; }
-  if (h2.brk) { k2.lanceIntact = false; k2.lanceStub = true; }
+  // BREAKABLE LANCE LOGIC (40% probability if it was a hit)
+  const breakProb = 0.40;
+  if (h1.type !== 'miss' && h1.type !== 'attaint' && Math.random() < breakProb) {
+    k1.lanceIntact = false; k1.lanceStub = true;
+  }
+  if (h2.type !== 'miss' && h2.type !== 'attaint' && Math.random() < breakProb) {
+    k2.lanceIntact = false; k2.lanceStub = true;
+  }
 
   const stunBefore1 = k1.stunned;
   const stunBefore2 = k2.stunned;
@@ -113,7 +119,13 @@ export function applyHitEffect(hit, defender) {
     case 'shield':   defender.wobble = 0.12 * s; defender.wobbleDecay = 0.012; break;
     case 'helmet':   defender.wobble = 0.22 * s; defender.wobbleDecay = 0.010; break;
     case 'lanceTip': defender.wobble = 0.15 * s; defender.wobbleDecay = 0.012; break;
-    case 'unhorse':  defender.fallen = true; defender.hp = 0; break;
+    case 'unhorse':  
+      defender.fallen = true; 
+      defender.hp = 0;
+      defender.speed *= 0.2; // Immediate slowdown on impact
+      defender.tilt = 0.4 * s; // Instant heavy tilt
+      defender.wobble = 0.6 * s;
+      break;
   }
 
   const baseDmg = HP_DAMAGE[hit.type] || 0;
