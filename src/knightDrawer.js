@@ -204,22 +204,77 @@ export function drawHead(ctx, colorArmor, colorPlume, bh) {
 }
 
 export function drawLance(ctx, intact, stub, shieldSide, colorLance, len, bh) {
+  const lSide = -shieldSide; // Lance is opposite to shield
+  const gripX = lSide * 18;
+  const gripY = 15;
+
   if (intact) {
-    const lSide = -shieldSide;
-    const lx = lSide * 22;
-    const ly = 25;
-    ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.moveTo(lx, ly - 40); ctx.lineTo(lx, ly); ctx.lineTo(shieldSide * 35, ly + len); ctx.stroke();
-    // Punta
+    ctx.save();
+    ctx.translate(gripX, gripY);
+    
+    // Rotation of the lance towards the target
+    // We want it to point forward and more significantly towards the center
+    const lanceAngle = (shieldSide === 1 ? -0.4 : 0.4); 
+    ctx.rotate(lanceAngle);
+
+    // 1. Vamplate (The hand guard)
+    ctx.fillStyle = '#7f8c8d';
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#2c3e50';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 2. Main Shaft (Straight)
+    // Wood texture / color
+    const gradient = ctx.createLinearGradient(-4, 0, 4, 0);
+    gradient.addColorStop(0, '#5d4037');
+    gradient.addColorStop(0.5, '#8d6e63');
+    gradient.addColorStop(1, '#5d4037');
+    
+    ctx.fillStyle = gradient;
+    // Shaft behind the hand
+    ctx.fillRect(-3, -25, 6, 25);
+    // Main shaft forward (tapered look)
+    ctx.beginPath();
+    ctx.moveTo(-3, 0);
+    ctx.lineTo(3, 0);
+    ctx.lineTo(1.5, len);
+    ctx.lineTo(-1.5, len);
+    ctx.closePath();
+    ctx.fill();
+
+    // 3. Tip (Steel)
     ctx.fillStyle = '#bdc3c7';
     ctx.beginPath();
-    const tx = shieldSide * 35, ty = ly + len;
-    ctx.moveTo(tx, ty); ctx.lineTo(tx - shieldSide*8, ty - 12); ctx.lineTo(tx + shieldSide*2, ty - 15);
-    ctx.closePath(); ctx.fill();
+    ctx.moveTo(-1.5, len);
+    ctx.lineTo(1.5, len);
+    ctx.lineTo(0, len + 12); // Sharp point
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.restore();
   } else if (stub) {
-    const lx = -shieldSide * 22;
-    ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.moveTo(lx, -15); ctx.lineTo(lx + shieldSide*10, 35); ctx.stroke();
+    // Broken lance look
+    ctx.save();
+    ctx.translate(gripX, gripY);
+    ctx.rotate(shieldSide === 1 ? -0.3 : 0.3);
+    
+    ctx.fillStyle = '#5d4037';
+    ctx.beginPath();
+    ctx.moveTo(-3, -20);
+    ctx.lineTo(3, -20);
+    ctx.lineTo(4, 15);
+    // Jagged broken end
+    ctx.lineTo(1, 12);
+    ctx.lineTo(0, 18);
+    ctx.lineTo(-2, 10);
+    ctx.lineTo(-3, 15);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.restore();
   }
 }
 
