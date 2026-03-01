@@ -75,7 +75,7 @@ export function showKnightSelection() {
       <div style="font-family:MedievalSharp; font-size:18px; color:var(--red); margin-bottom:10px">
         COMBATE ${joust.matchIdx + 1} DE ${joust.totalMatches}
       </div>
-      <div style="font-family:Almendra; font-size:13px; color:#5d4037; margin-bottom:15px">
+      <div style="font-family:Almendra; font-size:13px; color:var(--gold-bright); margin-bottom:15px; background:rgba(0,0,0,0.4); padding:6px; border:1px solid var(--gold-dim)">
         Selecciona un caballero para este duelo. Los que no tengan HP no pueden luchar.
       </div>
 
@@ -323,10 +323,13 @@ export function showMatchResult() {
     winnerName = 'EMPATE'; winnerColor = '#666'; statusText = 'PUNTUACIÓN IGUALADA';
   }
 
+  const isDraw = winnerName === 'EMPATE';
+  if (playerWon) joust.playerMatchWins++;
+  else if (!isDraw) joust.enemyMatchWins++;
+
   updateGlobalHUD();
 
   // FEEDBACK EFFECTS (Roses, Trash, Confetti) - Reduced count by 30%
-  const isDraw = winnerName === 'EMPATE';
   if (playerWon) {
     spawnConfetti(56); // 80 * 0.7
     spawnRoses('left', 17); // 25 * 0.7

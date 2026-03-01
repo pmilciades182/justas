@@ -15,7 +15,7 @@ export function renderHome() {
   const container = $('#home-team-preview');
   container.innerHTML = '';
   if (player.team.length === 0) {
-    container.innerHTML = '<p class="text-center text-dim text-sm">No hay equipo seleccionado</p>';
+    container.innerHTML = '<div class="help-text">No hay equipo seleccionado. ¡Ve a la pestaña Equipo!</div>';
   } else {
     player.team.forEach(kid => {
       const kd = getKnightData(kid);
@@ -25,7 +25,7 @@ export function renderHome() {
       const arm = eq.armor ? getArmorData(eq.armor) : null;
       const hrs = eq.horse ? getHorseData(eq.horse) : null;
       container.innerHTML += `
-        <div class="card" style="border-left: 3px solid ${c.plume}">
+        <div class="card" style="border-left: 4px solid ${c.plume}">
           <div class="card-row">
             <div class="card-icon" style="background:${c.shield}; color:#fff">${kd.icon}</div>
             <div class="card-info">
@@ -37,14 +37,16 @@ export function renderHome() {
     });
   }
 
-  $('#btn-quick-joust').disabled = player.team.length < 1;
+  const btnJoust = $('#btn-quick-joust');
+  btnJoust.disabled = player.team.length < 1;
   if (player.team.length < 1) {
-    $('#btn-quick-joust').innerHTML = '⚔ FORMAR ESCUADRÓN';
-    $('#btn-quick-joust').onclick = () => switchScreen('team');
+    btnJoust.innerHTML = '⚔ FORMAR ESCUADRÓN';
+    btnJoust.onclick = () => switchScreen('team');
   } else {
-    $('#btn-quick-joust').innerHTML = '🏇 ¡A JUSTAR!';
-    $('#btn-quick-joust').onclick = () => switchScreen('joust');
+    btnJoust.innerHTML = '🏇 ¡A JUSTAR!';
+    btnJoust.onclick = () => switchScreen('joust');
   }
+  
   $('#btn-go-designer').onclick = () => switchScreen('designer');
 
   $('#btn-story-mode').onclick = () => {

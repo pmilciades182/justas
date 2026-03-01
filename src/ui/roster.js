@@ -25,10 +25,10 @@ export function renderRoster() {
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.style.borderLeft = `3px solid ${c.plume}`;
+    div.style.borderLeft = `4px solid ${c.plume}`;
     div.innerHTML = `
       <div class="card-row">
-        <div class="card-icon" style="background:${c.shield}; color:#fff; font-size:28px">${kd.icon}</div>
+        <div class="card-icon" style="background:#1a110a; color:#fff; font-size:28px">${kd.icon}</div>
         <div class="card-info">
           <div class="card-name">${kd.name}</div>
           <div class="card-stats">
@@ -36,15 +36,26 @@ export function renderRoster() {
             <span class="stat-badge def">DEF ${kd.def}${arm ? '+' + arm.defB : ''}</span>
             <span class="stat-badge hor">MON ${kd.hor}</span>
           </div>
-          <div class="card-desc mt-8">
-            🛡 ${arm ? arm.name : '—'}
-            &nbsp;·&nbsp; 🐴 ${hrs ? hrs.name : '—'}
-            &nbsp;·&nbsp; 🧑 ${sqr ? sqr.name : '—'}
-          </div>
         </div>
       </div>
-      <div class="mt-8 flex-center">
-        <button class="btn btn-ghost btn-sm btn-equip" data-kid="${kid}">Equipar</button>
+      
+      <div class="roster-equip-preview">
+        <div class="mini-slot">
+          <div class="icon">${arm ? '🛡' : '➕'}</div>
+          <div class="label">${arm ? arm.name : 'Armadura'}</div>
+        </div>
+        <div class="mini-slot">
+          <div class="icon">${hrs ? '🐴' : '➕'}</div>
+          <div class="label">${hrs ? hrs.name : 'Caballo'}</div>
+        </div>
+        <div class="mini-slot">
+          <div class="icon">${sqr ? '🧑' : '➕'}</div>
+          <div class="label">${sqr ? sqr.name : 'Escudero'}</div>
+        </div>
+      </div>
+
+      <div class="mt-16">
+        <button class="btn btn-gold btn-equip" data-kid="${kid}" style="width:100%; padding:10px; font-size:12px">⚙ GESTIONAR EQUIPO</button>
       </div>`;
     container.appendChild(div);
   });
@@ -57,7 +68,7 @@ export function renderRoster() {
 export function openEquipModal(knightId) {
   equipKnightId = knightId;
   const kd = getKnightData(knightId);
-  $('#modal-equip-title').textContent = `Equipar: ${kd.name}`;
+  $('#modal-equip-title').textContent = `${kd.name}`;
   currentEquipTab = 'armor';
   renderEquipTab();
   $('#modal-equip').classList.add('open');
@@ -69,21 +80,28 @@ export function renderEquipTab() {
   const eq = player.equip[equipKnightId] || {};
   const currentId = eq[currentEquipTab] || null;
 
-  let db, invKey;
-  if (currentEquipTab === 'armor')  { db = DB_ARMORS;  invKey = 'armors'; }
-  if (currentEquipTab === 'horse')  { db = DB_HORSES;  invKey = 'horses'; }
-  if (currentEquipTab === 'squire') { db = DB_SQUIRES; invKey = 'squires'; }
+  let db;
+  if (currentEquipTab === 'armor')  { db = DB_ARMORS; }
+  if (currentEquipTab === 'horse')  { db = DB_HORSES; }
+  if (currentEquipTab === 'squire') { db = DB_SQUIRES; }
 
+  const grid = document.createElement('div');
+  grid.className = 'equip-grid';
+
+  // Opción "Sin Equipar"
   const noneDiv = document.createElement('div');
-  noneDiv.className = `pick-item${currentId === null ? ' selected' : ''}`;
-  noneDiv.innerHTML = `<span class="pick-icon">❌</span><div class="pick-info"><div class="pick-name">Sin equipar</div></div>`;
-  noneDiv.addEventListener('click', () => {
+  noneDiv.className = `equip-item ${currentId === null ? 'selected' : ''}`;
+  noneDiv.innerHTML = `
+    <div class="item-name">Desequipar</div>
+    <div style="font-size:20px; text-align:center; margin:10px 0">❌</div>
+  `;
+  noneDiv.onclick = () => {
     if (!player.equip[equipKnightId]) player.equip[equipKnightId] = {};
     player.equip[equipKnightId][currentEquipTab] = null;
     saveGame();
     renderEquipTab();
-  });
-  container.appendChild(noneDiv);
+  };
+  grid.appendChild(noneDiv);
 
   db.forEach(item => {
     const avail = countAvailable(currentEquipTab, item.id);
@@ -91,32 +109,32 @@ export function renderEquipTab() {
     const canEquip = isCurrent || avail > 0;
 
     const div = document.createElement('div');
-    div.className = `pick-item${isCurrent ? ' selected' : ''}`;
-    div.style.opacity = canEquip ? '1' : '0.35';
+    div.className = `equip-item ${isCurrent ? 'selected' : ''} ${!canEquip ? 'disabled' : ''}`;
 
     let statsHtml = '';
-    if (item.defB !== undefined) statsHtml += `<span class="stat-badge def">DEF +${item.defB}</span>`;
-    if (item.spdB !== undefined && item.spdB !== 0) statsHtml += `<span class="stat-badge spd">VEL ${item.spdB > 0 ? '+' : ''}${item.spdB}</span>`;
-    if (item.sta  !== undefined) statsHtml += `<span class="stat-badge hor">STA ${item.sta}</span>`;
-    if (item.eff  !== undefined) statsHtml += `<span class="stat-badge spd">EFI ${item.eff}</span>`;
+    if (item.defB !== undefined) statsHtml += `<span class="stat-badge def" style="background:#fff">🛡 +${item.defB}</span>`;
+    if (item.spdB !== undefined && item.spdB !== 0) statsHtml += `<span class="stat-badge str" style="background:#fff">⚡ ${item.spdB > 0 ? '+' : ''}${item.spdB}</span>`;
+    if (item.eff  !== undefined) statsHtml += `<span class="stat-badge hor" style="background:#fff">⭐ ${item.eff}</span>`;
 
     div.innerHTML = `
-      <div class="pick-info">
-        <div class="pick-name">${item.name} ${isCurrent ? '✓' : ''}</div>
-        <div class="card-stats">${statsHtml}</div>
-        <div class="pick-desc">${item.desc || ''} ${!isCurrent && avail > 0 ? `(${avail} disp.)` : ''}</div>
-      </div>`;
+      <div class="item-name">${item.name}</div>
+      <div class="item-stats">${statsHtml}</div>
+      ${!isCurrent && canEquip ? `<div class="item-avail">Disp: ${avail}</div>` : ''}
+      ${isCurrent ? `<div class="item-check">✓</div>` : ''}
+    `;
 
     if (canEquip) {
-      div.addEventListener('click', () => {
+      div.onclick = () => {
         if (!player.equip[equipKnightId]) player.equip[equipKnightId] = {};
         player.equip[equipKnightId][currentEquipTab] = item.id;
         saveGame();
         renderEquipTab();
-      });
+      };
     }
-    container.appendChild(div);
+    grid.appendChild(div);
   });
+
+  container.appendChild(grid);
 }
 
 // Modal bindings
