@@ -1,0 +1,130 @@
+// ══════════════════════════════════════
+// FÍSICA DE COLISIÓN, HP Y ATURDIMIENTO
+// ══════════════════════════════════════
+
+import { HIT_TABLE, HP_DAMAGE, LANE_X } from './constants.js';
+import { joust } from './state.js';
+import { spawnSparks, spawnSplinters, spawnBlood } from './particles.js';
+
+export function rollHit(strBonus, defBonus) {
+  let r = Math.random();
+  const strFactor = 1 + (strBonus - 5) * 0.04;
+  const defFactor = 1 + (defBonus - 5) * 0.04;
+
+  const adjusted = HIT_TABLE.map(h => {
+    let p = h.prob;
+    if (h.type === 'miss') p *= defFactor / strFactor;
+    else if (h.pts >= 3) p *= strFactor / defFactor;
+    return { ...h, adjProb: Math.max(0.01, p) };
+  });
+  const total = adjusted.reduce((s, h) => s + h.adjProb, 0);
+
+  for (const h of adjusted) {
+    r -= h.adjProb / total;
+    if (r <= 0) return h;
+  }
+  return adjusted[0];
+}
+
+export function getEffectiveStr(k) {
+  let str = k.str;
+  const hpPct = k.hp / k.maxHp;
+  if (hpPct < 0.25) str -= 3;
+  else if (hpPct < 0.50) str -= 2;
+  else if (hpPct < 0.75) str -= 1;
+  if (k.stunned) str -= 2;
+  return Math.max(1, str);
+}
+
+export function resolveClash() {
+  const k1 = joust.k1, k2 = joust.k2;
+  let h1 = rollHit(getEffectiveStr(k1), k2.def);
+  let h2 = rollHit(getEffectiveStr(k2), k1.def);
+
+  if (h1.type === 'lanceTip' || h2.type === 'lanceTip') {
+    const lt = HIT_TABLE.find(h => h.type === 'lanceTip');
+    h1 = lt; h2 = lt;
+  }
+
+  joust.k1Hit = h1;
+  joust.k2Hit = h2;
+  joust.k1Points += h1.pts;
+  joust.k2Points += h2.pts;
+  joust.history.push({ venida: joust.venida, k1Hit: h1, k2Hit: h2 });
+
+  const impactX = LANE_X;
+  const impactY = (k1.y + k2.y) / 2;
+  const maxPts = Math.max(h1.pts, h2.pts);
+
+  if (maxPts === 0 && h1.type === 'miss' && h2.type === 'miss') {
+    joust.shakeAmt = 0; joust.flashAlpha = 0;
+  } else if (maxPts === 0) {
+    spawnSparks(impactX, impactY, 8); joust.shakeAmt = 3;
+  } else if (maxPts <= 2) {
+    spawnSparks(impactX, impactY, 18); spawnSplinters(impactX, impactY, 14);
+    joust.shakeAmt = 8; joust.flashAlpha = 0.3;
+  } else if (maxPts <= 5) {
+    spawnSparks(impactX, impactY, 35); spawnSplinters(impactX, impactY, 28);
+    joust.shakeAmt = 14; joust.flashAlpha = 0.6;
+  } else {
+    spawnSparks(impactX, impactY, 50); spawnSplinters(impactX, impactY, 35);
+    joust.shakeAmt = 20; joust.flashAlpha = 0.9;
+  }
+
+  if (h1.brk) { k1.lanceIntact = false; k1.lanceStub = true; }
+  if (h2.brk) { k2.lanceIntact = false; k2.lanceStub = true; }
+
+  const stunBefore1 = k1.stunned;
+  const stunBefore2 = k2.stunned;
+  applyHitEffect(h1, k2);
+  applyHitEffect(h2, k1);
+
+  joust.stunEvent = null;
+  if (!stunBefore2 && k2.stunned) joust.stunEvent = k2.name;
+  else if (!stunBefore1 && k1.stunned) joust.stunEvent = k1.name;
+
+  if (h1.pts > 0) spawnBlood(k2.x, k2.y, Math.min(h1.pts * 4, 22));
+  if (h2.pts > 0) spawnBlood(k1.x, k1.y, Math.min(h2.pts * 4, 22));
+}
+
+export function applyHitEffect(hit, defender) {
+  const s = defender.side === 'left' ? -1 : 1;
+  switch (hit.type) {
+    case 'arm':      defender.wobble = 0.08 * s; defender.wobbleDecay = 0.015; break;
+    case 'shield':   defender.wobble = 0.12 * s; defender.wobbleDecay = 0.012; break;
+    case 'helmet':   defender.wobble = 0.22 * s; defender.wobbleDecay = 0.010; break;
+    case 'lanceTip': defender.wobble = 0.15 * s; defender.wobbleDecay = 0.012; break;
+    case 'unhorse':  defender.fallen = true; defender.hp = 0; break;
+  }
+
+  const baseDmg = HP_DAMAGE[hit.type] || 0;
+  if (baseDmg > 0) {
+    const defFactor = Math.max(0.3, 1 - (defender.def - 5) * 0.05);
+    const dmg = Math.max(1, Math.round(baseDmg * defFactor));
+    defender.hp = Math.max(0, defender.hp - dmg);
+
+    const markX = s * (6 + Math.random() * 16);
+    const markY = -10 + Math.random() * 30;
+    if (defender.bloodMarks.length < 10) {
+      defender.bloodMarks.push({ x: markX, y: markY, r: 2 + Math.random() * 3 });
+      if (Math.random() < 0.5) {
+        defender.bloodMarks.push({
+          x: markX + (Math.random() - 0.5) * 8,
+          y: markY + (Math.random() - 0.5) * 6,
+          r: 1.2 + Math.random() * 2,
+        });
+      }
+    }
+  }
+
+  let stunChance = 0;
+  if (hit.type === 'helmet')   stunChance = 0.30;
+  else if (hit.type === 'lanceTip') stunChance = 0.20;
+  const hpPct = defender.hp / defender.maxHp;
+  if (hpPct < 0.50) stunChance += 0.15;
+  if (hpPct < 0.25) stunChance += 0.20;
+  if (stunChance > 0 && !defender.stunned && Math.random() < stunChance) {
+    defender.stunned = true;
+    defender.stunTimer = 90 + Math.floor(Math.random() * 80);
+  }
+}
