@@ -91,6 +91,24 @@ export function spawnGroundSplinters(x, y, count) {
   }
 }
 
+export function spawnConfetti(count) {
+  const colors = ['#f1c40f', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6', '#e67e22'];
+  for (let i = 0; i < count; i++) {
+    joust.confetti.push({
+      x: Math.random() * 400, // Roughly canvas width
+      y: -20 - Math.random() * 100,
+      vx: (Math.random() - 0.5) * 4,
+      vy: 2 + Math.random() * 5,
+      r: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.2,
+      size: 4 + Math.random() * 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      life: 1,
+      decay: 0.002 + Math.random() * 0.005,
+    });
+  }
+}
+
 export function updateParticles() {
   for (const p of joust.sparks) { p.x+=p.vx; p.y+=p.vy; p.vy+=0.09; p.vx*=0.97; p.life-=p.decay; }
   joust.sparks = joust.sparks.filter(p => p.life > 0);
@@ -100,6 +118,16 @@ export function updateParticles() {
   joust.splinters = joust.splinters.filter(s => s.life > 0);
   for (const b of joust.blood) { b.x+=b.vx; b.y+=b.vy; b.vy+=0.14; b.vx*=0.91; b.life-=b.decay; }
   joust.blood = joust.blood.filter(b => b.life > 0);
+  
+  // Confetti update
+  for (const c of joust.confetti) {
+    c.x += c.vx + Math.sin(joust.t * 0.05) * 0.5;
+    c.y += c.vy;
+    c.r += c.vr;
+    c.life -= c.decay;
+  }
+  joust.confetti = joust.confetti.filter(c => c.life > 0 && c.y < 1000);
+
   // Huellas de casco se desvanecen lentamente
   for (const h of joust.hoofPrints) { h.alpha = Math.max(0, h.alpha - 0.0010); }
   joust.hoofPrints = joust.hoofPrints.filter(h => h.alpha > 0.02);

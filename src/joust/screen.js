@@ -8,6 +8,7 @@ import { resizeCanvas } from './constants.js';
 import { joust, setSubPhase } from './state.js';
 import { makeJoustKnight, generateEnemy, makeSquire } from './knights.js';
 import { switchScreen } from '../ui/nav.js';
+import { spawnConfetti } from './particles.js';
 
 export function initJoustScreen() {
   resizeCanvas();
@@ -262,6 +263,8 @@ export function startMatch() {
   joust.sparks = [];
   joust.dust = [];
   joust.splinters = [];
+  joust.blood = [];
+  joust.confetti = [];
   // groundBlood, groundSplinters, and hoofPrints are NOT reset here to persist across matches
   joust.shakeAmt = 0;
   joust.flashAlpha = 0;
@@ -303,7 +306,10 @@ export function showMatchResult() {
     winnerName = 'EMPATE'; winnerColor = '#666'; statusText = 'PUNTUACIÓN IGUALADA';
   }
 
-  if (playerWon) joust.playerMatchWins++;
+  if (playerWon) {
+    joust.playerMatchWins++;
+    spawnConfetti(80);
+  }
   else if (winnerName !== 'EMPATE') joust.enemyMatchWins++;
 
   updateGlobalHUD();
@@ -356,7 +362,10 @@ export function showTourneyResult() {
   const won = pWins > eWins;
   const draw = pWins === eWins;
 
-  if (won) player.wins++;
+  if (won) {
+    player.wins++;
+    spawnConfetti(150);
+  }
   else if (!draw) player.losses++;
 
   const goldReward = won ? 150 + pWins * 50 : 30 + pWins * 20;

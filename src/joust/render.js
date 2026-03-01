@@ -40,6 +40,7 @@ export function drawJoust() {
   drawTrack();
   drawSpeedLines();
   drawParticles();
+  drawConfetti(); // Celebration!
 
   drawSquire(ctx, joust.squire1, joust.t, COL, joust.t);
   drawSquire(ctx, joust.squire2, joust.t, COL, joust.t);
@@ -252,6 +253,18 @@ function drawParticles() {
   ctx.globalAlpha = 1;
 }
 
+function drawConfetti() {
+  for (const c of joust.confetti) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, c.life * 2);
+    ctx.translate(c.x, c.y);
+    ctx.rotate(c.r);
+    ctx.fillStyle = c.color;
+    ctx.fillRect(-c.size/2, -c.size/2, c.size, c.size);
+    ctx.restore();
+  }
+}
+
 function drawSpeedLines() {
   if (joust.subPhase !== 'charge') return;
   const k1 = joust.k1, k2 = joust.k2;
@@ -312,6 +325,52 @@ function drawJoustUI() {
   // 8. Indicadores de entrega de lanza
   drawDeliveryIndicators(k1);
   drawDeliveryIndicators(k2);
+
+  // 9. Burbujas de diálogo
+  drawSpeechBubble(k1);
+  drawSpeechBubble(k2);
+}
+
+function drawSpeechBubble(k) {
+  if (!k.speechText || k.speechTimer <= 0) return;
+
+  ctx.save();
+  ctx.font = 'italic 11px Almendra';
+  const textWidth = ctx.measureText(k.speechText).width;
+  const bw = textWidth + 16;
+  const bh = 24;
+  const bx = k.x - bw / 2;
+  const by = k.y - 75;
+
+  // Sombra
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.roundRect(bx + 2, by + 2, bw, bh, 6);
+  ctx.fill();
+
+  // Fondo
+  ctx.fillStyle = '#fff9e6';
+  ctx.strokeStyle = '#d4a017';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(bx, by, bw, bh, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  // Pico de la burbuja
+  ctx.beginPath();
+  ctx.moveTo(k.x - 5, by + bh);
+  ctx.lineTo(k.x, by + bh + 8);
+  ctx.lineTo(k.x + 5, by + bh);
+  ctx.fill();
+  ctx.stroke();
+
+  // Texto
+  ctx.fillStyle = '#2c1e16';
+  ctx.textAlign = 'center';
+  ctx.fillText(k.speechText, k.x, by + 16);
+
+  ctx.restore();
 }
 
 function drawDeliveryIndicators(k) {

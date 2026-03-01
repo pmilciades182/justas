@@ -7,13 +7,15 @@ import { joust, setSubPhase } from './state.js';
 import { spawnDust, spawnHoofPrint, updateParticles } from './particles.js';
 import { resolveClash } from './physics.js';
 import { updateSquireTracking, updateSquireDelivery, activateSquire } from './squire.js';
+import { knightSay, updateKnightSpeech } from './dialogue.js';
 
 export function updateJoust() {
+  const k1 = joust.k1, k2 = joust.k2;
+  updateParticles(); // Always update particles (confetti, blood, etc)
+  
   if (!joust.active) return;
   joust.t++;
   joust.phaseT++;
-
-  const k1 = joust.k1, k2 = joust.k2;
 
   // Decay shake & flash
   if (joust.shakeAmt > 0.3) joust.shakeAmt *= 0.85; else joust.shakeAmt = 0;
@@ -45,6 +47,19 @@ export function updateJoust() {
   // Individual Knight Logic
   updateKnight(k1, joust.squire1);
   updateKnight(k2, joust.squire2);
+  updateKnightSpeech(k1);
+  updateKnightSpeech(k2);
+
+  // Trigger random dialogues
+  if (joust.t % 300 === 0) {
+    [k1, k2].forEach(k => {
+      if (k.hp > 0 && !k.fallen) {
+        if (k.hp < 30) knightSay(k, 'low_hp');
+        else if (k.stunned) knightSay(k, 'stunned');
+        else if (Math.random() < 0.3) knightSay(k, 'taunt');
+      }
+    });
+  }
 
   // CLASH DETECTION (When they cross paths or meet)
   if (joust.subPhase !== 'clash' && joust.subPhase !== 'result' && !k1.fallen && !k2.fallen) {
@@ -103,8 +118,6 @@ export function updateJoust() {
       }
     }
   }
-
-  updateParticles();
 }
 
 function updateKnight(k, sq) {
@@ -123,6 +136,7 @@ function updateKnight(k, sq) {
     case 'ready':
       // Knights MUST wait for delivery if they don't have a lance
       if (!k.lanceIntact) {
+        if (joust.t % 120 === 0 && Math.random() < 0.4) knightSay(k, 'waiting');
         // Squire efficiency affects delivery speed - Reduced by 20%
         const deliverySpeed = (0.015 + (k.squireEff / 10) * 0.035) * 0.8;
         k.lanceLoading = Math.min(1, k.lanceLoading + deliverySpeed);

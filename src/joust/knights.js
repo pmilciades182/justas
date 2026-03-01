@@ -48,6 +48,8 @@ export function makeJoustKnight(knightId, side, equipData) {
     phase: 'charge', // ready | charge | clash | pass | turn | stop
     phaseT: 0,
     guard: 'low',    // high | low
+    speechText: '',
+    speechTimer: 0,
   };
 }
 
