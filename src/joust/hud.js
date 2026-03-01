@@ -24,17 +24,25 @@ export function updateJoustHUD() {
   _set('jhud-global-p2', joust.enemyMatchWins);
 
   // HP bars
-  _updateHpBar('jhud-k1-hp-fill', 'jhud-k1-hp-text', k1);
-  _updateHpBar('jhud-k2-hp-fill', 'jhud-k2-hp-text', k2);
+  _updateHpBar('jhud-k1-hp-fill', k1);
+  _updateHpBar('jhud-k2-hp-fill', k2);
 
-  // Stun indicators
-  const s1 = document.getElementById('jhud-k1-stun');
-  const s2 = document.getElementById('jhud-k2-stun');
-  if (s1) s1.style.visibility = k1.stunned ? 'visible' : 'hidden';
-  if (s2) s2.style.visibility = k2.stunned ? 'visible' : 'hidden';
+  // Clash Result Ribbons
+  const r1 = document.getElementById('jhud-k1-ribbon');
+  const r2 = document.getElementById('jhud-k2-ribbon');
+  const showRibbon = (joust.subPhase === 'pass' || joust.subPhase === 'squire') && joust.k1Hit;
 
-  // Venida
-  _set('jhud-venida-val', `${joust.venida}/${MAX_VENIDAS}`);
+  if (r1 && r2) {
+    if (showRibbon) {
+      r1.innerHTML = `<div>${joust.k1Hit.label}</div><div style="font-size:10px; opacity:0.8">+${joust.k1Hit.pts} PTS</div>`;
+      r2.innerHTML = `<div>${joust.k2Hit.label}</div><div style="font-size:10px; opacity:0.8">+${joust.k2Hit.pts} PTS</div>`;
+      r1.classList.add('show');
+      r2.classList.add('show');
+    } else {
+      r1.classList.remove('show');
+      r2.classList.remove('show');
+    }
+  }
 
   // Escudos (venidas completadas)
   const shieldsEl = document.getElementById('jhud-shields-row');
@@ -50,9 +58,8 @@ export function updateJoustHUD() {
   }
 }
 
-function _updateHpBar(fillId, textId, knight) {
+function _updateHpBar(fillId, knight) {
   const fill = document.getElementById(fillId);
-  const text = document.getElementById(textId);
   if (!fill) return;
 
   const pct = Math.max(0, knight.hp / knight.maxHp) * 100;
@@ -62,8 +69,6 @@ function _updateHpBar(fillId, textId, knight) {
   if (pct > 60)      fill.classList.add('jhud-hp-green');
   else if (pct > 30) fill.classList.add('jhud-hp-orange');
   else               fill.classList.add('jhud-hp-red');
-
-  if (text) text.textContent = `HP ${knight.hp}/${knight.maxHp}`;
 }
 
 function _set(id, value) {

@@ -274,29 +274,5 @@ function drawJoustUI() {
     }
   }
 
-  // 7. Resultado flotante
-  if ((joust.subPhase === 'pass' || joust.subPhase === 'squire') && joust.k1Hit) {
-    const alpha = Math.min(1, joust.phaseT / 20) * (joust.subPhase === 'pass' && joust.phaseT > 100 ? Math.max(0, 1-(joust.phaseT-100)/20) : 1);
-    if (alpha > 0.01) {
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      const bw = 340, bh = 55;
-      const py = H - 180;
-      ctx.fillStyle = '#f4e4bc';
-      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.roundRect(W/2 - bw/2, py, bw, bh, 4);
-      ctx.fill();
-      ctx.strokeStyle = '#d4a017'; ctx.lineWidth = 2;
-      ctx.strokeRect(W/2 - bw/2, py, bw, bh);
-
-      ctx.font = 'bold 14px MedievalSharp';
-      ctx.fillStyle = '#2c1e16';
-      ctx.textAlign = 'center';
-      ctx.fillText("RESULTADO DE LA CARRERA", W/2, py + 22);
-      ctx.font = 'italic 14px Almendra';
-      ctx.fillText(`${joust.k1Hit.label.toUpperCase()} (+${joust.k1Hit.pts})  —  ${joust.k2Hit.label.toUpperCase()} (+${joust.k2Hit.pts})`, W/2, py + 42);
-      ctx.restore();
-    }
-  }
+  // 7. Resultado flotante (Eliminado, ahora en HUD ribbons)
 }

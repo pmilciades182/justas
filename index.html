@@ -402,6 +402,35 @@
     .pick-item:hover { border-color: var(--gold); background: #fff9e6; }
     .pick-item .pick-name { font-size: 11px; font-weight: bold; margin-top: 5px; }
 
+    /* ===== HUD RIBBON EFFECTS ===== */
+    .jhud-ribbon {
+      position: absolute;
+      top: 100%; left: 5px; right: 5px;
+      height: 32px;
+      background: var(--gold);
+      color: #2c1e16;
+      font-family: 'MedievalSharp';
+      font-size: 11px;
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+      justify-content: center;
+      line-height: 1.1;
+      transform: translateY(-100%);
+      clip-path: polygon(0% 0%, 100% 0%, 95% 50%, 100% 100%, 0% 100%, 5% 50%);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 10;
+      pointer-events: none;
+      text-transform: uppercase;
+      font-weight: bold;
+      border: 1px solid rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .jhud-ribbon.show { opacity: 1; transform: translateY(4px); }
+    .jhud-ribbon.right { clip-path: polygon(0% 0%, 100% 0%, 95% 50%, 100% 100%, 0% 100%, 5% 50%); }
+
     /* ===== JOUST SCREEN ===== */
     #screen-joust {
       padding: 0;
@@ -422,6 +451,8 @@
       border-bottom: 3px solid #d4a017;
       padding: 8px 10px;
       height: 95px;
+      position: relative;
+      z-index: 30; /* Above arena and its overlays */
     }
     .jhud-knight { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
     .jhud-top-row { display: flex; align-items: center; gap: 6px; }
@@ -624,7 +655,7 @@
     <div id="screen-joust" class="screen">
       <!-- HUD separado del campo de juego -->
       <div id="joust-hud">
-        <div class="jhud-knight">
+        <div class="jhud-knight" style="position:relative">
           <div class="jhud-top-row">
             <span id="jhud-k1-icon" class="jhud-icon">⚔</span>
             <div class="jhud-info">
@@ -638,23 +669,20 @@
           <div class="jhud-hp-track">
             <div id="jhud-k1-hp-fill" class="jhud-hp-fill jhud-hp-green" style="width:100%"></div>
           </div>
-          <div id="jhud-k1-hp-text" class="jhud-hp-text">HP —</div>
-          <div id="jhud-k1-stun" class="jhud-stun" style="visibility:hidden">!! ATURDIDO !!</div>
+          <div id="jhud-k1-ribbon" class="jhud-ribbon">GOLPE</div>
         </div>
 
         <div class="jhud-center">
-          <div style="font-family: 'MedievalSharp'; font-size: 10px; color: var(--gold); margin-bottom: 2px;">MARCADOR GLOBAL</div>
+          <div style="font-family: 'MedievalSharp'; font-size: 10px; color: var(--gold); margin-bottom: 2px; letter-spacing:1px">MARCADOR</div>
           <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
-            <div id="jhud-global-p1" style="font-family: 'MedievalSharp'; font-size: 20px; color: #fff;">0</div>
+            <div id="jhud-global-p1" style="font-family: 'MedievalSharp'; font-size: 22px; color: #fff;">0</div>
             <div style="font-size: 12px; color: var(--gold-dim);">VS</div>
-            <div id="jhud-global-p2" style="font-family: 'MedievalSharp'; font-size: 20px; color: #fff;">0</div>
+            <div id="jhud-global-p2" style="font-family: 'MedievalSharp'; font-size: 22px; color: #fff;">0</div>
           </div>
-          <div class="jhud-venida-lbl">VENIDA</div>
-          <div id="jhud-venida-val" class="jhud-venida-num">—</div>
           <div id="jhud-shields-row" class="jhud-shields"></div>
         </div>
 
-        <div class="jhud-knight">
+        <div class="jhud-knight" style="position:relative">
           <div class="jhud-top-row jhud-right">
             <span id="jhud-k2-icon" class="jhud-icon">⚔</span>
             <div class="jhud-info right">
@@ -668,8 +696,7 @@
           <div class="jhud-hp-track">
             <div id="jhud-k2-hp-fill" class="jhud-hp-fill right jhud-hp-green" style="width:100%"></div>
           </div>
-          <div id="jhud-k2-hp-text" class="jhud-hp-text right">HP —</div>
-          <div id="jhud-k2-stun" class="jhud-stun" style="visibility:hidden; text-align:right">!! ATURDIDO !!</div>
+          <div id="jhud-k2-ribbon" class="jhud-ribbon right">GOLPE</div>
         </div>
       </div>
 
