@@ -47,6 +47,10 @@ export function renderHome() {
   }
   $('#btn-go-designer').onclick = () => switchScreen('designer');
 
+  $('#btn-story-mode').onclick = () => {
+    alert("📖 Modo Historia: PRÓXIMAMENTE\n\nEn desarrollo. Prepárate para forjar la leyenda de tu propia casa real en el lore de las Tierras de Hierro.");
+  };
+
   $('#btn-reset-game').onclick = () => {
     if (confirm('¿Estás seguro de que quieres borrar todos los datos? Esta acción no se puede deshacer.')) {
       localStorage.clear();

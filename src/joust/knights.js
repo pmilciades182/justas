@@ -2,11 +2,11 @@
 // OBJETOS RUNTIME: CABALLERO, ESCUDERO
 // ══════════════════════════════════════
 
-import { DB_KNIGHTS, DB_ARMORS, DB_HORSES, DB_SQUIRES, KNIGHT_COLORS, getKnightData, getArmorData, getHorseData, getSquireData } from '../data.js';
+import { DB_KNIGHTS, DB_ARMORS, DB_HORSES, DB_SQUIRES, KNIGHT_COLORS, getKnightData, getArmorData, getHorseData, getSquireData, ENEMY_SQUADS } from '../data.js';
 import { LANE_X, TRACK_TOP, TRACK_BOT, TRACK_W, TRACK_X } from './constants.js';
 
-export function makeJoustKnight(knightId, side, equipData) {
-  const kd = getKnightData(knightId);
+export function makeJoustKnight(knightId, side, equipData, customData = null) {
+  const kd = customData || getKnightData(knightId);
   const c = KNIGHT_COLORS[kd.colorIdx];
   const arm = equipData.armor ? getArmorData(equipData.armor) : null;
   const hrs = equipData.horse ? getHorseData(equipData.horse) : null;
@@ -17,12 +17,12 @@ export function makeJoustKnight(knightId, side, equipData) {
   const baseSpeed = 2.2 + spdMod * 0.2;
 
   return {
-    id: knightId,
+    id: kd.id || 'custom',
     name: kd.name,
     str: kd.str,
     def: totalDef,
     hor: kd.hor,
-    squireEff: sqr ? sqr.eff : 0,
+    squireEff: sqr ? sqr.eff : (kd.squireEff || 0),
     colors: c,
     icon: kd.icon,
     x: side === 'left' ? LANE_X - 16 : LANE_X + 16,
@@ -54,21 +54,22 @@ export function makeJoustKnight(knightId, side, equipData) {
 }
 
 export function generateEnemy(count) {
-  const pool = [...DB_KNIGHTS];
-  const team = [];
-  for (let i = 0; i < count; i++) {
-    const idx = Math.floor(Math.random() * pool.length);
-    const kd = pool[idx];
-    team.push({
-      knightId: kd.id,
-      equip: {
-        armor: DB_ARMORS[Math.min(Math.floor(Math.random() * 3), DB_ARMORS.length - 1)].id,
-        horse: DB_HORSES[Math.min(Math.floor(Math.random() * 3), DB_HORSES.length - 1)].id,
-        squire: DB_SQUIRES[Math.min(Math.floor(Math.random() * 2), DB_SQUIRES.length - 1)].id,
-      },
-    });
-  }
-  return team;
+  // Pick one random themed squad from ENEMY_SQUADS
+  const squad = ENEMY_SQUADS[Math.floor(Math.random() * ENEMY_SQUADS.length)];
+  
+  const knights = squad.knights.map(k => ({
+    knightId: 'enemy_' + k.name.replace(/\s/g, '_'),
+    hp: 100,
+    maxHp: 100,
+    customData: k, // Pass the predefined knight data directly
+    equip: {
+      armor: k.armor,
+      horse: k.horse,
+      squire: k.squire
+    }
+  }));
+
+  return { knights, squadData: { name: squad.name, origin: squad.origin } };
 }
 
 export function makeSquire(side, efficiency) {

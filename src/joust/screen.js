@@ -20,7 +20,10 @@ export function initJoustScreen() {
     hp: 100,
     maxHp: 100
   }));
-  joust.enemyTeam = generateEnemy(4).map(e => ({ ...e, hp: 100, maxHp: 100 }));
+  
+  const enemyResult = generateEnemy(4);
+  joust.enemyTeam = enemyResult.knights;
+  joust.enemySquadData = enemyResult.squadData;
 
   joust.matchIdx = 0;
   joust.playerMatchWins = 0;
@@ -101,14 +104,14 @@ export function showKnightSelection() {
           <div style="display:flex; flex-direction:column; gap:5px">`;
 
   joust.enemyTeam.forEach((k, idx) => {
-    const kd = getKnightData(k.knightId);
+    const kd = k.customData; // Use predefined data for enemies
     const disabled = k.hp <= 0;
     html += `
       <div style="display:flex; align-items:center; gap:8px; padding:5px; border:1px solid #ccc; background:${disabled ? '#eee' : '#fff'}; border-radius:4px; opacity:${disabled ? 0.6 : 1}">
         <span style="font-size:20px">${kd.icon}</span>
         <div style="text-align:left; flex:1">
-          <div style="font-size:11px; font-weight:bold">${kd.name}</div>
-          <div style="font-size:9px">HP: ${k.hp}/100</div>
+          <div style="font-size:11px; font-weight:bold; color:#2c1e16">${kd.name}</div>
+          <div style="font-size:9px; color:#5d4037">HP: ${k.hp}/100</div>
         </div>
       </div>`;
   });
@@ -191,15 +194,25 @@ export function showMatchIntro() {
   const pkData = joust.playerTeam[joust.selectedPlayerKnightIdx];
   const ekData = joust.enemyTeam[joust.selectedEnemyKnightIdx];
   const pkd = getKnightData(pkData.knightId);
-  const ekd = getKnightData(ekData.knightId);
+  const ekd = ekData.customData; // Using customData for enemy knights
   const pc = KNIGHT_COLORS[pkd.colorIdx];
   const ec = KNIGHT_COLORS[ekd.colorIdx];
 
   overlay.style.pointerEvents = 'auto';
   overlay.innerHTML = `
     <div class="card text-center" style="padding:30px 20px; border: 4px double var(--gold); background-color: var(--card); max-width: 360px; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
-      <div style="font-family:MedievalSharp; font-size:14px; color:var(--text-dim); margin-bottom:15px; letter-spacing: 1px;">
-        ORDEN DE COMBATE: DUELO ${joust.matchIdx + 1} / ${joust.totalMatches}
+      <div style="font-family:MedievalSharp; font-size:12px; color:var(--red); margin-bottom:5px; text-transform:uppercase; letter-spacing:1px">
+        Enfrentando a:
+      </div>
+      <div style="font-family:MedievalSharp; font-size:22px; color:#2c1e16; margin-bottom:2px">
+        ${joust.enemySquadData.name}
+      </div>
+      <div style="font-family:Almendra; font-size:14px; color:var(--gold-dim); margin-bottom:15px; font-style:italic">
+        — Casa Real ${joust.enemySquadData.origin} —
+      </div>
+
+      <div style="font-family:MedievalSharp; font-size:11px; color:var(--text-dim); margin-bottom:15px; letter-spacing: 1px; border-top: 1px solid rgba(0,0,0,0.1); padding-top:10px">
+        DUELO ${joust.matchIdx + 1} / ${joust.totalMatches}
       </div>
 
       <div style="display:flex; align-items:flex-start; justify-content:center; gap:15px; margin:20px 0">
@@ -249,7 +262,8 @@ export function startMatch() {
   joust.k1.lanceIntact = true; // Start with lance
   joust.k1.lanceLoading = 0;
   
-  joust.k2 = makeJoustKnight(ek.knightId, 'right', ek.equip);
+  // For enemy, pass ek.customData
+  joust.k2 = makeJoustKnight(ek.knightId, 'right', ek.equip, ek.customData);
   joust.k2.hp = ek.hp;
   joust.k2.lanceIntact = true; // Start with lance
   joust.k2.lanceLoading = 0;
@@ -268,9 +282,7 @@ export function startMatch() {
   joust.splinters = [];
   joust.blood = [];
   joust.confetti = [];
-  joust.roses = [];
-  joust.trash = [];
-  // groundBlood, groundSplinters, and hoofPrints are NOT reset here to persist across matches
+  // groundBlood, groundSplinters, hoofPrints, roses, and trash are NOT reset here to persist across matches
   joust.shakeAmt = 0;
   joust.flashAlpha = 0;
   joust.t = 0;
@@ -313,18 +325,18 @@ export function showMatchResult() {
 
   updateGlobalHUD();
 
-  // FEEDBACK EFFECTS (Roses, Trash, Confetti)
+  // FEEDBACK EFFECTS (Roses, Trash, Confetti) - Reduced count by 30%
   const isDraw = winnerName === 'EMPATE';
   if (playerWon) {
-    spawnConfetti(80);
-    spawnRoses('left', 25);
-    spawnTrash('right', 20);
+    spawnConfetti(56); // 80 * 0.7
+    spawnRoses('left', 17); // 25 * 0.7
+    spawnTrash('right', 14); // 20 * 0.7
   } else if (!isDraw) {
-    spawnRoses('right', 25);
-    spawnTrash('left', 20);
+    spawnRoses('right', 17);
+    spawnTrash('left', 14);
   } else {
-    spawnTrash('left', 10);
-    spawnTrash('right', 10);
+    spawnTrash('left', 7);
+    spawnTrash('right', 7);
   }
 
   const isLast = joust.matchIdx >= joust.totalMatches - 1;
@@ -332,13 +344,24 @@ export function showMatchResult() {
 
   const overlay = document.getElementById('joust-overlay');
   overlay.style.pointerEvents = 'auto';
+  
+  // Decide main title based on player outcome
+  let mainTitle = '¡EMPATE!';
+  let titleColor = '#666';
+  if (playerWon) {
+    mainTitle = '¡VICTORIA!';
+    titleColor = '#2d4a22';
+  } else if (!isDraw) {
+    mainTitle = '¡DERROTA!';
+    titleColor = 'var(--red)';
+  }
+
   overlay.innerHTML = `
     <div class="card text-center" style="padding:25px; border: 4px double var(--gold); background-color: var(--card); max-width: 340px;">
       <div style="font-family:MedievalSharp; font-size:14px; color:var(--text-dim); margin-bottom:10px">${statusText}</div>
-      <div style="font-family:MedievalSharp; font-size:36px; color:${winnerColor}; margin-bottom:5px">
-        ${winnerName === 'EMPATE' ? '¡EMPATE!' : '¡VICTORIA!'}
+      <div style="font-family:MedievalSharp; font-size:36px; color:${titleColor}; margin-bottom:15px">
+        ${mainTitle}
       </div>
-      <div style="font-family:MedievalSharp; font-size:18px; color:#2c1e16; margin-bottom:15px">${winnerName === 'EMPATE' ? '' : winnerName}</div>
 
       <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin:15px 0; background:rgba(0,0,0,0.05); padding:15px; border-radius:4px;">
         <div style="text-align:center">

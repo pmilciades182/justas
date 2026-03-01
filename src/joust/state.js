@@ -18,6 +18,7 @@ export const joust = {
   groundBlood: [], groundSplinters: [], hoofPrints: [],
   confetti: [],
   roses: [], trash: [],
+  enemySquadData: null,
   stunEvent: null,
   shakeAmt: 0, flashAlpha: 0,
   resultText: '',

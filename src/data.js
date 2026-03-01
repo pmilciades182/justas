@@ -50,3 +50,56 @@ export function getKnightData(id) { return DB_KNIGHTS.find(k => k.id === id); }
 export function getArmorData(id)  { return DB_ARMORS.find(a => a.id === id); }
 export function getHorseData(id)  { return DB_HORSES.find(h => h.id === id); }
 export function getSquireData(id) { return DB_SQUIRES.find(s => s.id === id); }
+
+export const ENEMY_SQUADS = [
+  {
+    name: 'La Orden de Calatrava',
+    origin: 'Española',
+    knights: [
+      { name: 'García de Paredes', str: 9, def: 7, hor: 6, icon: '🛡️', colorIdx: 2, armor: 'milanes', horse: 'destrero', squire: 'experto' },
+      { name: 'Suero de Quiñones', str: 7, def: 8, hor: 7, icon: '⚔️', colorIdx: 0, armor: 'justa', horse: 'corcel', squire: 'vetera' },
+      { name: 'Diego García', str: 8, def: 6, hor: 8, icon: '🐎', colorIdx: 1, armor: 'placas', horse: 'andaluz', squire: 'novato' },
+      { name: 'Pero Niño', str: 6, def: 9, hor: 5, icon: '🔥', colorIdx: 4, armor: 'milanes', horse: 'destrero', squire: 'experto' }
+    ]
+  },
+  {
+    name: 'Die Tevtonischen Ritter',
+    origin: 'Alemana',
+    knights: [
+      { name: 'Ulrich von Jungingen', str: 8, def: 8, hor: 6, icon: '🦅', colorIdx: 7, armor: 'justa', horse: 'destrero', squire: 'vetera' },
+      { name: 'Wolfram von Eschenbach', str: 6, def: 7, hor: 9, icon: '🏰', colorIdx: 6, armor: 'milanes', horse: 'corcel', squire: 'experto' },
+      { name: 'Götz von Berlichingen', str: 9, def: 5, hor: 7, icon: '🦾', colorIdx: 3, armor: 'placas', horse: 'destrero', squire: 'aprend' },
+      { name: 'Hermann von Salza', str: 7, def: 9, hor: 6, icon: '⚖️', colorIdx: 5, armor: 'justa', horse: 'rocin', squire: 'vetera' }
+    ]
+  },
+  {
+    name: 'Escuadrón Zarista Nevsky',
+    origin: 'Rusa',
+    knights: [
+      { name: 'Alexander Nevsky', str: 9, def: 9, hor: 7, icon: '❄️', colorIdx: 1, armor: 'justa', horse: 'destrero', squire: 'vetera' },
+      { name: 'Dmitry Donskoy', str: 8, def: 7, hor: 8, icon: '🐻', colorIdx: 7, armor: 'milanes', horse: 'corcel', squire: 'experto' },
+      { name: 'Ilya Muromets', str: 10, def: 5, hor: 6, icon: '🏔️', colorIdx: 2, armor: 'placas', horse: 'destrero', squire: 'novato' },
+      { name: 'Dobrynya Nikitich', str: 7, def: 8, hor: 9, icon: '🐉', colorIdx: 3, armor: 'milanes', horse: 'andaluz', squire: 'aprend' }
+    ]
+  },
+  {
+    name: 'Karantanski Vitezi',
+    origin: 'Eslovena',
+    knights: [
+      { name: 'Erasmus Lueger', str: 7, def: 9, hor: 6, icon: '⛰️', colorIdx: 0, armor: 'justa', horse: 'destrero', squire: 'vetera' },
+      { name: 'Jurij Dalmatin', str: 6, def: 6, hor: 8, icon: '📖', colorIdx: 4, armor: 'placas', horse: 'corcel', squire: 'experto' },
+      { name: 'Andrej Turjaški', str: 8, def: 7, hor: 7, icon: '🏹', colorIdx: 6, armor: 'milanes', horse: 'corcel', squire: 'aprend' },
+      { name: 'Nikola Jurišić', str: 9, def: 8, hor: 5, icon: '🛡️', colorIdx: 5, armor: 'justa', horse: 'destrero', squire: 'experto' }
+    ]
+  },
+  {
+    name: 'Guardia de Hierro Ming',
+    origin: 'China',
+    knights: [
+      { name: 'General Qi Jiguang', str: 8, def: 9, hor: 7, icon: '🐉', colorIdx: 4, armor: 'justa', horse: 'destrero', squire: 'vetera' },
+      { name: 'Lu Bu', str: 10, def: 4, hor: 10, icon: '👹', colorIdx: 6, armor: 'milanes', horse: 'destrero', squire: 'experto' },
+      { name: 'Guan Yu', str: 9, def: 8, hor: 8, icon: '👺', colorIdx: 2, armor: 'justa', horse: 'corcel', squire: 'vetera' },
+      { name: 'Yue Fei', str: 7, def: 10, hor: 6, icon: '🦅', colorIdx: 3, armor: 'milanes', horse: 'andaluz', squire: 'experto' }
+    ]
+  }
+];

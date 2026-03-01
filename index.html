@@ -9,23 +9,30 @@
   <link href="https://fonts.googleapis.com/css2?family=Almendra:ital,wght@0,400;0,700;1,400;1,700&family=MedievalSharp&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #1a120b; /* Dark Stone/Wood */
-      --surface: #2c1e16; /* Dark Wood */
-      --card: #f4e4bc; /* Parchment */
+      /* Palette: Midnight & Gold */
+      --bg: #0f0a06; 
+      --surface: #1e140f; 
+      --surface-light: #2d1e16;
+      --card: #f2e3c9; /* Royal Parchment */
+      --card-border: #c5a059;
       --card-text: #2c1e16;
+      --card-text-dim: #5d4037;
+      
       --gold: #d4a017;
-      --gold-dim: #a07a10;
       --gold-bright: #ffd54f;
-      --red: #7b1113;
-      --blue: #1a3a5f;
-      --green: #2d4a22;
-      --text: #e0d0b0;
+      --gold-dim: #8b6b10;
+      
+      --red: #8e1616;
+      --red-bright: #c02525;
+      
+      --text: #e8d5b5;
       --text-dim: #a09080;
-      --radius: 4px; /* More angular medieval feel */
+      
+      --radius: 2px; /* Angular medieval feel */
       --nav-h: 70px;
       --top-h: 60px;
-      --shadow: 0 4px 15px rgba(0,0,0,0.5);
-      --border-ornate: 4px double var(--gold-dim);
+      --shadow: 0 6px 12px rgba(0,0,0,0.6);
+      --border-ornate: 3px double var(--gold-dim);
     }
     
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -33,8 +40,8 @@
     body {
       background: var(--bg);
       background-image: 
-        radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%),
-        url('https://www.transparenttextures.com/patterns/dark-matter.png');
+        radial-gradient(circle at 50% 50%, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%),
+        url('https://www.transparenttextures.com/patterns/dark-leather.png');
       color: var(--text);
       font-family: 'Almendra', serif;
       overflow: hidden;
@@ -42,8 +49,7 @@
       width: 100vw;
       user-select: none;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      align-items: center; justify-content: center;
     }
 
     #app {
@@ -54,39 +60,37 @@
       max-width: 500px;
       background: var(--surface);
       position: relative;
-      border-left: 2px solid var(--gold-dim);
-      border-right: 2px solid var(--gold-dim);
-      box-shadow: 0 0 50px rgba(0,0,0,0.8);
+      border-left: 1px solid var(--gold-dim);
+      border-right: 1px solid var(--gold-dim);
+      box-shadow: 0 0 60px rgba(0,0,0,0.9);
       overflow: hidden;
     }
 
     /* ===== TOP BAR ===== */
     #topbar {
       height: var(--top-h);
-      background: #3d2b1f;
+      background: #1a110a;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
+      align-items: center; justify-content: space-between;
       padding: 0 20px;
       border-bottom: var(--border-ornate);
-      z-index: 10;
+      z-index: 50;
       flex-shrink: 0;
     }
     #topbar .title { 
       font-family: 'MedievalSharp', cursive; 
-      font-size: 22px; 
-      color: var(--gold); 
-      letter-spacing: 2px;
-      text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+      font-size: 20px; 
+      color: var(--gold-bright); 
+      letter-spacing: 1px;
+      text-shadow: 2px 2px 2px rgba(0,0,0,0.8);
     }
     #topbar .gold-display {
-      background: rgba(0,0,0,0.3);
+      background: #000;
       border: 1px solid var(--gold-dim);
-      border-radius: 4px;
-      padding: 6px 14px;
-      font-weight: bold;
+      padding: 6px 12px;
+      font-family: 'MedievalSharp';
       color: var(--gold-bright);
-      box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+      box-shadow: inset 0 0 8px rgba(212,160,23,0.2);
     }
 
     /* ===== SCREENS ===== */
@@ -95,148 +99,168 @@
       flex: 1;
       overflow-y: auto;
       padding: 20px;
-      background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png');
+      background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
+      background-color: var(--surface);
     }
     .screen.active { display: flex; flex-direction: column; }
-    .screen::-webkit-scrollbar { width: 5px; }
-    .screen::-webkit-scrollbar-thumb { background: var(--gold-dim); }
 
     .screen-title {
       font-family: 'MedievalSharp', cursive;
-      font-size: 28px;
-      color: var(--gold);
-      margin-bottom: 8px;
+      font-size: 26px;
+      color: var(--gold-bright);
+      margin-bottom: 12px;
       text-align: center;
-      border-bottom: 1px solid var(--gold-dim);
-      padding-bottom: 8px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    .screen-title::after {
+      content: ''; display: block; width: 60px; height: 2px; background: var(--gold); margin: 8px auto 0;
     }
     .screen-subtitle {
       font-style: italic;
-      color: var(--text-dim);
+      color: var(--text);
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
     }
 
-    /* ===== CARDS (Parchment Look) ===== */
+    /* ===== CARDS ===== */
     .card {
       background: var(--card);
-      background-image: url('https://www.transparenttextures.com/patterns/old-map.png');
       color: var(--card-text);
-      border-radius: var(--radius);
+      border: 1px solid #8b6b10;
       padding: 16px;
       margin-bottom: 16px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-      border: 1px solid #d4c4a8;
+      box-shadow: 4px 4px 0px rgba(0,0,0,0.4);
       position: relative;
+      border-radius: 0;
     }
     .card::before {
-      content: '';
-      position: absolute; inset: 4px;
-      border: 1px solid rgba(44, 30, 22, 0.1);
+      content: ''; position: absolute; inset: 2px;
+      border: 1px solid rgba(139, 107, 16, 0.2);
       pointer-events: none;
     }
     
     .card-row { display: flex; align-items: center; gap: 16px; }
     .card-icon {
-      width: 52px; height: 52px;
+      width: 48px; height: 48px;
       background: var(--surface);
       border: 2px solid var(--gold-dim);
       display: flex; align-items: center; justify-content: center;
-      font-size: 28px;
+      font-size: 24px;
       flex-shrink: 0;
+      box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
-    .card-info { flex: 1; min-width: 0; }
-    .card-name { font-family: 'MedievalSharp', cursive; font-size: 18px; color: var(--red); }
-    .card-desc { font-size: 14px; color: #5d4037; font-weight: bold; }
+    .card-name { font-family: 'MedievalSharp', cursive; font-size: 18px; color: var(--red); line-height: 1.2; }
+    .card-desc { font-size: 13px; color: var(--card-text-dim); font-weight: 700; margin-top: 2px; }
     
-    .card-stats {
-      display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;
-    }
     .stat-badge {
-      font-size: 12px;
-      padding: 3px 8px;
-      background: rgba(0,0,0,0.05);
-      border: 1px solid rgba(0,0,0,0.1);
+      font-size: 11px;
+      padding: 2px 6px;
+      background: rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.15);
       font-weight: bold;
+      font-family: 'MedievalSharp';
     }
-    .stat-badge.str { color: #a30000; border-color: #ffa0a0; }
-    .stat-badge.def { color: #004080; border-color: #a0c0ff; }
-    .stat-badge.hor { color: #006000; border-color: #a0ffa0; }
+    .stat-badge.str { color: #8e1616; }
+    .stat-badge.def { color: #1a3a5f; }
+    .stat-badge.hor { color: #1a4018; }
+
+    .section-label {
+      font-family: 'MedievalSharp';
+      color: var(--gold-bright);
+      font-size: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-shadow: 1px 1px 2px #000;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--gold-dim); opacity: 0.5; }
 
     /* ===== BUTTONS ===== */
     .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 12px 24px;
       font-family: 'MedievalSharp', cursive;
-      font-size: 16px;
+      font-size: 15px;
+      padding: 12px 20px;
       cursor: pointer;
-      transition: all 0.2s;
-      border: 2px solid rgba(0,0,0,0.2);
+      border: 1px solid rgba(0,0,0,0.4);
       text-transform: uppercase;
       letter-spacing: 1px;
+      transition: all 0.15s;
+      position: relative;
+      border-radius: 0;
     }
-    .btn:active { transform: translateY(2px); filter: brightness(0.9); }
+    .btn:active { transform: translateY(2px); }
     
     .btn-gold {
-      background: linear-gradient(to bottom, var(--gold-bright), var(--gold));
-      color: #2c1e16;
-      border-color: var(--gold-dim);
-      box-shadow: 0 4px 0 #8b6b10;
+      background: #d4a017;
+      background: linear-gradient(to bottom, #eec045, #d4a017);
+      color: #1a110a;
+      border: 1px solid #8b6b10;
+      box-shadow: 0 4px 0 #6d4c0a, 0 6px 10px rgba(0,0,0,0.4);
+      font-weight: bold;
     }
-    .btn-gold:active { box-shadow: 0 0 0 transparent; }
+    .btn-gold:hover { filter: brightness(1.1); }
+    .btn-gold:active { box-shadow: 0 1px 0 #6d4c0a; }
     
+    .btn-ghost {
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      border: 1px solid var(--gold-dim);
+      box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); border-color: var(--gold); }
+    .btn-ghost:active { box-shadow: 0 0 0 transparent; }
+
     .btn-red { 
-      background: linear-gradient(to bottom, #a31a1a, var(--red)); 
+      background: #8e1616;
+      background: linear-gradient(to bottom, #b02525, #8e1616);
       color: #fff; 
+      border: 1px solid #4a0a0b;
       box-shadow: 0 4px 0 #4a0a0b;
     }
-    .btn-ghost {
-      background: rgba(0,0,0,0.1);
-      color: var(--card-text);
-      border: 1px solid var(--surface);
-    }
+    .btn-red:active { box-shadow: 0 1px 0 #4a0a0b; }
 
-    .btn-lg { width: 100%; padding: 16px; font-size: 20px; }
-    .btn:disabled { opacity: 0.5; filter: grayscale(1); pointer-events: none; }
+    .btn-lg { width: 100%; padding: 18px; font-size: 18px; }
+    .btn:disabled { opacity: 0.4; filter: grayscale(0.8); pointer-events: none; }
 
     /* ===== BOTTOM NAV ===== */
     #bottomnav {
       height: var(--nav-h);
-      background: #3d2b1f;
+      background: #1a110a;
       display: flex;
       border-top: var(--border-ornate);
-      z-index: 10;
+      z-index: 50;
       flex-shrink: 0;
     }
     .nav-tab {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      font-size: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s;
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: none; border: none; color: var(--text-dim); font-size: 11px; font-weight: bold; cursor: pointer;
     }
-    .nav-tab .nav-icon { font-size: 24px; margin-bottom: 2px; filter: grayscale(0.5); }
-    .nav-tab.active { color: var(--gold-bright); background: rgba(0,0,0,0.2); }
-    .nav-tab.active .nav-icon { filter: grayscale(0); transform: scale(1.1); }
+    .nav-tab .nav-icon { font-size: 22px; margin-bottom: 2px; transition: transform 0.2s; opacity: 0.6; }
+    .nav-tab.active { color: var(--gold-bright); background: rgba(212,160,23,0.1); }
+    .nav-tab.active .nav-icon { opacity: 1; transform: scale(1.15) translateY(-2px); }
 
     /* ===== HOME SCREEN ===== */
     .house-banner {
-      background: linear-gradient(135deg, var(--red) 0%, #4a0a0b 100%);
-      border: 3px solid var(--gold);
+      background: #4a0a0b;
+      background-image: linear-gradient(45deg, #3d0809 25%, transparent 25%), linear-gradient(-45deg, #3d0809 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #3d0809 75%), linear-gradient(-45deg, transparent 75%, #3d0809 75%);
+      background-size: 20px 20px;
+      border: 2px solid var(--gold);
       padding: 30px 20px;
       text-align: center;
-      margin-bottom: 20px;
-      box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+      margin-bottom: 24px;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.8), var(--shadow);
     }
-    .house-banner h2 { font-family: 'MedievalSharp', cursive; font-size: 32px; color: var(--gold-bright); margin-bottom: 4px; }
-    .house-banner p { font-style: italic; opacity: 0.8; }
+    .house-banner h2 { 
+      font-family: 'MedievalSharp', cursive; 
+      font-size: 30px; color: var(--gold-bright); 
+      margin-bottom: 4px; 
+      text-shadow: 2px 2px 0 #000;
+    }
+    .house-banner p { font-style: italic; color: #e8d5b5; opacity: 0.9; font-size: 14px; }
     
     .house-stats {
       display: grid;
@@ -618,6 +642,7 @@
       <div id="home-team-preview"></div>
       <div class="mt-16 text-center" style="display: flex; flex-direction: column; gap: 12px;">
         <button class="btn btn-gold btn-lg" id="btn-quick-joust">🏇 ¡A JUSTAR!</button>
+        <button class="btn btn-ghost" id="btn-story-mode" style="width: 100%; border: 1px solid var(--gold-dim); color: var(--gold-dim)">📖 MODO HISTORIA</button>
         <button class="btn btn-ghost" id="btn-go-designer" style="width: 100%; border: 1px solid var(--gold-dim);">🎨 DISEÑO DE CABALLERO</button>
         <button class="btn btn-red" id="btn-reset-game" style="font-size: 11px; padding: 8px; margin-top: 20px; opacity: 0.7;">⚠️ RESETEAR DATOS (DEBUG)</button>
       </div>
