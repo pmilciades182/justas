@@ -1167,8 +1167,16 @@ function drawJoustKnight(k) {
     ctx.fill();
   }
 
-  // Shield (on the side facing opponent = toward center of track)
-  const shieldSide = k.side === 'left' ? 1 : -1;
+  // Shield & lance direction — ALWAYS toward the barrier/opponent
+  // In screen space: barrier is at LANE_X. If knight is left of it, point right (+1), else left (-1).
+  // But we're in LOCAL space (rotated), so convert screen→local by checking cos(rotation):
+  //   rotation ≈ 0 or 2PI  → local X = screen X  (cosR > 0)
+  //   rotation ≈ PI or 3PI → local X = -screen X (cosR < 0)
+  const barrierScreenDir = k.x < LANE_X ? 1 : -1;
+  const cosR = Math.cos(k.rotation + k.tilt + k.wobble);
+  const shieldSide = barrierScreenDir * (cosR >= 0 ? 1 : -1);
+
+  // Shield
   ctx.fillStyle = k.colors.shield;
   ctx.beginPath();
   ctx.ellipse(shieldSide*(KNIGHT_BW/2+9), 2, 9, 14, 0, 0, Math.PI*2);
@@ -1180,7 +1188,7 @@ function drawJoustKnight(k) {
   ctx.moveTo(shieldSide*(KNIGHT_BW/2+2), 2); ctx.lineTo(shieldSide*(KNIGHT_BW/2+16), 2);
   ctx.stroke();
 
-  // Helmet (at front)
+  // Helmet (at front = local +Y)
   ctx.fillStyle = k.colors.armor;
   ctx.beginPath();
   ctx.arc(0, KNIGHT_BH/2 - 5, 10, 0, Math.PI*2);
@@ -1196,8 +1204,8 @@ function drawJoustKnight(k) {
   ctx.ellipse(0, KNIGHT_BH/2 + 4, 5, 9, 0, 0, Math.PI*2);
   ctx.fill();
 
-  // Lance
-  const lanceSide = shieldSide; // lance crosses the barrier
+  // Lance — same side as shield, crosses the barrier diagonally toward opponent
+  const lanceSide = shieldSide;
   if (k.lanceIntact) {
     const handY = KNIGHT_BH/2 - 14;
     const endY = handY + LANCE_LEN;
