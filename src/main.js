@@ -1,3 +1,5 @@
+import { drawJoustKnight, drawSquire } from './knightDrawer.js';
+
 // ═══════════════════════════════════════════════════════════════
 // JUSTA REAL — Prototipo completo de juego medieval de justas
 // ═══════════════════════════════════════════════════════════════
@@ -1061,6 +1063,36 @@ function updateJoust() {
 // §10  JOUST RENDERING
 // ══════════════════════════════════════
 
+function drawJoust() {
+  ctx.save();
+  if (joust.shakeAmt > 0) {
+    ctx.translate((Math.random()-0.5)*joust.shakeAmt, (Math.random()-0.5)*joust.shakeAmt);
+  }
+  ctx.clearRect(-20, -20, W+40, H+40);
+
+  drawTrack();
+  drawSpeedLines();
+
+  // Draw dust under knights
+  drawParticles();
+
+  // Use imported functions from knightDrawer.js
+  drawSquire(ctx, joust.squire1, joust.t, COL, joust.t);
+  drawSquire(ctx, joust.squire2, joust.t, COL, joust.t);
+  
+  drawJoustKnight(ctx, joust.k1, joust.t, COL, LANE_X, HORSE_W, HORSE_H, KNIGHT_BW, KNIGHT_BH, LANCE_LEN);
+  drawJoustKnight(ctx, joust.k2, joust.t, COL, LANE_X, HORSE_W, HORSE_H, KNIGHT_BW, KNIGHT_BH, LANCE_LEN);
+
+  // Flash
+  if (joust.flashAlpha > 0) {
+    ctx.fillStyle = `rgba(255,255,255,${Math.max(0, joust.flashAlpha)})`;
+    ctx.fillRect(-20, -20, W+40, H+40);
+  }
+
+  drawJoustUI();
+  ctx.restore();
+}
+
 function drawTrack() {
   // Background - simple field
   ctx.fillStyle = '#2d5a27';
@@ -1100,259 +1132,6 @@ function drawTrack() {
   ctx.moveTo(TRACK_X, 0); ctx.lineTo(TRACK_X, H); ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(TRACK_X + TRACK_W, 0); ctx.lineTo(TRACK_X + TRACK_W, H); ctx.stroke();
-}
-
-function drawJoustKnight(k) {
-  if (!k) return;
-  ctx.save();
-  ctx.translate(k.x, k.y);
-  ctx.rotate(k.rotation + k.tilt + k.wobble);
-
-  const bob = k.fallen ? 0 : Math.sin(joust.t * 0.28) * 2;
-
-  // ── Horse ──
-  ctx.save();
-  ctx.translate(bob, 0);
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.15)';
-  ctx.beginPath();
-  ctx.ellipse(3, 5, HORSE_W/2+3, HORSE_H/2+5, 0, 0, Math.PI*2);
-  ctx.fill();
-  // Legs
-  if (!k.fallen) {
-    const legs = [{lx:-9,ly:0.3,ph:0},{lx:9,ly:0.3,ph:Math.PI},{lx:-9,ly:-0.3,ph:Math.PI},{lx:9,ly:-0.3,ph:0}];
-    for (const l of legs) {
-      const kick = Math.sin(joust.t * 0.35 + l.ph) * 6;
-      ctx.fillStyle = COL.horseDark;
-      ctx.beginPath();
-      ctx.ellipse(l.lx + kick*0.4, l.ly*HORSE_H, 4, 5, 0, 0, Math.PI*2);
-      ctx.fill();
-    }
-  }
-  // Body
-  ctx.fillStyle = k.colors.horse;
-  ctx.beginPath();
-  ctx.ellipse(0, 0, HORSE_W/2, HORSE_H/2, 0, 0, Math.PI*2);
-  ctx.fill();
-  // Head (always at local "front" = positive Y)
-  ctx.fillStyle = COL.horseDark;
-  ctx.beginPath();
-  ctx.ellipse(0, HORSE_H/2 - 2, 8, 12, 0, 0, Math.PI*2);
-  ctx.fill();
-  // Nose
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.beginPath();
-  ctx.ellipse(0, HORSE_H/2 + 7, 5, 4, 0, 0, Math.PI*2);
-  ctx.fill();
-  // Tail
-  ctx.fillStyle = COL.horseDark;
-  ctx.beginPath();
-  ctx.ellipse(0, -(HORSE_H/2 + 4), 5, 8, 0, 0, Math.PI*2);
-  ctx.fill();
-  ctx.restore();
-
-  // ── Knight body ──
-  ctx.save();
-  ctx.translate(bob, 5);
-  // Armor
-  ctx.fillStyle = k.colors.armor;
-  ctx.beginPath();
-  ctx.roundRect(-KNIGHT_BW/2, -KNIGHT_BH/2, KNIGHT_BW, KNIGHT_BH, 6);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,0.22)';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(-KNIGHT_BW/2, -KNIGHT_BH/2, KNIGHT_BW, KNIGHT_BH);
-  // Shine
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(-KNIGHT_BW/2 + 4, -KNIGHT_BH/2 + 5);
-  ctx.lineTo(-KNIGHT_BW/2 + 4,  KNIGHT_BH/2 - 6);
-  ctx.stroke();
-
-  // Pauldrons
-  for (const sx of [-1, 1]) {
-    ctx.fillStyle = k.colors.armor;
-    ctx.beginPath();
-    ctx.ellipse(sx*(KNIGHT_BW/2+3), -KNIGHT_BH/2+8, 7, 5, 0, 0, Math.PI*2);
-    ctx.fill();
-  }
-
-  // Shield & lance direction — ALWAYS toward the barrier/opponent
-  // In screen space: barrier is at LANE_X. If knight is left of it, point right (+1), else left (-1).
-  // But we're in LOCAL space (rotated), so convert screen→local by checking cos(rotation):
-  //   rotation ≈ 0 or 2PI  → local X = screen X  (cosR > 0)
-  //   rotation ≈ PI or 3PI → local X = -screen X (cosR < 0)
-  const barrierScreenDir = k.x < LANE_X ? 1 : -1;
-  const cosR = Math.cos(k.rotation + k.tilt + k.wobble);
-  const shieldSide = barrierScreenDir * (cosR >= 0 ? 1 : -1);
-
-  // Shield
-  ctx.fillStyle = k.colors.shield;
-  ctx.beginPath();
-  ctx.ellipse(shieldSide*(KNIGHT_BW/2+9), 2, 9, 14, 0, 0, Math.PI*2);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(shieldSide*(KNIGHT_BW/2+9), -10); ctx.lineTo(shieldSide*(KNIGHT_BW/2+9), 14);
-  ctx.moveTo(shieldSide*(KNIGHT_BW/2+2), 2); ctx.lineTo(shieldSide*(KNIGHT_BW/2+16), 2);
-  ctx.stroke();
-
-  // Helmet (at front = local +Y)
-  ctx.fillStyle = k.colors.armor;
-  ctx.beginPath();
-  ctx.arc(0, KNIGHT_BH/2 - 5, 10, 0, Math.PI*2);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,0.55)';
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.moveTo(-6, KNIGHT_BH/2 - 5); ctx.lineTo(6, KNIGHT_BH/2 - 5);
-  ctx.stroke();
-  // Plume
-  ctx.fillStyle = k.colors.plume;
-  ctx.beginPath();
-  ctx.ellipse(0, KNIGHT_BH/2 + 4, 5, 9, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  // Lance — same side as shield, crosses the barrier diagonally toward opponent
-  const lanceSide = shieldSide;
-  if (k.lanceIntact) {
-    const handY = KNIGHT_BH/2 - 14;
-    const endY = handY + LANCE_LEN;
-    const endX = lanceSide * 32;
-    ctx.strokeStyle = COL.lance;
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(0, handY); ctx.lineTo(endX, endY);
-    ctx.stroke();
-    ctx.strokeStyle = COL.lanceSheen;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(1, handY); ctx.lineTo(endX+1, endY);
-    ctx.stroke();
-    // Tip
-    const dx = endX, dy = endY - handY;
-    const len = Math.sqrt(dx*dx+dy*dy);
-    const nx = dx/len, ny = dy/len;
-    ctx.fillStyle = '#c0c0c0';
-    ctx.beginPath();
-    ctx.moveTo(endX, endY);
-    ctx.lineTo(endX+nx*12-ny*4, endY+ny*12+nx*4);
-    ctx.lineTo(endX+nx*12+ny*4, endY+ny*12-nx*4);
-    ctx.closePath();
-    ctx.fill();
-  } else if (k.lanceStub) {
-    const handY = KNIGHT_BH/2 - 14;
-    ctx.strokeStyle = COL.lance;
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(0, handY); ctx.lineTo(lanceSide * 8, handY + 20);
-    ctx.stroke();
-  }
-
-  // Hand
-  ctx.fillStyle = '#4a4a4a';
-  ctx.beginPath();
-  ctx.arc(0, KNIGHT_BH/2 - 16, 4, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.restore();
-  ctx.restore();
-}
-
-function drawSquire(sq) {
-  if (!sq) return;
-  ctx.save();
-  ctx.translate(sq.x, sq.y);
-
-  const isMoving = sq.phase === 'running_in' || sq.phase === 'running_out';
-  const isHandoff = sq.phase === 'handoff';
-  const isWatching = sq.phase === 'watching';
-
-  // Subtle idle bob when watching, running bob when moving
-  const bob = isMoving ? Math.sin(joust.t * 0.5) * 3 : Math.sin(joust.t * 0.06) * 1;
-
-  // Face toward the track
-  const faceDir = sq.side === 'left' ? 1 : -1;
-
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.12)';
-  ctx.beginPath();
-  ctx.ellipse(1, 10, 7, 3, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Body (small figure in brown tunic)
-  ctx.fillStyle = isHandoff ? '#6d8040' : '#8b6040';
-  ctx.beginPath();
-  ctx.ellipse(bob * 0.3, 0, 7, 12, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // Belt
-  ctx.strokeStyle = '#5a3a20';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(-6, 2); ctx.lineTo(6, 2);
-  ctx.stroke();
-
-  // Head
-  ctx.fillStyle = '#e0b890';
-  ctx.beginPath();
-  ctx.arc(0, -11, 5.5, 0, Math.PI * 2);
-  ctx.fill();
-  // Hair
-  ctx.fillStyle = '#5a3a20';
-  ctx.beginPath();
-  ctx.arc(0, -13, 4, Math.PI, Math.PI * 2);
-  ctx.fill();
-
-  // Eyes (dots looking toward track)
-  ctx.fillStyle = '#222';
-  ctx.beginPath();
-  ctx.arc(faceDir * 2, -11, 1, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Arms — watching: hands at sides, running: carrying lance
-  if (isWatching) {
-    // Arms at sides, slightly animated
-    ctx.strokeStyle = '#e0b890';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-5, -4); ctx.lineTo(-7, 4);
-    ctx.moveTo(5, -4); ctx.lineTo(7, 4);
-    ctx.stroke();
-    // Spare lance held vertically at side
-    ctx.strokeStyle = COL.lance;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(faceDir * 8, -18); ctx.lineTo(faceDir * 8, 14);
-    ctx.stroke();
-    // Lance tip
-    ctx.fillStyle = '#c0c0c0';
-    ctx.beginPath();
-    ctx.moveTo(faceDir * 8, -18);
-    ctx.lineTo(faceDir * 8 - 2, -22);
-    ctx.lineTo(faceDir * 8 + 2, -22);
-    ctx.closePath();
-    ctx.fill();
-  } else if (sq.phase === 'running_in' || isHandoff) {
-    // Carrying lance horizontally
-    ctx.strokeStyle = COL.lance;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(-22, -4); ctx.lineTo(22, -4);
-    ctx.stroke();
-    // Lance tip
-    ctx.fillStyle = '#c0c0c0';
-    ctx.beginPath();
-    ctx.moveTo(faceDir * 22, -4);
-    ctx.lineTo(faceDir * 26, -6);
-    ctx.lineTo(faceDir * 26, -2);
-    ctx.closePath();
-    ctx.fill();
-  }
-  // running_out: empty hands, just running back
-
-  ctx.restore();
 }
 
 function drawParticles() {
@@ -1569,34 +1348,6 @@ function drawJoustUI() {
       ctx.restore();
     }
   }
-}
-
-function drawJoust() {
-  ctx.save();
-  if (joust.shakeAmt > 0) {
-    ctx.translate((Math.random()-0.5)*joust.shakeAmt, (Math.random()-0.5)*joust.shakeAmt);
-  }
-  ctx.clearRect(-20, -20, W+40, H+40);
-
-  drawTrack();
-  drawSpeedLines();
-
-  // Draw dust under knights
-  drawParticles();
-
-  drawSquire(joust.squire1);
-  drawSquire(joust.squire2);
-  drawJoustKnight(joust.k1);
-  drawJoustKnight(joust.k2);
-
-  // Flash
-  if (joust.flashAlpha > 0) {
-    ctx.fillStyle = `rgba(255,255,255,${Math.max(0, joust.flashAlpha)})`;
-    ctx.fillRect(-20, -20, W+40, H+40);
-  }
-
-  drawJoustUI();
-  ctx.restore();
 }
 
 // ══════════════════════════════════════
