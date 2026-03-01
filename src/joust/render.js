@@ -1,5 +1,5 @@
 // ══════════════════════════════════════
-// RENDERIZADO DEL CANVAS DE JUSTA
+// RENDERIZADO DEL CANVAS DE JUSTA (Diseño Optimizado - Solid Color)
 // ══════════════════════════════════════
 
 import { drawJoustKnight, drawSquire } from '../knightDrawer.js';
@@ -11,24 +11,26 @@ import {
 } from './constants.js';
 import { joust } from './state.js';
 
-// ── Ruido de campo generado una sola vez en carga del módulo ───────────────
+// ── Ruido de campo estático generado una sola vez ─────────────────────────
 const TRACK_PEBBLES = Array.from({ length: 90 }, () => ({
-  fx:  Math.random(),                            // fracción de TRACK_W
-  fy:  Math.random(),                            // fracción de H
+  fx:  Math.random(), fy:  Math.random(),
   r:   0.5 + Math.random() * 2.5,
   a:   0.06 + Math.random() * 0.12,
-  col: Math.random() < 0.35 ? '#9a7840'
-     : Math.random() < 0.5  ? '#d8b880' : '#887860',
+  col: Math.random() < 0.35 ? '#9a7840' : Math.random() < 0.5 ? '#d8b880' : '#887860',
 }));
 
-const GRASS_TUFTS = Array.from({ length: 60 }, () => ({
-  side: Math.random() < 0.5 ? 0 : 1,            // 0 = hierba izq, 1 = derecha
-  fx:   Math.random(),
-  fy:   Math.random(),
-  r:    1.5 + Math.random() * 4.5,
-  a:    0.10 + Math.random() * 0.18,
-  col:  ['#1a4018', '#3d7230', '#4a8840', '#224824'][Math.floor(Math.random() * 4)],
+const GRASS_TUFTS = Array.from({ length: 100 }, () => ({
+  side: Math.random() < 0.5 ? 0 : 1,
+  fx:   Math.random(), fy:   Math.random(),
+  r:    2.5 + Math.random() * 5.5,
+  a:    0.08 + Math.random() * 0.15,
+  col:  ['#1a4018', '#2d5a27', '#3d7230', '#224824'][Math.floor(Math.random() * 4)],
 }));
+
+// ── Bordes irregulares del sendero (Pre-calculados para rendimiento) ──────
+const EDGE_SAMPLES = 40;
+const LEFT_EDGE_NOISE = Array.from({ length: EDGE_SAMPLES + 1 }, () => (Math.random() - 0.5) * 16);
+const RIGHT_EDGE_NOISE = Array.from({ length: EDGE_SAMPLES + 1 }, () => (Math.random() - 0.5) * 16);
 
 export function drawJoust() {
   ctx.save();
@@ -38,11 +40,10 @@ export function drawJoust() {
   ctx.clearRect(-20, -20, W+40, H+40);
 
   drawTrack();
-  drawSpeedLines();
   drawParticles();
   drawRoses();
   drawTrash();
-  drawConfetti(); // Celebration!
+  drawConfetti();
 
   drawSquire(ctx, joust.squire1, joust.t, COL, joust.t);
   drawSquire(ctx, joust.squire2, joust.t, COL, joust.t);
@@ -60,197 +61,159 @@ export function drawJoust() {
 }
 
 function drawTrack() {
-  // ── Hierba ──────────────────────────────────────────────────────────────
-  ctx.fillStyle = '#2d5a27';
+  // 1. Hierba base (Color sólido)
+  ctx.fillStyle = '#2d5a27'; // Un verde bosque profundo
   ctx.fillRect(0, 0, W, H);
 
-  // Variaciones de textura en la hierba (manchas de luz/sombra)
+  // 2. Variaciones sutiles de color en la hierba (Manchas estáticas)
   for (const g of GRASS_TUFTS) {
-    const gx = g.side === 0
-      ? g.fx * TRACK_X
-      : TRACK_X + TRACK_W + g.fx * TRACK_X;
+    const gx = g.side === 0 ? g.fx * TRACK_X : TRACK_X + TRACK_W + g.fx * (W - (TRACK_X + TRACK_W));
     ctx.globalAlpha = g.a;
     ctx.fillStyle = g.col;
-    ctx.beginPath();
-    ctx.arc(gx, g.fy * H, g.r, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(gx, g.fy * H, g.r * 2, 0, Math.PI * 2); ctx.fill();
   }
   ctx.globalAlpha = 1;
 
-  // ── Arena / tierra ───────────────────────────────────────────────────────
+  // 3. Tierra con bordes irregulares
+  ctx.beginPath();
+  // Borde izquierdo (hacia abajo)
+  for (let i = 0; i <= EDGE_SAMPLES; i++) {
+    const y = (i / EDGE_SAMPLES) * H;
+    ctx.lineTo(TRACK_X + LEFT_EDGE_NOISE[i], y);
+  }
+  // Borde derecho (hacia arriba)
+  for (let i = EDGE_SAMPLES; i >= 0; i--) {
+    const y = (i / EDGE_SAMPLES) * H;
+    ctx.lineTo(TRACK_X + TRACK_W + RIGHT_EDGE_NOISE[i], y);
+  }
+  ctx.closePath();
+  
+  // Rellenar tierra base
   ctx.fillStyle = COL.dirt;
-  ctx.fillRect(TRACK_X, 0, TRACK_W, H);
+  ctx.fill();
 
-  // Carriles gastados donde cabalgan los caballos (LANE_X ± 16)
-  ctx.globalAlpha = 0.22;
-  ctx.fillStyle = '#8a6030';
-  ctx.fillRect(LANE_X - 25, 0, 18, H);
-  ctx.fillRect(LANE_X +  7, 0, 18, H);
-  ctx.globalAlpha = 1;
+  // Rellenar degradado de surcos sobre el mismo camino irregular
+  ctx.save();
+  ctx.clip(); // Limitar el degradado al área irregular de tierra
+  const trackGradient = ctx.createLinearGradient(TRACK_X, 0, TRACK_X + TRACK_W, 0);
+  trackGradient.addColorStop(0, 'rgba(0,0,0,0.12)');
+  trackGradient.addColorStop(0.3, 'rgba(0,0,0,0.28)'); // Surco izq
+  trackGradient.addColorStop(0.5, 'rgba(0,0,0,0.35)'); // Centro
+  trackGradient.addColorStop(0.7, 'rgba(0,0,0,0.28)'); // Surco der
+  trackGradient.addColorStop(1, 'rgba(0,0,0,0.12)');
+  ctx.fillStyle = trackGradient;
+  ctx.fillRect(TRACK_X - 20, 0, TRACK_W + 40, H);
 
-  // Piedrecillas y textura arenosa
+  // 4. Piedrecillas (también dentro del clip)
   for (const p of TRACK_PEBBLES) {
     ctx.globalAlpha = p.a;
     ctx.fillStyle = p.col;
-    ctx.beginPath();
-    ctx.arc(TRACK_X + p.fx * TRACK_W, p.fy * H, p.r, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(TRACK_X + p.fx * TRACK_W, p.fy * H, p.r, 0, Math.PI * 2); ctx.fill();
   }
+  ctx.restore();
   ctx.globalAlpha = 1;
 
-  // Líneas horizontales de rodadas (existentes)
-  ctx.strokeStyle = 'rgba(150,110,55,0.18)';
-  ctx.lineWidth = 1;
-  for (let ry = 8; ry < H; ry += 14) {
-    ctx.beginPath();
-    ctx.moveTo(TRACK_X + 5, ry);
-    ctx.lineTo(TRACK_X + TRACK_W - 5, ry);
-    ctx.stroke();
-  }
-
-  // ── Decales persistentes (antes de la valla) ─────────────────────────────
+  // 5. Decales (Sangre y astillas en el suelo)
   drawGroundMarks();
 
-  // ── Zonas de Entrega (Escuderos) ──
+  // 6. Zonas de Entrega (Respetando bordes irregulares)
   ctx.save();
+  // Usar el mismo path irregular para recortar las zonas de entrega
+  ctx.beginPath();
+  for (let i = 0; i <= EDGE_SAMPLES; i++) {
+    ctx.lineTo(TRACK_X + LEFT_EDGE_NOISE[i], (i / EDGE_SAMPLES) * H);
+  }
+  for (let i = EDGE_SAMPLES; i >= 0; i--) {
+    ctx.lineTo(TRACK_X + TRACK_W + RIGHT_EDGE_NOISE[i], (i / EDGE_SAMPLES) * H);
+  }
+  ctx.closePath();
+  ctx.clip();
+
   ctx.globalAlpha = 0.15;
   ctx.fillStyle = '#d4a017';
-  const trackH = (TRACK_BOT - TRACK_TOP);
-  const zoneH = trackH * DELIVERY_ZONE_PCT;
+  const zoneH = (TRACK_BOT - TRACK_TOP) * DELIVERY_ZONE_PCT;
+  ctx.fillRect(TRACK_X - 20, TRACK_TOP, TRACK_W + 40, zoneH);
+  ctx.fillRect(TRACK_X - 20, TRACK_BOT - zoneH, TRACK_W + 40, zoneH);
   
-  // Relleno de zona
-  ctx.fillRect(TRACK_X, TRACK_TOP, TRACK_W, zoneH);
-  ctx.fillRect(TRACK_X, TRACK_BOT - zoneH, TRACK_W, zoneH);
-  
-  // Líneas divisorias
+  // Líneas divisorias de zona (Horizontales)
   ctx.globalAlpha = 0.4;
   ctx.strokeStyle = '#ffd54f';
-  ctx.lineWidth = 2;
   ctx.setLineDash([5, 5]);
-  
-  // Límites 90%
   ctx.beginPath();
-  ctx.moveTo(TRACK_X, TRACK_TOP); ctx.lineTo(TRACK_X + TRACK_W, TRACK_TOP);
-  ctx.moveTo(TRACK_X, TRACK_BOT); ctx.lineTo(TRACK_X + TRACK_W, TRACK_BOT);
+  ctx.moveTo(TRACK_X - 20, TRACK_TOP); ctx.lineTo(TRACK_X+TRACK_W+20, TRACK_TOP);
+  ctx.moveTo(TRACK_X - 20, TRACK_BOT); ctx.lineTo(TRACK_X+TRACK_W+20, TRACK_BOT);
+  ctx.moveTo(TRACK_X - 20, TRACK_TOP+zoneH); ctx.lineTo(TRACK_X+TRACK_W+20, TRACK_TOP+zoneH);
+  ctx.moveTo(TRACK_X - 20, TRACK_BOT-zoneH); ctx.lineTo(TRACK_X+TRACK_W+20, TRACK_BOT-zoneH);
   ctx.stroke();
-
-  // Límites 20%
-  ctx.beginPath();
-  ctx.moveTo(TRACK_X, TRACK_TOP + zoneH); ctx.lineTo(TRACK_X + TRACK_W, TRACK_TOP + zoneH);
-  ctx.moveTo(TRACK_X, TRACK_BOT - zoneH); ctx.lineTo(TRACK_X + TRACK_W, TRACK_BOT - zoneH);
-  ctx.stroke();
-  
-  ctx.setLineDash([]);
   ctx.restore();
 
-  // ── Valla / palizada ─────────────────────────────────────────────────────
-  ctx.strokeStyle = COL.railLine;
-  ctx.lineWidth = 5;
-  ctx.beginPath();
-  ctx.moveTo(LANE_X, 0); ctx.lineTo(LANE_X, H);
-  ctx.stroke();
+  // 7. Valla / palizada Mejorada
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.fillRect(LANE_X + 2, 0, 6, H); // Sombra valla central
 
-  ctx.fillStyle = COL.rail;
+  // Valla central (Recta por construcción)
+  ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(LANE_X, 0); ctx.lineTo(LANE_X, H); ctx.stroke();
+
+  ctx.fillStyle = '#3e2723';
   for (let py = 24; py < H; py += 50) {
-    ctx.fillRect(LANE_X - 6, py - 4, 12, 8);
+    ctx.fillRect(LANE_X - 7, py - 4, 14, 8);
+    ctx.fillStyle = '#7f8c8d'; ctx.fillRect(LANE_X - 1, py - 1, 2, 2); // Clavo
+    ctx.fillStyle = '#3e2723';
   }
 
-  ctx.strokeStyle = COL.rail;
-  ctx.lineWidth = 5;
+  // Rieles laterales IRREGULARES (Siguen el ruido del borde)
+  ctx.setLineDash([]);
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#8b6914';
+  
+  // Riel Izquierdo
   ctx.beginPath();
-  ctx.moveTo(TRACK_X, 0); ctx.lineTo(TRACK_X, H); ctx.stroke();
+  for (let i = 0; i <= EDGE_SAMPLES; i++) {
+    ctx.lineTo(TRACK_X + LEFT_EDGE_NOISE[i], (i / EDGE_SAMPLES) * H);
+  }
+  ctx.stroke();
+
+  // Riel Derecho
   ctx.beginPath();
-  ctx.moveTo(TRACK_X + TRACK_W, 0); ctx.lineTo(TRACK_X + TRACK_W, H); ctx.stroke();
+  for (let i = 0; i <= EDGE_SAMPLES; i++) {
+    ctx.lineTo(TRACK_X + TRACK_W + RIGHT_EDGE_NOISE[i], (i / EDGE_SAMPLES) * H);
+  }
+  ctx.stroke();
+  
+  ctx.restore();
 }
 
 function drawGroundMarks() {
-  // Manchas de sangre en el suelo
   for (const b of joust.groundBlood) {
     ctx.save();
     ctx.globalAlpha = b.alpha;
-    // Mancha exterior (rojo oscuro)
     ctx.fillStyle = '#6b0808';
-    ctx.beginPath();
-    ctx.ellipse(b.x, b.y, b.r * 1.4, b.r * 0.8, b.angle, 0, Math.PI * 2);
-    ctx.fill();
-    // Centro seco (más oscuro)
-    ctx.fillStyle = '#3d0404';
-    ctx.beginPath();
-    ctx.ellipse(b.x, b.y, b.r * 0.65, b.r * 0.38, b.angle, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.ellipse(b.x, b.y, b.r * 1.4, b.r * 0.8, b.angle, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
-
-  // Astillas de lanza en el suelo
   for (const s of joust.groundSplinters) {
     ctx.save();
-    ctx.globalAlpha = s.alpha * 0.85;
+    ctx.globalAlpha = s.alpha * 0.8;
     ctx.strokeStyle = s.dark ? '#7a5020' : '#b08040';
-    ctx.lineWidth = 1.5 + s.alpha * 0.5;
-    ctx.translate(s.x, s.y);
-    ctx.rotate(s.angle);
-    ctx.beginPath();
-    ctx.moveTo(-s.len / 2, 0);
-    ctx.lineTo(s.len / 2, 0);
-    ctx.stroke();
+    ctx.lineWidth = 1.5;
+    ctx.translate(s.x, s.y); ctx.rotate(s.angle);
+    ctx.beginPath(); ctx.moveTo(-s.len / 2, 0); ctx.lineTo(s.len / 2, 0); ctx.stroke();
     ctx.restore();
   }
-
-  // Huellas de cascos
-  for (const h of joust.hoofPrints) {
-    ctx.save();
-    ctx.globalAlpha = h.alpha;
-    ctx.translate(h.x, h.y);
-    ctx.rotate(h.angle);
-    // Huella principal (forma de riñón)
-    ctx.fillStyle = '#7a5828';
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 4.5, 2.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Detalle interior
-    ctx.fillStyle = '#5a3e1a';
-    ctx.beginPath();
-    ctx.ellipse(1.2, 0, 2.2, 1.4, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  ctx.globalAlpha = 1;
 }
 
 function drawParticles() {
   for (const p of joust.sparks) {
     ctx.globalAlpha = p.life;
     ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size*p.life, 0, Math.PI*2);
-    ctx.fill();
-  }
-  for (const d of joust.dust) {
-    ctx.globalAlpha = d.life * 0.38;
-    ctx.fillStyle = '#c8a87a';
-    ctx.beginPath();
-    ctx.arc(d.x, d.y, d.size, 0, Math.PI*2);
-    ctx.fill();
-  }
-  for (const s of joust.splinters) {
-    ctx.save();
-    ctx.globalAlpha = s.life;
-    ctx.strokeStyle = '#c9a96e';
-    ctx.lineWidth = 2.5;
-    ctx.translate(s.x, s.y);
-    ctx.rotate(s.angle);
-    ctx.beginPath();
-    ctx.moveTo(-s.len/2, 0); ctx.lineTo(s.len/2, 0);
-    ctx.stroke();
-    ctx.restore();
+    ctx.beginPath(); ctx.arc(p.x, p.y, 2.5 * p.life, 0, Math.PI*2); ctx.fill();
   }
   for (const b of joust.blood) {
     ctx.globalAlpha = b.life * 0.88;
-    ctx.fillStyle = b.life > 0.5 ? '#cc1010' : '#7a0a0a';
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, b.size * Math.max(0.3, b.life), 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillStyle = '#cc1010';
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.size * Math.max(0.3, b.life), 0, Math.PI * 2); ctx.fill();
   }
   ctx.globalAlpha = 1;
 }
@@ -262,7 +225,7 @@ function drawConfetti() {
     ctx.translate(c.x, c.y);
     ctx.rotate(c.r);
     ctx.fillStyle = c.color;
-    ctx.fillRect(-c.size/2, -c.size/2, c.size, c.size);
+    ctx.fillRect(-2, -2, 4, 4);
     ctx.restore();
   }
 }
@@ -270,19 +233,14 @@ function drawConfetti() {
 function drawRoses() {
   for (const r of joust.roses) {
     ctx.save();
-    ctx.translate(r.x, r.y);
-    ctx.rotate(r.r);
-    // Flower head
+    ctx.translate(r.x, r.y); ctx.rotate(r.r);
     ctx.fillStyle = r.color;
     ctx.beginPath();
     for (let i = 0; i < 5; i++) {
       const angle = (i / 5) * Math.PI * 2;
-      ctx.arc(Math.cos(angle) * 3, Math.sin(angle) * 3, 3, 0, Math.PI * 2);
+      ctx.arc(Math.cos(angle) * 2, Math.sin(angle) * 2, 2, 0, Math.PI * 2);
     }
     ctx.fill();
-    // Center
-    ctx.fillStyle = '#f1c40f';
-    ctx.beginPath(); ctx.arc(0, 0, 1.5, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 }
@@ -290,50 +248,17 @@ function drawRoses() {
 function drawTrash() {
   for (const t of joust.trash) {
     ctx.save();
-    ctx.translate(t.x, t.y);
-    ctx.rotate(t.r);
-    if (t.type === 'tomato') {
-      ctx.fillStyle = t.color; // Use the specific rotten color
-      ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
-      // Little green leaf on top
-      ctx.fillStyle = '#27ae60';
-      ctx.beginPath(); ctx.arc(0, -2, 2, 0, Math.PI * 2); ctx.fill();
-    } else {
-      ctx.fillStyle = t.color; // rock color
-      ctx.beginPath();
-      ctx.moveTo(-3, -2); ctx.lineTo(3, -3); ctx.lineTo(4, 2); ctx.lineTo(-2, 4);
-      ctx.closePath(); ctx.fill();
-    }
+    ctx.translate(t.x, t.y); ctx.rotate(t.r);
+    ctx.fillStyle = t.type === 'tomato' ? t.color : '#7f8c8d';
+    ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
-}
-
-function drawSpeedLines() {
-  if (joust.subPhase !== 'charge') return;
-  const k1 = joust.k1, k2 = joust.k2;
-  if (!k1 || !k2) return;
-  const dist = Math.abs(k2.y - k1.y);
-  if (dist > 300) return;
-  const alpha = (1 - dist/300) * 0.25;
-  ctx.globalAlpha = alpha;
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 1;
-  for (let i = 0; i < 8; i++) {
-    const lx = TRACK_X + 10 + Math.random()*(TRACK_W-20);
-    const mid = (k1.y + k2.y)/2;
-    const y = mid + (Math.random()-0.5)*100;
-    ctx.beginPath();
-    ctx.moveTo(lx, y); ctx.lineTo(lx+(Math.random()-0.5)*8, y+(Math.random()-0.5)*12);
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
 }
 
 function drawJoustUI() {
   const k1 = joust.k1, k2 = joust.k2;
   if (!k1 || !k2) return;
 
-  // 6. Efectos de impacto
   if (joust.subPhase === 'clash') {
     const a = Math.max(0, 1 - joust.phaseT/80);
     if (a > 0) {
@@ -341,125 +266,58 @@ function drawJoustUI() {
       ctx.globalAlpha = a;
       ctx.textAlign = 'center';
       const maxPts = Math.max(joust.k1Hit?.pts || 0, joust.k2Hit?.pts || 0);
-      let txt = '¡IMPACTO!', col = '#ffd54f';
+      let txt = '¡IMPACTO!'; let col = '#ffd54f';
       if (maxPts >= 10) { txt = '¡DESMONTADO!'; col = '#ff4444'; }
       else if (maxPts >= 3) { txt = '¡GRAN GOLPE!'; col = '#e67e22'; }
-      else if (maxPts === 0) { txt = joust.k1Hit?.type === 'miss' ? '¡FALLO!' : '¡TOQUE!'; col = '#a09080'; }
-
-      ctx.font = '52px MedievalSharp';
-      ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.fillText(txt, W/2 + 4, H/2 + 4);
+      ctx.font = '28px MedievalSharp';
       ctx.fillStyle = col;
       ctx.fillText(txt, W/2, H/2);
-
+      
       if (joust.stunEvent) {
-        ctx.font = '26px MedievalSharp';
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.fillText(`** ¡${joust.stunEvent} ATURDIDO! **`, W/2 + 2, H/2 + 52);
+        ctx.font = '16px MedievalSharp';
         ctx.fillStyle = '#FFD700';
-        ctx.fillText(`** ¡${joust.stunEvent} ATURDIDO! **`, W/2, H/2 + 50);
+        ctx.fillText(`** ¡${joust.stunEvent} ATURDIDO! **`, W/2, H/2 + 35);
       }
       ctx.restore();
     }
   }
-
-  // 7. Resultado flotante (Eliminado, ahora en HUD ribbons)
   
-  // 8. Indicadores de entrega de lanza
   drawDeliveryIndicators(k1);
   drawDeliveryIndicators(k2);
-
-  // 9. Burbujas de diálogo
   drawSpeechBubble(k1);
   drawSpeechBubble(k2);
 }
 
 function drawSpeechBubble(k) {
   if (!k.speechText || k.speechTimer <= 0) return;
-
   const isProminent = k.speechType === 'prominent';
   ctx.save();
-  // 30% smaller font sizes
   ctx.font = isProminent ? 'bold 14px MedievalSharp' : 'italic 9px Almendra';
-  
   const textWidth = ctx.measureText(k.speechText).width;
-  const padding = isProminent ? 18 : 12;
-  const bw = textWidth + padding;
+  const bw = textWidth + 18;
   const bh = isProminent ? 32 : 18;
-  
-  // Calculate bubble position with screen constraints - reduced offsets
   let bx = k.x - bw / 2;
   let by = k.y - (isProminent ? 70 : 55);
-  
-  if (by < 10) by = k.y + 35; // Flip to below if too high
-  
-  // Keep horizontally within canvas
+  if (by < 10) by = k.y + 35;
   bx = Math.max(10, Math.min(W - bw - 10, bx));
 
-  // Sombra
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  ctx.beginPath();
-  ctx.roundRect(bx + 2, by + 2, bw, bh, isProminent ? 8 : 4);
-  ctx.fill();
-
-  // Fondo
   ctx.fillStyle = isProminent ? '#ffd54f' : '#fff9e6';
   ctx.strokeStyle = isProminent ? '#8e1616' : '#d4a017';
   ctx.lineWidth = isProminent ? 2.5 : 1.2;
-  ctx.beginPath();
-  ctx.roundRect(bx, by, bw, bh, isProminent ? 8 : 4);
-  ctx.fill();
-  ctx.stroke();
-
-  // Pico de la burbuja (Tail)
-  ctx.beginPath();
-  const isBelow = by > k.y;
-  const tailW = isProminent ? 6 : 4;
-  const tailH = isProminent ? 10 : 6;
-  if (isBelow) {
-    ctx.moveTo(k.x - tailW, by);
-    ctx.lineTo(k.x, by - tailH);
-    ctx.lineTo(k.x + tailW, by);
-  } else {
-    ctx.moveTo(k.x - tailW, by + bh);
-    ctx.lineTo(k.x, by + bh + tailH);
-    ctx.lineTo(k.x + tailW, by + bh);
-  }
-  ctx.fill();
-  ctx.stroke();
-
-  // Texto
+  ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 6); ctx.fill(); ctx.stroke();
+  
   ctx.fillStyle = isProminent ? '#8e1616' : '#2c1e16';
   ctx.textAlign = 'center';
   ctx.fillText(k.speechText, bx + bw/2, by + (isProminent ? 21 : 12));
-
   ctx.restore();
 }
 
 function drawDeliveryIndicators(k) {
   if (k.lanceIntact || k.fallen || (k.phase !== 'charge' && k.phase !== 'ready')) return;
   if (k.lanceLoading <= 0) return;
-
-  const cx = k.x;
-  const cy = k.y - 45;
-  const radius = 10;
-
   ctx.save();
-  // Fondo del círculo
   ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.4)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Arco de progreso
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, -Math.PI/2, -Math.PI/2 + (Math.PI * 2 * k.lanceLoading));
-  ctx.strokeStyle = COL.gold || '#d4a017';
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  ctx.stroke();
+  ctx.arc(k.x, k.y - 30, 6, -Math.PI/2, -Math.PI/2 + (Math.PI * 2 * k.lanceLoading));
+  ctx.strokeStyle = '#d4a017'; ctx.lineWidth = 2.5; ctx.stroke();
   ctx.restore();
 }

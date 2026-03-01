@@ -14,7 +14,7 @@ export let TRACK_TOP = H * 0.05; // 5% margin top
 export let TRACK_BOT = H * 0.95; // 5% margin bottom (90% total)
 
 export const TRACK_W    = 100;
-export const DELIVERY_ZONE_PCT = 0.20; // 20% of track length
+export const DELIVERY_ZONE_PCT = 0.20; 
 export const LANCE_LEN  = 80;
 export const KNIGHT_BW  = 26;
 export const KNIGHT_BH  = 42;
