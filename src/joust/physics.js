@@ -4,7 +4,7 @@
 
 import { HIT_TABLE, HP_DAMAGE, LANE_X } from './constants.js';
 import { joust } from './state.js';
-import { spawnSparks, spawnSplinters, spawnBlood } from './particles.js';
+import { spawnSparks, spawnSplinters, spawnBlood, spawnGroundBlood, spawnGroundSplinters } from './particles.js';
 
 export function rollHit(strBonus, defBonus) {
   let r = Math.random();
@@ -83,8 +83,15 @@ export function resolveClash() {
   if (!stunBefore2 && k2.stunned) joust.stunEvent = k2.name;
   else if (!stunBefore1 && k1.stunned) joust.stunEvent = k1.name;
 
-  if (h1.pts > 0) spawnBlood(k2.x, k2.y, Math.min(h1.pts * 4, 22));
-  if (h2.pts > 0) spawnBlood(k1.x, k1.y, Math.min(h2.pts * 4, 22));
+  if (h1.pts > 0) {
+    spawnBlood(k2.x, k2.y, Math.min(h1.pts * 4, 22));
+    spawnGroundBlood(k2.x, k2.y, Math.min(Math.ceil(h1.pts * 1.2), 7));
+  }
+  if (h2.pts > 0) {
+    spawnBlood(k1.x, k1.y, Math.min(h2.pts * 4, 22));
+    spawnGroundBlood(k1.x, k1.y, Math.min(Math.ceil(h2.pts * 1.2), 7));
+  }
+  if (maxPts >= 2) spawnGroundSplinters(impactX, impactY, 4 + Math.min(maxPts, 7));
 }
 
 export function applyHitEffect(hit, defender) {

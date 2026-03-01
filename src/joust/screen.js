@@ -96,6 +96,9 @@ export function startMatch() {
   joust.sparks = [];
   joust.dust = [];
   joust.splinters = [];
+  joust.groundBlood = [];
+  joust.groundSplinters = [];
+  joust.hoofPrints = [];
   joust.shakeAmt = 0;
   joust.flashAlpha = 0;
   joust.t = 0;

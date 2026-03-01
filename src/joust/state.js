@@ -15,6 +15,7 @@ export const joust = {
   k1Points: 0, k2Points: 0,
   history: [],
   sparks: [], dust: [], splinters: [], blood: [],
+  groundBlood: [], groundSplinters: [], hoofPrints: [],
   stunEvent: null,
   shakeAmt: 0, flashAlpha: 0,
   resultText: '',

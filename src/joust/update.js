@@ -4,7 +4,7 @@
 
 import { TRACK_TOP, TRACK_BOT, HORSE_H, MAX_VENIDAS } from './constants.js';
 import { joust, setSubPhase } from './state.js';
-import { spawnDust, updateParticles } from './particles.js';
+import { spawnDust, spawnHoofPrint, updateParticles } from './particles.js';
 import { resolveClash } from './physics.js';
 import { updateSquireTracking, updateSquireDelivery, activateSquire } from './squire.js';
 
@@ -66,6 +66,10 @@ export function updateJoust() {
       spawnDust(k1.x, k1.y - k1.baseDir * (HORSE_H/2 + 4));
       spawnDust(k2.x, k2.y - k2.baseDir * (HORSE_H/2 + 4));
     }
+    if (joust.t % 16 === 0) {
+      spawnHoofPrint(k1);
+      spawnHoofPrint(k2);
+    }
 
     if (k1.baseDir === 1 && k1.y >= k2.y - 20) {
       resolveClash(); setSubPhase('clash');
@@ -114,6 +118,9 @@ export function updateJoust() {
 
       if (k.speed > 0.5 && joust.t % 4 === 0) {
         spawnDust(k.x, k.y - k.baseDir * (HORSE_H / 2 + 4));
+      }
+      if (k.speed > 0.5 && joust.t % 16 === 0) {
+        spawnHoofPrint(k);
       }
     }
 

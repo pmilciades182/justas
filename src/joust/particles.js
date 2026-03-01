@@ -51,6 +51,46 @@ export function spawnBlood(x, y, count) {
   }
 }
 
+// ── Decales persistentes en el suelo ──────────────────────────────────
+
+export function spawnHoofPrint(knight) {
+  if (!knight || knight.fallen) return;
+  // Alterna izquierda/derecha para simular los dos cascos
+  const side = joust.hoofPrints.length % 2 === 0 ? 1 : -1;
+  joust.hoofPrints.push({
+    x: knight.x + side * 4 + (Math.random() - 0.5) * 3,
+    y: knight.y - knight.baseDir * 28 + (Math.random() - 0.5) * 5,
+    angle: (Math.random() - 0.5) * 0.6,
+    alpha: 0.42,
+  });
+}
+
+export function spawnGroundBlood(x, y, count) {
+  for (let i = 0; i < count; i++) {
+    joust.groundBlood.push({
+      x: x + (Math.random() - 0.5) * 18,
+      y: y + (Math.random() - 0.5) * 34,
+      r: 2.5 + Math.random() * 5.5,
+      alpha: 0.50 + Math.random() * 0.32,
+      angle: Math.random() * Math.PI,
+    });
+  }
+}
+
+export function spawnGroundSplinters(x, y, count) {
+  if (joust.groundSplinters.length > 80) return;
+  for (let i = 0; i < count; i++) {
+    joust.groundSplinters.push({
+      x: x + (Math.random() - 0.5) * 50,
+      y: y + (Math.random() - 0.5) * 38,
+      angle: Math.random() * Math.PI,
+      len: 8 + Math.random() * 14,
+      alpha: 0.65 + Math.random() * 0.25,
+      dark: Math.random() < 0.4,
+    });
+  }
+}
+
 export function updateParticles() {
   for (const p of joust.sparks) { p.x+=p.vx; p.y+=p.vy; p.vy+=0.09; p.vx*=0.97; p.life-=p.decay; }
   joust.sparks = joust.sparks.filter(p => p.life > 0);
@@ -60,4 +100,7 @@ export function updateParticles() {
   joust.splinters = joust.splinters.filter(s => s.life > 0);
   for (const b of joust.blood) { b.x+=b.vx; b.y+=b.vy; b.vy+=0.14; b.vx*=0.91; b.life-=b.decay; }
   joust.blood = joust.blood.filter(b => b.life > 0);
+  // Huellas de casco se desvanecen lentamente
+  for (const h of joust.hoofPrints) { h.alpha = Math.max(0, h.alpha - 0.0010); }
+  joust.hoofPrints = joust.hoofPrints.filter(h => h.alpha > 0.02);
 }
