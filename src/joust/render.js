@@ -4,8 +4,8 @@
 
 import { drawJoustKnight, drawSquire } from '../knightDrawer.js';
 import {
-  ctx, W, H, LANE_X, TRACK_X, TRACK_W, TRACK_BOT,
-  COL, MAX_VENIDAS,
+  ctx, W, H, LANE_X, TRACK_X, TRACK_W,
+  COL,
   HORSE_W, HORSE_H, KNIGHT_BW, KNIGHT_BH, LANCE_LEN,
 } from './constants.js';
 import { joust } from './state.js';
@@ -129,146 +129,9 @@ function drawSpeedLines() {
   ctx.globalAlpha = 1;
 }
 
-function sText(text, x, y, fill, stroke = 'rgba(0,0,0,0.85)', lw = 4) {
-  ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.strokeText(text, x, y);
-  ctx.fillStyle = fill; ctx.fillText(text, x, y);
-}
-
 function drawJoustUI() {
   const k1 = joust.k1, k2 = joust.k2;
   if (!k1 || !k2) return;
-
-  const hudH = 100;
-  const margin = 10;
-  const innerW = Math.min(W - margin * 2, 480);
-  const startX_HUD = (W - innerW) / 2;
-
-  // 1. Marco principal
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.8)';
-  ctx.shadowBlur = 20;
-  ctx.fillStyle = '#2c1e16';
-  ctx.beginPath();
-  ctx.roundRect(startX_HUD, margin, innerW, hudH, 2);
-  ctx.fill();
-  ctx.strokeStyle = '#d4a017';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(startX_HUD + 2, margin + 2, innerW - 4, hudH - 4);
-  ctx.strokeStyle = '#a07a10';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(startX_HUD + 6, margin + 6, innerW - 12, hudH - 12);
-  ctx.restore();
-
-  // 2. Estandartes
-  ctx.fillStyle = '#7b1113';
-  ctx.fillRect(startX_HUD + 8, margin + 8, 130, hudH - 16);
-  ctx.fillStyle = '#1a3a5f';
-  ctx.fillRect(startX_HUD + innerW - 138, margin + 8, 130, hudH - 16);
-
-  // 3. Textos y puntuación
-  ctx.save();
-  ctx.font = 'bold 9px Almendra';
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.textAlign = 'left';
-  ctx.fillText("CABALLERO REAL", startX_HUD + 15, margin + 22);
-  ctx.textAlign = 'right';
-  ctx.fillText("ADVERSARIO", startX_HUD + innerW - 15, margin + 22);
-
-  ctx.font = 'bold 13px MedievalSharp';
-  ctx.fillStyle = '#ffd54f';
-  ctx.textAlign = 'left';
-  ctx.fillText(k1.name.toUpperCase(), startX_HUD + 15, margin + 85);
-  ctx.textAlign = 'right';
-  ctx.fillText(k2.name.toUpperCase(), startX_HUD + innerW - 15, margin + 85);
-
-  ctx.font = '30px serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(k1.icon, startX_HUD + 15, margin + 58);
-  ctx.textAlign = 'right';
-  ctx.fillText(k2.icon, startX_HUD + innerW - 15, margin + 58);
-
-  ctx.font = 'bold 44px MedievalSharp';
-  ctx.fillStyle = '#fff';
-  ctx.textAlign = 'right';
-  ctx.fillText(joust.k1Points, startX_HUD + 130, margin + 65);
-  ctx.textAlign = 'left';
-  ctx.fillText(joust.k2Points, startX_HUD + innerW - 130, margin + 65);
-
-  ctx.font = 'bold 10px Almendra';
-  ctx.textAlign = 'right';
-  ctx.fillText("PTS", startX_HUD + 130, margin + 80);
-  ctx.textAlign = 'left';
-  ctx.fillText("PTS", startX_HUD + innerW - 130, margin + 80);
-  ctx.restore();
-
-  // 4. Panel central
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#d4a017';
-  ctx.font = 'bold 11px MedievalSharp';
-  ctx.fillText("VENIDA", W/2, margin + 25);
-
-  ctx.font = 'bold 32px MedievalSharp';
-  ctx.fillStyle = '#fff';
-  ctx.fillText(`${joust.venida} / ${MAX_VENIDAS}`, W/2, margin + 58);
-
-  const gap = 16;
-  const startX_Shields = W/2 - ((MAX_VENIDAS-1) * gap) / 2;
-  for(let i=0; i<MAX_VENIDAS; i++) {
-    const active = i < joust.history.length;
-    const current = i === joust.history.length;
-    ctx.fillStyle = active ? '#ffd54f' : (current ? '#fff' : 'rgba(255,255,255,0.1)');
-    ctx.strokeStyle = active ? '#d4a017' : (current ? '#fff' : 'rgba(255,255,255,0.2)');
-    ctx.beginPath();
-    const sx = startX_Shields + i*gap, sy = margin + 72;
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(sx + 5, sy + 2);
-    ctx.lineTo(sx + 5, sy + 9);
-    ctx.quadraticCurveTo(sx, sy + 13, sx - 5, sy + 9);
-    ctx.lineTo(sx - 5, sy + 2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  // 5. Barras de HP
-  {
-    const hpY = margin + hudH + 5;
-    const hpH = 7;
-    const hpW = 130;
-    const hpPadX = 8;
-
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.52)';
-    ctx.beginPath();
-    ctx.roundRect(startX_HUD, hpY - 3, innerW, hpH + 18, [0, 0, 4, 4]);
-    ctx.fill();
-
-    const k1Pct = k1.hp / k1.maxHp;
-    const k1HpCol = k1Pct > 0.60 ? '#27ae60' : k1Pct > 0.30 ? '#e67e22' : '#c0392b';
-    ctx.fillStyle = 'rgba(255,255,255,0.10)';
-    ctx.beginPath(); ctx.roundRect(startX_HUD + hpPadX, hpY, hpW, hpH, 2); ctx.fill();
-    ctx.fillStyle = k1HpCol;
-    ctx.beginPath(); ctx.roundRect(startX_HUD + hpPadX, hpY, Math.max(2, hpW * k1Pct), hpH, 2); ctx.fill();
-
-    const k2Pct = k2.hp / k2.maxHp;
-    const k2HpCol = k2Pct > 0.60 ? '#27ae60' : k2Pct > 0.30 ? '#e67e22' : '#c0392b';
-    const k2BarX = startX_HUD + innerW - hpPadX - hpW;
-    const k2FillW = Math.max(2, hpW * k2Pct);
-    ctx.fillStyle = 'rgba(255,255,255,0.10)';
-    ctx.beginPath(); ctx.roundRect(k2BarX, hpY, hpW, hpH, 2); ctx.fill();
-    ctx.fillStyle = k2HpCol;
-    ctx.beginPath(); ctx.roundRect(k2BarX + hpW - k2FillW, hpY, k2FillW, hpH, 2); ctx.fill();
-
-    ctx.font = 'bold 8px Almendra';
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.textAlign = 'left';
-    ctx.fillText(`HP ${k1.hp}/${k1.maxHp}${k1.stunned ? '  !! ATURDIDO' : ''}`, startX_HUD + hpPadX, hpY + hpH + 9);
-    ctx.textAlign = 'right';
-    ctx.fillText(`${k2.stunned ? 'ATURDIDO !!  ' : ''}${k2.hp}/${k2.maxHp} HP`, startX_HUD + innerW - hpPadX, hpY + hpH + 9);
-    ctx.restore();
-  }
 
   // 6. Efectos de impacto
   if (joust.subPhase === 'clash') {

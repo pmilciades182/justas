@@ -42,9 +42,9 @@ export const HP_DAMAGE = {
 };
 
 export function resizeCanvas() {
-  const screen = document.getElementById('screen-joust');
-  const sw = screen.clientWidth || window.innerWidth;
-  const sh = screen.clientHeight || window.innerHeight;
+  const arena = document.getElementById('joust-arena');
+  const sw = arena ? arena.clientWidth : window.innerWidth;
+  const sh = arena ? arena.clientHeight : window.innerHeight;
 
   canvas.width = sw;
   canvas.height = sh;

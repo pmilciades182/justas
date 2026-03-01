@@ -11,6 +11,7 @@ import { renderTeam } from './ui/team.js';
 import { initJoustScreen, showMatchResult } from './joust/screen.js';
 import { updateJoust } from './joust/update.js';
 import { drawJoust } from './joust/render.js';
+import { updateJoustHUD } from './joust/hud.js';
 import { joust } from './joust/state.js';
 
 // Cargar partida guardada
@@ -28,6 +29,7 @@ function gameLoop() {
   if (currentScreen === 'joust') {
     updateJoust();
     drawJoust();
+    updateJoustHUD();
 
     if (joust.subPhase === 'result' && joust.active) {
       showMatchResult();

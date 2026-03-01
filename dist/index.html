@@ -332,24 +332,115 @@
       z-index: 20;
     }
 
-    /* ===== JOUST CANVAS ===== */
-    #screen-joust { 
-      padding: 0; 
-      background: #1a120b; 
-      position: relative;
-      height: 100%;
+    /* ===== JOUST SCREEN ===== */
+    #screen-joust {
+      padding: 0;
+      background: #1a120b;
+      overflow: hidden;
     }
     #screen-joust.active {
       display: flex;
       flex-direction: column;
     }
-    #canvas { 
-      width: 100%; 
-      height: 100%; 
-      object-fit: cover; 
-      display: block;
+
+    /* ── HUD separado del campo ── */
+    #joust-hud {
+      flex-shrink: 0;
+      display: flex;
+      align-items: stretch;
+      background: #2c1e16;
+      border-bottom: 3px solid #d4a017;
+      padding: 8px 10px;
+      height: 95px;
     }
-    
+    .jhud-knight { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .jhud-top-row { display: flex; align-items: center; gap: 6px; }
+    .jhud-top-row.jhud-right { flex-direction: row-reverse; }
+    .jhud-icon { font-size: 26px; line-height: 1; flex-shrink: 0; }
+    .jhud-info { flex: 1; min-width: 0; }
+    .jhud-info.right { text-align: right; }
+    .jhud-name {
+      font-family: 'MedievalSharp', cursive;
+      font-size: 11px;
+      color: #ffd54f;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .jhud-pts-row { display: flex; align-items: baseline; gap: 3px; }
+    .jhud-pts-row.right { flex-direction: row-reverse; }
+    .jhud-pts-label { font-family: 'Almendra', serif; font-size: 9px; color: rgba(255,255,255,0.45); }
+    .jhud-pts-val { font-family: 'MedievalSharp', cursive; font-size: 24px; color: #fff; line-height: 1; }
+    .jhud-hp-track {
+      height: 7px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+    .jhud-hp-fill {
+      position: absolute; top: 0; left: 0; bottom: 0;
+      border-radius: 2px;
+      transition: width 0.12s ease, background-color 0.3s;
+    }
+    .jhud-hp-fill.right { left: auto; right: 0; }
+    .jhud-hp-green  { background: #27ae60; }
+    .jhud-hp-orange { background: #e67e22; }
+    .jhud-hp-red    { background: #c0392b; }
+    .jhud-hp-text {
+      font-family: 'Almendra', serif;
+      font-size: 9px;
+      color: rgba(255,255,255,0.65);
+    }
+    .jhud-hp-text.right { text-align: right; }
+    .jhud-stun {
+      font-family: 'MedievalSharp', cursive;
+      font-size: 9px;
+      color: #ffd700;
+      letter-spacing: 0.5px;
+    }
+    /* Center panel */
+    .jhud-center {
+      width: 76px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      border-left: 1px solid rgba(212,160,23,0.35);
+      border-right: 1px solid rgba(212,160,23,0.35);
+      padding: 0 6px;
+    }
+    .jhud-venida-lbl {
+      font-family: 'MedievalSharp', cursive;
+      font-size: 8px;
+      color: #d4a017;
+      letter-spacing: 0.5px;
+    }
+    .jhud-venida-num {
+      font-family: 'MedievalSharp', cursive;
+      font-size: 22px;
+      color: #fff;
+      line-height: 1;
+    }
+    .jhud-shields { display: flex; gap: 5px; margin-top: 3px; }
+    .jhud-shield {
+      width: 9px; height: 11px;
+      clip-path: polygon(0% 0%, 100% 0%, 100% 58%, 50% 100%, 0% 58%);
+    }
+    .jhud-shield.done    { background: #ffd54f; }
+    .jhud-shield.current { background: #fff; }
+    .jhud-shield.pending { background: rgba(255,255,255,0.15); }
+
+    /* ── Arena (canvas + overlay) ── */
+    #joust-arena {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    #canvas { width: 100%; height: 100%; display: block; }
     .joust-overlay {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
@@ -393,7 +484,7 @@
     .mt-16 { margin-top: 16px; }
     .mt-8 { margin-top: 8px; }
   </style>
-  <script type="module" crossorigin src="/assets/index-eCDduI0E.js"></script>
+  <script type="module" crossorigin src="/assets/index-tS8gx_n8.js"></script>
 </head>
 <body>
   <div id="app">
@@ -464,8 +555,56 @@
 
     <!-- ===== SCREEN: JOUST ===== -->
     <div id="screen-joust" class="screen">
-      <canvas id="canvas"></canvas>
-      <div class="joust-overlay" id="joust-overlay"></div>
+      <!-- HUD separado del campo de juego -->
+      <div id="joust-hud">
+        <div class="jhud-knight">
+          <div class="jhud-top-row">
+            <span id="jhud-k1-icon" class="jhud-icon">⚔</span>
+            <div class="jhud-info">
+              <div id="jhud-k1-name" class="jhud-name">CABALLERO</div>
+              <div class="jhud-pts-row">
+                <span class="jhud-pts-label">PTS</span>
+                <span id="jhud-k1-pts" class="jhud-pts-val">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="jhud-hp-track">
+            <div id="jhud-k1-hp-fill" class="jhud-hp-fill jhud-hp-green" style="width:100%"></div>
+          </div>
+          <div id="jhud-k1-hp-text" class="jhud-hp-text">HP —</div>
+          <div id="jhud-k1-stun" class="jhud-stun" style="visibility:hidden">!! ATURDIDO !!</div>
+        </div>
+
+        <div class="jhud-center">
+          <div class="jhud-venida-lbl">VENIDA</div>
+          <div id="jhud-venida-val" class="jhud-venida-num">—</div>
+          <div id="jhud-shields-row" class="jhud-shields"></div>
+        </div>
+
+        <div class="jhud-knight">
+          <div class="jhud-top-row jhud-right">
+            <span id="jhud-k2-icon" class="jhud-icon">⚔</span>
+            <div class="jhud-info right">
+              <div id="jhud-k2-name" class="jhud-name">ADVERSARIO</div>
+              <div class="jhud-pts-row right">
+                <span class="jhud-pts-label">PTS</span>
+                <span id="jhud-k2-pts" class="jhud-pts-val">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="jhud-hp-track">
+            <div id="jhud-k2-hp-fill" class="jhud-hp-fill right jhud-hp-green" style="width:100%"></div>
+          </div>
+          <div id="jhud-k2-hp-text" class="jhud-hp-text right">HP —</div>
+          <div id="jhud-k2-stun" class="jhud-stun" style="visibility:hidden; text-align:right">!! ATURDIDO !!</div>
+        </div>
+      </div>
+
+      <!-- Campo de juego (canvas) -->
+      <div id="joust-arena">
+        <canvas id="canvas"></canvas>
+        <div class="joust-overlay" id="joust-overlay"></div>
+      </div>
     </div>
 
     <!-- BOTTOM NAV -->
