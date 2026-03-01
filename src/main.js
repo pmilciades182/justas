@@ -1406,39 +1406,42 @@ function drawJoustUI() {
   if (!k1 || !k2) return;
 
   // Panel bg
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillStyle = 'rgba(44, 30, 22, 0.8)';
   ctx.beginPath();
-  ctx.roundRect(10, 6, W - 20, 46, 8);
+  ctx.roundRect(10, 6, W - 20, 50, 4);
   ctx.fill();
+  ctx.strokeStyle = '#d4a017';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 6, W - 20, 50);
 
   // Names
-  ctx.font = 'bold 12px sans-serif';
+  ctx.font = 'bold 14px Almendra';
   ctx.textAlign = 'left';
   ctx.fillStyle = k1.colors.plume;
-  ctx.fillText(k1.name, 18, 22);
+  ctx.fillText(k1.name, 18, 24);
   ctx.textAlign = 'right';
   ctx.fillStyle = k2.colors.plume;
-  ctx.fillText(k2.name, W - 18, 22);
+  ctx.fillText(k2.name, W - 18, 24);
 
   // Score
-  ctx.font = 'bold 18px sans-serif';
+  ctx.font = '22px MedievalSharp';
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#fff';
-  ctx.fillText(`${joust.k1Points} : ${joust.k2Points}`, W/2, 24);
+  ctx.fillStyle = '#ffd54f';
+  ctx.fillText(`${joust.k1Points} : ${joust.k2Points}`, W/2, 28);
 
   // Venida
-  ctx.font = '11px sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.fillText(`Venida ${joust.venida}/${MAX_VENIDAS}  ·  Combate ${joust.matchIdx + 1}`, W/2, 42);
+  ctx.font = '12px Almendra';
+  ctx.fillStyle = 'rgba(224, 208, 176, 0.7)';
+  ctx.fillText(`VENIDA ${joust.venida}/${MAX_VENIDAS}  ·  COMBATE ${joust.matchIdx + 1}`, W/2, 46);
 
   // History at bottom
   const hY = H - 14;
-  ctx.font = '10px sans-serif';
+  ctx.font = '11px Almendra';
   ctx.textAlign = 'center';
   for (let i = 0; i < joust.history.length; i++) {
     const h = joust.history[i];
     const x = W/2 + (i - (joust.history.length-1)/2) * 60;
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.fillStyle = 'rgba(224, 208, 176, 0.5)';
     ctx.fillText(`V${h.venida}: +${h.k1Hit.pts} / +${h.k2Hit.pts}`, x, hY);
   }
 
@@ -1447,46 +1450,49 @@ function drawJoustUI() {
     const a = Math.max(0, 1 - joust.phaseT/20);
     if (a > 0) {
       ctx.globalAlpha = a;
-      ctx.font = 'bold 40px serif';
+      ctx.font = '44px MedievalSharp';
       ctx.textAlign = 'center';
       const maxPts = Math.max(joust.k1Hit?.pts || 0, joust.k2Hit?.pts || 0);
-      let txt = '¡IMPACTO!', col = '#f1c40f';
-      if (maxPts >= 10) { txt = '¡¡DESMONTADO!!'; col = '#ff4444'; }
-      else if (maxPts >= 3) { txt = '¡GRAN GOLPE!'; col = '#ff8c00'; }
-      else if (maxPts === 0) { txt = joust.k1Hit?.type === 'miss' ? '¡FALLO!' : '¡TOQUE!'; col = '#aaa'; }
-      sText(txt, W/2, H/2 - 20, col);
+      let txt = '¡IMPACTO!', col = '#d4a017';
+      if (maxPts >= 10) { txt = '¡¡DESMONTADO!!'; col = '#7b1113'; }
+      else if (maxPts >= 3) { txt = '¡GRAN GOLPE!'; col = '#e67e22'; }
+      else if (maxPts === 0) { txt = joust.k1Hit?.type === 'miss' ? '¡FALLO!' : '¡TOQUE!'; col = '#a09080'; }
+      sText(txt, W/2, H/2 - 20, col, 'rgba(0,0,0,0.8)', 6);
       ctx.globalAlpha = 1;
     }
   }
 
-  // Hit details after clash (fade in, then fade out after riding)
+  // Hit details after clash
   if ((joust.subPhase === 'pass' || joust.subPhase === 'squire') && joust.k1Hit) {
     const fadeIn = Math.min(1, joust.phaseT / 25);
     const fadeOut = joust.subPhase === 'pass' && joust.phaseT > 100 ? Math.max(0, 1 - (joust.phaseT - 100) / 40) : 1;
     const alpha = fadeIn * fadeOut;
     if (alpha > 0.01) {
       ctx.globalAlpha = alpha;
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillStyle = '#f4e4bc';
       ctx.beginPath();
-      ctx.roundRect(20, H/2 - 25, W - 40, 50, 8);
+      ctx.roundRect(20, H/2 - 30, W - 40, 60, 4);
       ctx.fill();
-      ctx.font = '12px sans-serif';
+      ctx.strokeStyle = '#d4a017';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(20, H/2 - 30, W - 40, 60);
+      
+      ctx.font = 'bold 14px Almendra';
       ctx.textAlign = 'left';
-      ctx.fillStyle = k1.colors.plume;
-      ctx.fillText(`${k1.name}: ${joust.k1Hit.label} +${joust.k1Hit.pts}`, 30, H/2);
+      ctx.fillStyle = '#2c1e16';
+      ctx.fillText(`${k1.name}: ${joust.k1Hit.label} (+${joust.k1Hit.pts})`, 30, H/2 + 5);
       ctx.textAlign = 'right';
-      ctx.fillStyle = k2.colors.plume;
-      ctx.fillText(`+${joust.k2Hit.pts} ${joust.k2Hit.label} :${k2.name}`, W - 30, H/2);
+      ctx.fillText(`${k2.name}: ${joust.k2Hit.label} (+${joust.k2Hit.pts})`, W - 30, H/2 + 5);
       ctx.globalAlpha = 1;
     }
   }
 
-  // Turn phase - show "Girando..."
+  // Turn phase
   if (joust.subPhase === 'turn') {
-    ctx.globalAlpha = 0.6;
-    ctx.font = '16px serif';
+    ctx.globalAlpha = 0.8;
+    ctx.font = '18px MedievalSharp';
     ctx.textAlign = 'center';
-    sText(joust.venida < MAX_VENIDAS ? `Preparando venida ${joust.venida + 1}...` : 'Última venida completada', W/2, H/2, '#f0e68c');
+    sText(joust.venida < MAX_VENIDAS ? `Preparando venida ${joust.venida + 1}...` : 'Torneo Finalizado', W/2, H/2, '#ffd54f');
     ctx.globalAlpha = 1;
   }
 }
@@ -1551,25 +1557,20 @@ function showMatchIntro() {
   const ec = KNIGHT_COLORS[ekd.colorIdx];
 
   overlay.innerHTML = `
-    <div style="background:rgba(0,0,0,0.85); padding:30px 20px; border-radius:16px; text-align:center; max-width:340px">
-      <div style="font:bold 14px sans-serif; color:#888; margin-bottom:12px">COMBATE ${joust.matchIdx + 1} DE ${joust.playerTeam.length}</div>
+    <div class="card text-center" style="padding:30px 20px; border: 4px double var(--gold); background-color: var(--card);">
+      <div style="font-family:MedievalSharp; font-size:16px; color:var(--text-dim); margin-bottom:12px; text-transform:uppercase">COMBATE ${joust.matchIdx + 1} DE ${joust.playerTeam.length}</div>
       <div style="display:flex; align-items:center; justify-content:center; gap:20px; margin:16px 0">
         <div>
-          <div style="font-size:40px">${pkd.icon}</div>
-          <div style="font:bold 14px sans-serif; color:${pc.plume}; margin-top:4px">${pkd.name}</div>
-          <div style="font:11px sans-serif; color:#888">FUE ${pkd.str} · DEF ${pkd.def} · MON ${pkd.hor}</div>
+          <div style="font-size:50px">${pkd.icon}</div>
+          <div style="font-family:MedievalSharp; font-size:16px; color:${pc.plume}; margin-top:4px">${pkd.name}</div>
         </div>
-        <div style="font:bold 28px serif; color:#f0e68c">VS</div>
+        <div style="font-family:MedievalSharp; font-size:32px; color:var(--red)">VS</div>
         <div>
-          <div style="font-size:40px">${ekd.icon}</div>
-          <div style="font:bold 14px sans-serif; color:${ec.plume}; margin-top:4px">${ekd.name}</div>
-          <div style="font:11px sans-serif; color:#888">FUE ${ekd.str} · DEF ${ekd.def} · MON ${ekd.hor}</div>
+          <div style="font-size:50px">${ekd.icon}</div>
+          <div style="font-family:MedievalSharp; font-size:16px; color:${ec.plume}; margin-top:4px">${ekd.name}</div>
         </div>
       </div>
-      <div style="font:11px sans-serif; color:#666; margin-bottom:16px">
-        Puntuación: ${joust.playerMatchWins} - ${joust.enemyMatchWins}
-      </div>
-      <button class="btn btn-gold btn-lg" id="btn-start-match">⚔ ¡JUSTAR!</button>
+      <button class="btn btn-gold btn-lg" id="btn-start-match">⚔ ¡A LA LIZA!</button>
     </div>`;
   overlay.style.pointerEvents = 'auto';
 
@@ -1615,45 +1616,38 @@ function showMatchResult() {
   const k1Unhorsed = joust.history.some(h => h.k2Hit.type === 'unhorse');
   const k2Unhorsed = joust.history.some(h => h.k1Hit.type === 'unhorse');
 
-  let winnerName, method, winnerColor;
+  let winnerName, winnerColor;
   let playerWon = false;
 
   if (k2Unhorsed && !k1Unhorsed) {
-    winnerName = k1.name; winnerColor = k1.colors.plume; method = 'Victoria por desmontaje';
+    winnerName = k1.name; winnerColor = k1.colors.plume;
     playerWon = true;
   } else if (k1Unhorsed && !k2Unhorsed) {
-    winnerName = k2.name; winnerColor = k2.colors.plume; method = 'Victoria por desmontaje';
+    winnerName = k2.name; winnerColor = k2.colors.plume;
   } else if (k1Unhorsed && k2Unhorsed) {
-    winnerName = 'EMPATE'; winnerColor = '#f0e68c'; method = 'Ambos desmontados';
+    winnerName = 'EMPATE'; winnerColor = '#d4a017';
   } else if (joust.k1Points > joust.k2Points) {
-    winnerName = k1.name; winnerColor = k1.colors.plume; method = 'Victoria por puntos';
+    winnerName = k1.name; winnerColor = k1.colors.plume;
     playerWon = true;
   } else if (joust.k2Points > joust.k1Points) {
-    winnerName = k2.name; winnerColor = k2.colors.plume; method = 'Victoria por puntos';
+    winnerName = k2.name; winnerColor = k2.colors.plume;
   } else {
-    winnerName = 'EMPATE'; winnerColor = '#f0e68c'; method = 'Puntuación igualada';
+    winnerName = 'EMPATE'; winnerColor = '#d4a017';
   }
 
   if (playerWon) joust.playerMatchWins++;
   else if (winnerName !== 'EMPATE') joust.enemyMatchWins++;
 
-  // Build history summary
-  let histHtml = '';
-  for (const h of joust.history) {
-    histHtml += `<div style="font:11px sans-serif; color:#999; margin:2px 0">V${h.venida}: ${h.k1Hit.label} (+${h.k1Hit.pts}) vs ${h.k2Hit.label} (+${h.k2Hit.pts})</div>`;
-  }
-
   const isLast = joust.matchIdx >= joust.playerTeam.length - 1;
-  const btnText = isLast ? '🏆 Ver Resultado Final' : '➡ Siguiente Combate';
+  const btnText = isLast ? '🏆 RESULTADOS' : '➡ SIGUIENTE';
 
   const overlay = $('#joust-overlay');
   overlay.innerHTML = `
-    <div style="background:rgba(0,0,0,0.88); padding:24px 20px; border-radius:16px; text-align:center; max-width:340px">
-      <div style="font:bold 28px serif; color:${winnerColor}">¡${winnerName === 'EMPATE' ? 'EMPATE!' : winnerName + ' VENCE!'}</div>
-      <div style="font:14px sans-serif; color:#aaa; margin:6px 0">${method}</div>
-      <div style="font:bold 36px sans-serif; color:#fff; margin:12px 0">${joust.k1Points} — ${joust.k2Points}</div>
-      <div style="margin:10px 0">${histHtml}</div>
-      <div style="font:12px sans-serif; color:#f0e68c; margin:10px 0">
+    <div class="card text-center" style="padding:24px 20px; border: 4px double var(--gold); background-color: var(--card);">
+      <div style="font-family:MedievalSharp; font-size:32px; color:${winnerColor}">${winnerName === 'EMPATE' ? '¡EMPATE!' : '¡VICTORIA!'}</div>
+      <div style="font-family:MedievalSharp; font-size:18px; color:var(--surface); margin:8px 0">${winnerName === 'EMPATE' ? '' : winnerName}</div>
+      <div style="font-family:MedievalSharp; font-size:40px; color:var(--red); margin:12px 0">${joust.k1Points} — ${joust.k2Points}</div>
+      <div style="font-family:Almendra; font-size:14px; color:var(--text-dim); margin:10px 0">
         Torneo: ${joust.playerMatchWins} - ${joust.enemyMatchWins}
       </div>
       <button class="btn btn-gold btn-lg" id="btn-next-match">${btnText}</button>
@@ -1681,25 +1675,24 @@ function showTourneyResult() {
   if (won) player.wins++;
   else if (!draw) player.losses++;
 
-  // Reward gold
   const goldReward = won ? 150 + pWins * 50 : 30 + pWins * 20;
   player.gold += goldReward;
   saveGame();
 
   const overlay = $('#joust-overlay');
   overlay.innerHTML = `
-    <div style="background:rgba(0,0,0,0.9); padding:30px 20px; border-radius:16px; text-align:center; max-width:340px">
-      <div style="font-size:48px; margin-bottom:10px">${won ? '🏆' : draw ? '⚖️' : '💀'}</div>
-      <div style="font:bold 30px serif; color:${won ? '#ffd54f' : draw ? '#aaa' : '#e74c3c'}">
-        ${won ? '¡VICTORIA!' : draw ? 'EMPATE' : 'DERROTA'}
+    <div class="card text-center" style="padding:30px 20px; border: 4px double var(--gold); background-color: var(--card);">
+      <div style="font-size:60px; margin-bottom:10px">${won ? '🏆' : draw ? '⚖️' : '💀'}</div>
+      <div style="font-family:MedievalSharp; font-size:32px; color:${won ? 'var(--gold)' : draw ? '#666' : 'var(--red)'}">
+        ${won ? '¡CAMPEÓN!' : draw ? 'EMPATE' : 'DERROTA'}
       </div>
-      <div style="font:16px sans-serif; color:#aaa; margin:8px 0">
+      <div style="font-family:Almendra; font-size:18px; color:var(--surface); margin:8px 0">
         ${pWins} combates ganados — ${eWins} perdidos
       </div>
-      <div style="font:bold 16px sans-serif; color:#ffd54f; margin:12px 0">
+      <div style="font-family:MedievalSharp; font-size:20px; color:var(--gold-dim); margin:12px 0">
         +${goldReward} 🪙
       </div>
-      <button class="btn btn-gold btn-lg" id="btn-back-home">🏰 Volver a Casa</button>
+      <button class="btn btn-red btn-lg" id="btn-back-home">🏰 VOLVER AL CASTILLO</button>
     </div>`;
   overlay.style.pointerEvents = 'auto';
 
