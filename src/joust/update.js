@@ -39,64 +39,122 @@ export function updateJoust() {
     }
   }
 
-  // Squires always track their knight
+  // Update Squires
   updateSquireTracking(joust.squire1, k1);
   updateSquireTracking(joust.squire2, k2);
+  updateSquireDelivery(joust.squire1, k1);
+  updateSquireDelivery(joust.squire2, k2);
 
-  // ── CHARGE ──
-  if (joust.subPhase === 'charge') {
-    const k1Acc = k1.stunned ? 0.032 : 0.08;
-    const k2Acc = k2.stunned ? 0.032 : 0.08;
-    const k1Cap = k1.stunned ? k1.maxSpeed * 0.42 : k1.maxSpeed;
-    const k2Cap = k2.stunned ? k2.maxSpeed * 0.42 : k2.maxSpeed;
-    k1.speed = Math.min(k1.speed + k1Acc, k1Cap);
-    k2.speed = Math.min(k2.speed + k2Acc, k2Cap);
+  // Individual Knight Logic
+  updateKnight(k1, joust.squire1);
+  updateKnight(k2, joust.squire2);
 
-    k1.y += k1.speed * k1.baseDir;
-    k2.y += k2.speed * k2.baseDir;
-
-    if (joust.t % 3 === 0) {
-      spawnDust(k1.x, k1.y - k1.baseDir * (HORSE_H/2 + 4));
-      spawnDust(k2.x, k2.y - k2.baseDir * (HORSE_H/2 + 4));
-    }
-    if (joust.t % 16 === 0) {
-      spawnHoofPrint(k1);
-      spawnHoofPrint(k2);
-    }
-
-    if (k1.baseDir === 1 && k1.y >= k2.y - 20) {
-      resolveClash(); setSubPhase('clash');
-    } else if (k1.baseDir === -1 && k1.y <= k2.y + 20) {
-      resolveClash(); setSubPhase('clash');
+  // CLASH DETECTION (When they cross paths)
+  if (joust.subPhase !== 'clash' && joust.subPhase !== 'result' && !k1.fallen && !k2.fallen) {
+    const dist = Math.abs(k1.y - k2.y);
+    const meeting = (k1.baseDir === 1) ? (k1.y >= k2.y - 20) : (k1.y <= k2.y + 20);
+    
+    if (meeting && k1.phase === 'charge' && k2.phase === 'charge') {
+      resolveClash();
+      setSubPhase('clash');
+      k1.phase = 'clash'; k1.phaseT = 0;
+      k2.phase = 'clash'; k2.phaseT = 0;
     }
   }
 
-  // ── CLASH ──
+  // Global Sync / Match Flow
   if (joust.subPhase === 'clash') {
-    k1.y += k1.speed * k1.baseDir * 0.5;
-    k2.y += k2.speed * k2.baseDir * 0.5;
-
-    if (k1.fallen && joust.phaseT > 3) {
-      k1.tilt += 0.05 * (k1.side === 'left' ? -1 : 1);
-      k1.x += (k1.side === 'left' ? -1.5 : 1.5);
+    if (joust.phaseT > 20) {
+      setSubPhase('pass');
+      if (!k1.fallen) { k1.phase = 'pass'; k1.phaseT = 0; }
+      if (!k2.fallen) { k2.phase = 'pass'; k2.phaseT = 0; }
     }
-    if (k2.fallen && joust.phaseT > 3) {
-      k2.tilt += 0.05 * (k2.side === 'left' ? -1 : 1);
-      k2.x += (k2.side === 'left' ? -1.5 : 1.5);
-    }
-
-    if (joust.phaseT > 20) setSubPhase('pass');
   }
 
-  // ── PASS ──
-  if (joust.subPhase === 'pass') {
-    for (const k of [k1, k2]) {
+  if (joust.subPhase === 'pass' || joust.subPhase === 'squire') {
+    const k1Done = k1.fallen || k1.phase === 'turn' || k1.phase === 'ready';
+    const k2Done = k2.fallen || k2.phase === 'turn' || k2.phase === 'ready';
+
+    if (k1Done && k2Done) {
+      if (k1.fallen || k2.fallen || joust.venida >= MAX_VENIDAS) {
+        setSubPhase('result');
+      } else {
+        // If lances are broken, we might be in 'squire' subPhase
+        const needsSquire1 = !k1.lanceIntact && k1.squireEff > 0;
+        const needsSquire2 = !k2.lanceIntact && k2.squireEff > 0;
+        
+        if ((needsSquire1 && !k1.lanceIntact) || (needsSquire2 && !k2.lanceIntact)) {
+           if (joust.subPhase !== 'squire') {
+             setSubPhase('squire');
+             if (needsSquire1) activateSquire(joust.squire1, k1);
+             if (needsSquire2) activateSquire(joust.squire2, k2);
+           }
+           
+           // Check if squires finished
+           const sq1Ready = !needsSquire1 || (joust.squire1.phase === 'watching' && k1.lanceIntact);
+           const sq2Ready = !needsSquire2 || (joust.squire2.phase === 'watching' && k2.lanceIntact);
+           
+           if (sq1Ready && sq2Ready) {
+             startNextVenida();
+           }
+        } else {
+          startNextVenida();
+        }
+      }
+    }
+  }
+
+  updateParticles();
+}
+
+function updateKnight(k, sq) {
+  if (!k) return;
+  k.phaseT++;
+
+  // GUARD STATUS: High guard only if enough speed and not stunned
+  // Guardia Baja if: stunned OR speed < 70% of max
+  if (k.stunned || k.speed < k.maxSpeed * 0.7) {
+    k.guard = 'low';
+  } else {
+    k.guard = 'high';
+  }
+
+  switch (k.phase) {
+    case 'ready':
+      // Ready to charge as soon as we are here? No, we wait for next venida to be triggered
+      // Actually, user says: "una vez llega a la zona de inicio directamente arremete"
+      // So if match is active and we are ready, we charge.
+      if (joust.subPhase === 'charge' || joust.subPhase === 'pass' || joust.subPhase === 'turn') {
+         k.phase = 'charge';
+         k.phaseT = 0;
+      }
+      break;
+
+    case 'charge':
+      const acc = k.stunned ? 0.032 : 0.08;
+      const cap = k.stunned ? k.maxSpeed * 0.42 : k.maxSpeed;
+      k.speed = Math.min(k.speed + acc, cap);
+      k.y += k.speed * k.baseDir;
+      
+      if (joust.t % 3 === 0) spawnDust(k.x, k.y - k.baseDir * (HORSE_H/2 + 4));
+      if (joust.t % 16 === 0) spawnHoofPrint(k);
+      break;
+
+    case 'clash':
+      k.y += k.speed * k.baseDir * 0.5;
       if (k.fallen) {
-        if (joust.phaseT < 50) {
+        k.tilt += 0.05 * (k.side === 'left' ? -1 : 1);
+        k.x += (k.side === 'left' ? -1.5 : 1.5);
+      }
+      break;
+
+    case 'pass':
+      if (k.fallen) {
+        if (k.phaseT < 50) {
           k.tilt += 0.02 * (k.side === 'left' ? -1 : 1);
           k.x += (k.side === 'left' ? -0.5 : 0.5);
         }
-        continue;
+        return;
       }
       const endY = k.baseDir === 1 ? TRACK_BOT - 25 : TRACK_TOP + 25;
       const distToEnd = Math.abs(endY - k.y);
@@ -109,98 +167,35 @@ export function updateJoust() {
       k.y += k.speed * k.baseDir;
       k.y = Math.max(TRACK_TOP + 10, Math.min(TRACK_BOT - 10, k.y));
 
-      if (k.speed > 0.5 && joust.t % 4 === 0) {
-        spawnDust(k.x, k.y - k.baseDir * (HORSE_H / 2 + 4));
+      if (k.speed > 0.5 && joust.t % 4 === 0) spawnDust(k.x, k.y - k.baseDir * (HORSE_H / 2 + 4));
+      if (k.speed > 0.5 && joust.t % 16 === 0) spawnHoofPrint(k);
+
+      if (k.speed < 0.08) {
+        k.phase = 'turn';
+        k.phaseT = 0;
+        k.targetRotation = k.rotation + Math.PI;
       }
-      if (k.speed > 0.5 && joust.t % 16 === 0) {
-        spawnHoofPrint(k);
-      }
-    }
+      break;
 
-    const k1Done = k1.fallen || k1.speed < 0.08;
-    const k2Done = k2.fallen || k2.speed < 0.08;
-
-    if (k1Done && k2Done && joust.phaseT > 20) {
-      if (k1.fallen || k2.fallen) {
-        setSubPhase('result');
-      } else if (joust.venida >= MAX_VENIDAS) {
-        setSubPhase('result');
-      } else if (!k1.lanceIntact || !k2.lanceIntact) {
-        setSubPhase('squire');
-        if (!k1.lanceIntact && k1.squireEff > 0) activateSquire(joust.squire1, k1);
-        if (!k2.lanceIntact && k2.squireEff > 0) activateSquire(joust.squire2, k2);
-      } else {
-        setSubPhase('turn');
-      }
-    }
-  }
-
-  // ── SQUIRE ──
-  if (joust.subPhase === 'squire') {
-    updateSquireDelivery(joust.squire1, k1);
-    updateSquireDelivery(joust.squire2, k2);
-
-    if (joust.phaseT > 60) {
-      if (!k1.lanceIntact && joust.squire1.phase === 'watching') {
-        k1.lanceIntact = true; k1.lanceStub = false;
-      }
-      if (!k2.lanceIntact && joust.squire2.phase === 'watching') {
-        k2.lanceIntact = true; k2.lanceStub = false;
-      }
-    }
-
-    const sq1Done = joust.squire1.phase === 'watching';
-    const sq2Done = joust.squire2.phase === 'watching';
-    if ((sq1Done && sq2Done && k1.lanceIntact && k2.lanceIntact) || joust.phaseT > 160) {
-      k1.lanceIntact = true; k1.lanceStub = false;
-      k2.lanceIntact = true; k2.lanceStub = false;
-      joust.squire1.phase = 'watching';
-      joust.squire2.phase = 'watching';
-      setSubPhase('turn');
-    }
-  }
-
-  // ── TURN ──
-  if (joust.subPhase === 'turn') {
-    if (joust.phaseT === 1) {
-      k1.targetRotation = k1.rotation + Math.PI;
-      k2.targetRotation = k2.rotation + Math.PI;
-    }
-    if (joust.phaseT > 70) {
-      k1.baseDir *= -1;
-      k2.baseDir *= -1;
-      k1.rotation = k1.targetRotation;
-      k2.rotation = k2.targetRotation;
-      setSubPhase('pause');
-    }
-  }
-
-  // ── PAUSE ──
-  if (joust.subPhase === 'pause') {
-    if (joust.phaseT > 30) {
-      if (joust.venida >= MAX_VENIDAS) {
-        setSubPhase('result');
-      } else {
-        joust.venida++;
-        joust.k1Hit = null;
-        joust.k2Hit = null;
-        k1.speed = 0;
-        k2.speed = 0;
-
-        // Aturdimiento decrece por venida
-        for (const k of [k1, k2]) {
-          if (k.stunned) {
-            k.stunRounds--;
-            if (k.stunRounds <= 0) k.stunned = false;
-          }
+    case 'turn':
+      if (k.phaseT > 70) {
+        k.baseDir *= -1;
+        k.rotation = k.targetRotation;
+        k.phase = 'ready';
+        k.phaseT = 0;
+        // Aturdimiento decrece al terminar de girar (fin de su venida)
+        if (k.stunned) {
+          k.stunRounds--;
+          if (k.stunRounds <= 0) k.stunned = false;
         }
-
-        setSubPhase('charge');
       }
-    }
+      break;
   }
+}
 
-  // ── RESULT ── (handled by overlay button via gameLoop)
-
-  updateParticles();
+function startNextVenida() {
+  joust.venida++;
+  joust.k1Hit = null;
+  joust.k2Hit = null;
+  setSubPhase('charge');
 }
