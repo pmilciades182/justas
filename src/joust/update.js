@@ -47,6 +47,11 @@ export function updateJoust() {
   // Individual Knight Logic
   updateKnight(k1, joust.squire1);
   updateKnight(k2, joust.squire2);
+  
+  // Robustness: Fallen knights stop speaking
+  if (k1.fallen) k1.speechText = '';
+  if (k2.fallen) k2.speechText = '';
+  
   updateKnightSpeech(k1);
   updateKnightSpeech(k2);
 

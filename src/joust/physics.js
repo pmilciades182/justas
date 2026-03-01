@@ -38,6 +38,7 @@ export function getEffectiveStr(k) {
 
 export function resolveClash() {
   const k1 = joust.k1, k2 = joust.k2;
+  const distY = Math.abs(k1.y - k2.y);
   
   let h1, h2;
 
@@ -48,18 +49,22 @@ export function resolveClash() {
     const lt = HIT_TABLE.find(h => h.type === 'lanceTip');
     h1 = lt; h2 = lt;
   } else {
-    // 90% Lógica normal de cuerpo/escudo
-    // Direct unhorse logic: if one hits and the other is in low guard
+    // Determine who can actually reach whom
+    const r1 = k1.lanceIntact ? 95 : 25;
+    const r2 = k2.lanceIntact ? 95 : 25;
+
+    // K1's hit attempt
     if (k2.guard === 'low' && k1.guard === 'high' && k1.lanceIntact) {
       h1 = HIT_TABLE.find(h => h.type === 'unhorse');
-      h2 = HIT_TABLE.find(h => h.type === 'miss');
-    } else if (k1.guard === 'low' && k2.guard === 'high' && k2.lanceIntact) {
-      h1 = HIT_TABLE.find(h => h.type === 'miss');
+    } else {
+      h1 = (k1.lanceIntact && distY <= r1) ? rollHit(getEffectiveStr(k1), k2.def) : HIT_TABLE.find(h => h.type === 'miss');
+    }
+
+    // K2's hit attempt
+    if (k1.guard === 'low' && k2.guard === 'high' && k2.lanceIntact) {
       h2 = HIT_TABLE.find(h => h.type === 'unhorse');
     } else {
-      // Normal roll (lanceTip is prob 0 in normal table now)
-      h1 = k1.lanceIntact ? rollHit(getEffectiveStr(k1), k2.def) : HIT_TABLE.find(h => h.type === 'miss');
-      h2 = k2.lanceIntact ? rollHit(getEffectiveStr(k2), k1.def) : HIT_TABLE.find(h => h.type === 'miss');
+      h2 = (k2.lanceIntact && distY <= r2) ? rollHit(getEffectiveStr(k2), k1.def) : HIT_TABLE.find(h => h.type === 'miss');
     }
   }
 
