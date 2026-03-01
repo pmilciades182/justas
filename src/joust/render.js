@@ -377,41 +377,61 @@ function drawJoustUI() {
 function drawSpeechBubble(k) {
   if (!k.speechText || k.speechTimer <= 0) return;
 
+  const isProminent = k.speechType === 'prominent';
   ctx.save();
-  ctx.font = 'italic 11px Almendra';
+  // 30% smaller font sizes
+  ctx.font = isProminent ? 'bold 14px MedievalSharp' : 'italic 9px Almendra';
+  
   const textWidth = ctx.measureText(k.speechText).width;
-  const bw = textWidth + 16;
-  const bh = 24;
-  const bx = k.x - bw / 2;
-  const by = k.y - 75;
+  const padding = isProminent ? 18 : 12;
+  const bw = textWidth + padding;
+  const bh = isProminent ? 32 : 18;
+  
+  // Calculate bubble position with screen constraints - reduced offsets
+  let bx = k.x - bw / 2;
+  let by = k.y - (isProminent ? 70 : 55);
+  
+  if (by < 10) by = k.y + 35; // Flip to below if too high
+  
+  // Keep horizontally within canvas
+  bx = Math.max(10, Math.min(W - bw - 10, bx));
 
   // Sombra
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
   ctx.beginPath();
-  ctx.roundRect(bx + 2, by + 2, bw, bh, 6);
+  ctx.roundRect(bx + 2, by + 2, bw, bh, isProminent ? 8 : 4);
   ctx.fill();
 
   // Fondo
-  ctx.fillStyle = '#fff9e6';
-  ctx.strokeStyle = '#d4a017';
-  ctx.lineWidth = 1.5;
+  ctx.fillStyle = isProminent ? '#ffd54f' : '#fff9e6';
+  ctx.strokeStyle = isProminent ? '#8e1616' : '#d4a017';
+  ctx.lineWidth = isProminent ? 2.5 : 1.2;
   ctx.beginPath();
-  ctx.roundRect(bx, by, bw, bh, 6);
+  ctx.roundRect(bx, by, bw, bh, isProminent ? 8 : 4);
   ctx.fill();
   ctx.stroke();
 
-  // Pico de la burbuja
+  // Pico de la burbuja (Tail)
   ctx.beginPath();
-  ctx.moveTo(k.x - 5, by + bh);
-  ctx.lineTo(k.x, by + bh + 8);
-  ctx.lineTo(k.x + 5, by + bh);
+  const isBelow = by > k.y;
+  const tailW = isProminent ? 6 : 4;
+  const tailH = isProminent ? 10 : 6;
+  if (isBelow) {
+    ctx.moveTo(k.x - tailW, by);
+    ctx.lineTo(k.x, by - tailH);
+    ctx.lineTo(k.x + tailW, by);
+  } else {
+    ctx.moveTo(k.x - tailW, by + bh);
+    ctx.lineTo(k.x, by + bh + tailH);
+    ctx.lineTo(k.x + tailW, by + bh);
+  }
   ctx.fill();
   ctx.stroke();
 
   // Texto
-  ctx.fillStyle = '#2c1e16';
+  ctx.fillStyle = isProminent ? '#8e1616' : '#2c1e16';
   ctx.textAlign = 'center';
-  ctx.fillText(k.speechText, k.x, by + 16);
+  ctx.fillText(k.speechText, bx + bw/2, by + (isProminent ? 21 : 12));
 
   ctx.restore();
 }

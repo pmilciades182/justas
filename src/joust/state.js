@@ -25,8 +25,8 @@ export const joust = {
   resultColor: '#fff',
   
   // Team Match State
-  playerTeam: [], // { knightId, equip, hp }
-  enemyTeam: [],  // { knightId, equip, hp }
+  playerTeam: [], // { knightId, equip, hp, fatigue }
+  enemyTeam: [],  // { knightId, equip, hp, fatigue }
   playerMatchWins: 0,
   enemyMatchWins: 0,
   totalMatches: 4, // Standard 4 knights per squad

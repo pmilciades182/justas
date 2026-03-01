@@ -41,6 +41,7 @@ export function makeJoustKnight(knightId, side, equipData, customData = null) {
     wobbleDecay: 0,
     hp: 100,
     maxHp: 100,
+    fatigue: 0,      // 0 to 100
     stunned: false,
     stunRounds: 0,
     bloodMarks: [],
@@ -50,6 +51,7 @@ export function makeJoustKnight(knightId, side, equipData, customData = null) {
     guard: 'low',    // high | low
     speechText: '',
     speechTimer: 0,
+    speechType: 'normal', // normal | prominent
   };
 }
 
@@ -57,11 +59,18 @@ export function generateEnemy(count) {
   // Pick one random themed squad from ENEMY_SQUADS
   const squad = ENEMY_SQUADS[Math.floor(Math.random() * ENEMY_SQUADS.length)];
   
+  // Pick one uniform dark color for the whole squad (indices 8-11 in KNIGHT_COLORS)
+  const squadColorIdx = 8 + Math.floor(Math.random() * 4);
+  
+  // Pick one uniform icon for the whole squad (the emblem of the house)
+  const squadIcon = squad.knights[0].icon;
+
   const knights = squad.knights.map(k => ({
     knightId: 'enemy_' + k.name.replace(/\s/g, '_'),
     hp: 100,
     maxHp: 100,
-    customData: k, // Pass the predefined knight data directly
+    fatigue: 0,
+    customData: { ...k, colorIdx: squadColorIdx, icon: squadIcon }, // Override individual color and icon
     equip: {
       armor: k.armor,
       horse: k.horse,

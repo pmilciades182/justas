@@ -155,9 +155,20 @@ function updateKnight(k, sq) {
       break;
 
     case 'charge':
-      const acc = k.stunned ? 0.032 : 0.08;
-      const cap = k.stunned ? k.maxSpeed * 0.42 : k.maxSpeed;
-      k.speed = Math.min(k.speed + acc, cap);
+      // HORSE MECHANICS: Triple progressive acceleration based on position
+      const trackLen = TRACK_BOT - TRACK_TOP;
+      const distFromStart = k.baseDir === 1 ? (k.y - TRACK_TOP) : (TRACK_BOT - k.y);
+      const progress = Math.max(0, Math.min(1, distFromStart / trackLen));
+      
+      // Base acceleration tripled (0.06 -> 0.18) and gain tripled (0.04 -> 0.12)
+      const baseAcc = k.stunned ? 0.075 : 0.18;
+      const currentAcc = baseAcc + (progress * 0.12); 
+      
+      // Fatigue affects max speed (each 10% fatigue reduces max speed by 5%)
+      const fatigueFactor = 1 - (k.fatigue / 100) * 0.5;
+      const cap = (k.stunned ? k.maxSpeed * 0.42 : k.maxSpeed) * fatigueFactor;
+      
+      k.speed = Math.min(k.speed + currentAcc, cap);
       k.y += k.speed * k.baseDir;
       
       // MAXIMUM ADVANCE LIMIT (Past the other end)

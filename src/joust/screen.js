@@ -9,6 +9,7 @@ import { joust, setSubPhase } from './state.js';
 import { makeJoustKnight, generateEnemy, makeSquire } from './knights.js';
 import { switchScreen } from '../ui/nav.js';
 import { spawnConfetti, spawnRoses, spawnTrash } from './particles.js';
+import { knightSay } from './dialogue.js';
 
 export function initJoustScreen() {
   resizeCanvas();
@@ -18,11 +19,12 @@ export function initJoustScreen() {
     knightId: kid,
     equip: player.equip[kid] || { armor: null, horse: null, squire: null },
     hp: 100,
-    maxHp: 100
+    maxHp: 100,
+    fatigue: 0
   }));
   
   const enemyResult = generateEnemy(4);
-  joust.enemyTeam = enemyResult.knights;
+  joust.enemyTeam = enemyResult.knights.map(k => ({ ...k, hp: 100, maxHp: 100, fatigue: 0 }));
   joust.enemySquadData = enemyResult.squadData;
 
   joust.matchIdx = 0;
@@ -220,7 +222,7 @@ export function showMatchIntro() {
           <div style="font-size:55px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2))">${pkd.icon}</div>
           <div style="font-family:MedievalSharp; font-size:16px; color:${pc.plume}; margin-top:8px; font-weight:bold">${pkd.name}</div>
           <div style="font-family:Almendra; font-size:11px; color:#5d4037; margin-top:4px">
-            HP: ${pkData.hp}/100<br>
+            HP: ${pkData.hp}/100 | Cansancio: ${pkData.fatigue || 0}%<br>
             FUE ${pkd.str} · DEF ${pkd.def}
           </div>
         </div>
@@ -231,7 +233,7 @@ export function showMatchIntro() {
           <div style="font-size:55px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2))">${ekd.icon}</div>
           <div style="font-family:MedievalSharp; font-size:16px; color:${ec.plume}; margin-top:8px; font-weight:bold">${ekd.name}</div>
           <div style="font-family:Almendra; font-size:11px; color:#5d4037; margin-top:4px">
-            HP: ${ekData.hp}/100<br>
+            HP: ${ekData.hp}/100 | Cansancio: ${ekData.fatigue || 0}%<br>
             FUE ${ekd.str} · DEF ${ekd.def}
           </div>
         </div>
@@ -259,12 +261,14 @@ export function startMatch() {
 
   joust.k1 = makeJoustKnight(pk.knightId, 'left', pk.equip);
   joust.k1.hp = pk.hp; 
+  joust.k1.fatigue = pk.fatigue || 0;
   joust.k1.lanceIntact = true; // Start with lance
   joust.k1.lanceLoading = 0;
   
   // For enemy, pass ek.customData
   joust.k2 = makeJoustKnight(ek.knightId, 'right', ek.equip, ek.customData);
   joust.k2.hp = ek.hp;
+  joust.k2.fatigue = ek.fatigue || 0;
   joust.k2.lanceIntact = true; // Start with lance
   joust.k2.lanceLoading = 0;
   
@@ -290,6 +294,11 @@ export function startMatch() {
 
   joust.k1.speed = 0;
   joust.k2.speed = 0;
+  
+  // WAR CRIES at start
+  knightSay(joust.k1, 'war_cry');
+  knightSay(joust.k2, 'war_cry');
+
   setSubPhase('charge');
 }
 
@@ -297,9 +306,16 @@ export function showMatchResult() {
   joust.active = false;
   const k1 = joust.k1, k2 = joust.k2;
 
-  // Persist HP back to the teams
-  joust.playerTeam[joust.selectedPlayerKnightIdx].hp = k1.hp;
-  joust.enemyTeam[joust.selectedEnemyKnightIdx].hp = k2.hp;
+  // Persist HP and Fatigue back to the teams
+  const pkData = joust.playerTeam[joust.selectedPlayerKnightIdx];
+  const ekData = joust.enemyTeam[joust.selectedEnemyKnightIdx];
+  
+  pkData.hp = k1.hp;
+  ekData.hp = k2.hp;
+  
+  // Increase fatigue (15% per duel)
+  pkData.fatigue = Math.min(100, (pkData.fatigue || 0) + 15);
+  ekData.fatigue = Math.min(100, (ekData.fatigue || 0) + 15);
 
   const k1Unhorsed = joust.history.some(h => h.k2Hit.type === 'unhorse');
   const k2Unhorsed = joust.history.some(h => h.k1Hit.type === 'unhorse');

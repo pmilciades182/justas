@@ -94,8 +94,12 @@ export function resolveClash() {
 
   const stunBefore1 = k1.stunned;
   const stunBefore2 = k2.stunned;
-  applyHitEffect(h1, k2);
-  applyHitEffect(h2, k1);
+  const totalImpactSpeed = k1.speed + k2.speed;
+  // Standard speed is around 4-5. Let's make a multiplier (1.0 at speed 4.5)
+  const damageMult = totalImpactSpeed / 4.5;
+
+  applyHitEffect(h1, k2, damageMult);
+  applyHitEffect(h2, k1, damageMult);
 
   joust.stunEvent = null;
   if (!stunBefore2 && k2.stunned) joust.stunEvent = k2.name;
@@ -112,7 +116,7 @@ export function resolveClash() {
   if (maxPts >= 2) spawnGroundSplinters(impactX, impactY, 4 + Math.min(maxPts, 7));
 }
 
-export function applyHitEffect(hit, defender) {
+export function applyHitEffect(hit, defender, damageMult = 1.0) {
   const s = defender.side === 'left' ? -1 : 1;
   switch (hit.type) {
     case 'arm':      defender.wobble = 0.08 * s; defender.wobbleDecay = 0.015; break;
@@ -131,7 +135,7 @@ export function applyHitEffect(hit, defender) {
   const baseDmg = HP_DAMAGE[hit.type] || 0;
   if (baseDmg > 0) {
     const defFactor = Math.max(0.3, 1 - (defender.def - 5) * 0.05);
-    const dmg = Math.max(1, Math.round(baseDmg * defFactor));
+    const dmg = Math.max(1, Math.round(baseDmg * defFactor * damageMult));
     defender.hp = Math.max(0, defender.hp - dmg);
 
     const markX = s * (6 + Math.random() * 16);

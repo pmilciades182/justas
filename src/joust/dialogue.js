@@ -2,6 +2,8 @@
 // SISTEMA DE DIÁLOGOS DE CABALLEROS
 // ══════════════════════════════════════
 
+import { WAR_CRIES } from '../data.js';
+
 const PHRASES = {
   // Cuando están esperando lanza
   waiting: [
@@ -56,16 +58,28 @@ const PHRASES = {
   ]
 };
 
-export function knightSay(k, category) {
-  if (k.speechTimer > 0) return; // Don't interrupt current speech
-  const list = PHRASES[category] || PHRASES.reaction;
+export function knightSay(k, category, type = 'normal') {
+  if (k.speechTimer > 0 && type === 'normal') return; // Don't interrupt if normal
+  
+  let list;
+  if (category === 'war_cry') {
+    list = WAR_CRIES;
+    k.speechType = 'prominent';
+  } else {
+    list = PHRASES[category] || PHRASES.reaction;
+    k.speechType = 'normal';
+  }
+
   k.speechText = list[Math.floor(Math.random() * list.length)];
-  k.speechTimer = 180; // 3 seconds at 60fps
+  k.speechTimer = k.speechType === 'prominent' ? 120 : 90; // Half duration: 2s/1.5s approx
 }
 
 export function updateKnightSpeech(k) {
   if (k.speechTimer > 0) {
     k.speechTimer--;
-    if (k.speechTimer <= 0) k.speechText = '';
+    if (k.speechTimer <= 0) {
+      k.speechText = '';
+      k.speechType = 'normal';
+    }
   }
 }

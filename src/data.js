@@ -44,12 +44,28 @@ export const KNIGHT_COLORS = [
   { armor: '#ab47bc', plume: '#7b1fa2', shield: '#4a148c', horse: '#4a2810' },
   { armor: '#ef5350', plume: '#b71c1c', shield: '#d32f2f', horse: '#5c3317' },
   { armor: '#e0e0e0', plume: '#bdbdbd', shield: '#757575', horse: '#3b1f0a' },
+  // Enemy Dark Themes
+  { armor: '#1a1a1a', plume: '#333333', shield: '#000000', horse: '#2b1a0a' }, // Black
+  { armor: '#1b3022', plume: '#2e7d32', shield: '#0a2b10', horse: '#3b1f0a' }, // Dark Green
+  { armor: '#1a237e', plume: '#3949ab', shield: '#0d1440', horse: '#2b1a0a' }, // Dark Blue
+  { armor: '#4a0a0b', plume: '#8e1616', shield: '#260505', horse: '#3b1f0a' }, // Dark Red
 ];
 
 export function getKnightData(id) { return DB_KNIGHTS.find(k => k.id === id); }
 export function getArmorData(id)  { return DB_ARMORS.find(a => a.id === id); }
 export function getHorseData(id)  { return DB_HORSES.find(h => h.id === id); }
 export function getSquireData(id) { return DB_SQUIRES.find(s => s.id === id); }
+
+export const WAR_CRIES = [
+  "¡POR EL HONOR Y LA GLORIA!", "¡DEUS VULT!", "¡POR MI ESTIRPE!", "¡SENTID EL ACERO!",
+  "¡A LA CARGA!", "¡PARA MÍ LA VICTORIA!", "¡MORID CON HONOR!", "¡POR EL REY!",
+  "¡SANGRE Y HIERRO!", "¡TIEMBLA ANTE MÍ!", "¡POR LA CORONA!", "¡NO HABRÁ PIEDAD!",
+  "¡MI LANZA OS ENCONTRARÁ!", "¡VALHALLA ME ESPERA!", "¡POR LA PATRIA!", "¡FUERZA Y HONOR!",
+  "¡QUE DIOS JUZGUE!", "¡AL SUELO, GUSANO!", "¡POR MI CASA!", "¡SOY LA TORMENTA!",
+  "¡MI NOMBRE SERÁ LEYENDA!", "¡MUERTE O VICTORIA!", "¡POR EL SOL PONIENTE!", "¡SENTID MI FURIA!",
+  "¡EL TRONO ES MÍO!", "¡POR LOS ANCESTROS!", "¡NI UN PASO ATRÁS!", "¡POR LA JUSTICIA!",
+  "¡MI VALOR ES ETERNO!", "¡QUE COMIENCE LA LIZA!"
+];
 
 export const ENEMY_SQUADS = [
   {
@@ -100,6 +116,56 @@ export const ENEMY_SQUADS = [
       { name: 'Lu Bu', str: 10, def: 4, hor: 10, icon: '👹', colorIdx: 6, armor: 'milanes', horse: 'destrero', squire: 'experto' },
       { name: 'Guan Yu', str: 9, def: 8, hor: 8, icon: '👺', colorIdx: 2, armor: 'justa', horse: 'corcel', squire: 'vetera' },
       { name: 'Yue Fei', str: 7, def: 10, hor: 6, icon: '🦅', colorIdx: 3, armor: 'milanes', horse: 'andaluz', squire: 'experto' }
+    ]
+  },
+  {
+    name: 'Orden del León Dorado',
+    origin: 'Inglesa',
+    knights: [
+      { name: 'Sir Richard Lionheart', str: 9, def: 8, hor: 7, icon: '🦁', colorIdx: 0, armor: 'justa', horse: 'destrero', squire: 'vetera' },
+      { name: 'Sir William Marshall', str: 8, def: 10, hor: 8, icon: '⚔️', colorIdx: 1, armor: 'milanes', horse: 'andaluz', squire: 'experto' },
+      { name: 'Sir Edward Woodstock', str: 10, def: 6, hor: 9, icon: '🛡️', colorIdx: 2, armor: 'placas', horse: 'corcel', squire: 'aprend' },
+      { name: 'Sir John Hawkwood', str: 7, def: 7, hor: 10, icon: '🏹', colorIdx: 3, armor: 'cuero', horse: 'rocin', squire: 'novato' }
+    ]
+  },
+  {
+    name: 'Shogunato Ashikaga',
+    origin: 'Japonesa',
+    knights: [
+      { name: 'Musashi Miyamoto', str: 10, def: 5, hor: 8, icon: '🌙', colorIdx: 4, armor: 'cuero', horse: 'corcel', squire: 'experto' },
+      { name: 'Tadakatsu Honda', str: 9, def: 10, hor: 6, icon: '👹', colorIdx: 5, armor: 'milanes', horse: 'destrero', squire: 'vetera' },
+      { name: 'Yukimura Sanada', str: 8, def: 7, hor: 10, icon: '🔥', colorIdx: 6, armor: 'placas', horse: 'andaluz', squire: 'aprend' },
+      { name: 'Masamune Date', str: 9, def: 8, hor: 7, icon: '🦅', colorIdx: 7, armor: 'justa', horse: 'corcel', squire: 'experto' }
+    ]
+  },
+  {
+    name: 'Húsares Alados de Varsovia',
+    origin: 'Polaca',
+    knights: [
+      { name: 'Jan Sobieski III', str: 9, def: 9, hor: 10, icon: '🪶', colorIdx: 0, armor: 'justa', horse: 'andaluz', squire: 'vetera' },
+      { name: 'Stanislaw Zolkiewski', str: 8, def: 8, hor: 9, icon: '🛡️', colorIdx: 1, armor: 'milanes', horse: 'destrero', squire: 'experto' },
+      { name: 'Stefan Czarniecki', str: 7, def: 10, hor: 8, icon: '⚔️', colorIdx: 2, armor: 'placas', horse: 'corcel', squire: 'aprend' },
+      { name: 'Jerzy Lubomirski', str: 9, def: 7, hor: 9, icon: '🦅', colorIdx: 3, armor: 'milanes', horse: 'destrero', squire: 'novato' }
+    ]
+  },
+  {
+    name: 'Clan del Lobo Gélido',
+    origin: 'Nórdica',
+    knights: [
+      { name: 'Ragnar Lodbrok', str: 10, def: 6, hor: 7, icon: '🐺', colorIdx: 4, armor: 'cuero', horse: 'rocin', squire: 'experto' },
+      { name: 'Bjorn Ironside', str: 8, def: 10, hor: 6, icon: '⚓', colorIdx: 5, armor: 'placas', horse: 'destrero', squire: 'aprend' },
+      { name: 'Ivar the Boneless', str: 10, def: 4, hor: 9, icon: '🪓', colorIdx: 6, armor: 'cuero', horse: 'corcel', squire: 'novato' },
+      { name: 'Harald Hardrada', str: 9, def: 8, hor: 8, icon: '🏔️', colorIdx: 7, armor: 'milanes', horse: 'andaluz', squire: 'vetera' }
+    ]
+  },
+  {
+    name: 'Guardia de los Inmortales',
+    origin: 'Persa',
+    knights: [
+      { name: 'Ciro el Grande', str: 9, def: 9, hor: 8, icon: '☀️', colorIdx: 0, armor: 'justa', horse: 'andaluz', squire: 'vetera' },
+      { name: 'Darío I el Grande', str: 8, def: 10, hor: 7, icon: '🦁', colorIdx: 1, armor: 'milanes', horse: 'destrero', squire: 'experto' },
+      { name: 'Jerjes I', str: 10, def: 5, hor: 9, icon: '🏹', colorIdx: 2, armor: 'placas', horse: 'corcel', squire: 'aprend' },
+      { name: 'Artajerjes', str: 7, def: 8, hor: 10, icon: '💎', colorIdx: 3, armor: 'justa', horse: 'corcel', squire: 'vetera' }
     ]
   }
 ];
