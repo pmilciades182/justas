@@ -581,6 +581,12 @@ const HIT_TABLE = [
   { type: 'unhorse',  prob: 0.12, pts: 10, brk: true,  label: '¡Desmontado!' },
 ];
 
+// Daño base de HP por tipo de impacto (antes de reducción por DEF)
+const HP_DAMAGE = {
+  miss: 0, attaint: 0,
+  arm: 8, shield: 14, helmet: 22, lanceTip: 30, unhorse: 0,
+};
+
 function rollHit(strBonus, defBonus) {
   let r = Math.random();
   // Adjust probabilities based on stats
@@ -621,7 +627,8 @@ const joust = {
   k1Hit: null, k2Hit: null,
   k1Points: 0, k2Points: 0,
   history: [],
-  sparks: [], dust: [], splinters: [],
+  sparks: [], dust: [], splinters: [], blood: [],
+  stunEvent: null,
   shakeAmt: 0, flashAlpha: 0,
   resultText: '',
   resultColor: '#fff',
@@ -669,6 +676,11 @@ function makeJoustKnight(knightId, side, equipData) {
     tilt: 0,
     wobble: 0,
     wobbleDecay: 0,
+    hp: 100,
+    maxHp: 100,
+    stunned: false,
+    stunTimer: 0,
+    bloodMarks: [],
     side: side,
   };
 }
@@ -741,6 +753,32 @@ function spawnSplinters(x, y, count) {
     });
   }
 }
+// Partículas de sangre en posición del defensor
+function spawnBlood(x, y, count) {
+  for (let i = 0; i < count; i++) {
+    const a = -Math.PI * 0.5 + (Math.random() - 0.5) * Math.PI * 1.4;
+    const sp = 1.5 + Math.random() * 5;
+    joust.blood.push({
+      x: x + (Math.random() - 0.5) * 12,
+      y: y + (Math.random() - 0.5) * 12,
+      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.8,
+      life: 1, decay: 0.018 + Math.random() * 0.018,
+      size: 2 + Math.random() * 3.5,
+    });
+  }
+}
+
+// STR efectiva considerando HP actual y aturdimiento
+function getEffectiveStr(k) {
+  let str = k.str;
+  const hpPct = k.hp / k.maxHp;
+  if (hpPct < 0.25) str -= 3;
+  else if (hpPct < 0.50) str -= 2;
+  else if (hpPct < 0.75) str -= 1;
+  if (k.stunned) str -= 2;
+  return Math.max(1, str);
+}
+
 function updateParticles() {
   for (const p of joust.sparks) { p.x+=p.vx; p.y+=p.vy; p.vy+=0.09; p.vx*=0.97; p.life-=p.decay; }
   joust.sparks = joust.sparks.filter(p => p.life > 0);
@@ -748,13 +786,16 @@ function updateParticles() {
   joust.dust = joust.dust.filter(d => d.life > 0);
   for (const s of joust.splinters) { s.x+=s.vx; s.y+=s.vy; s.vy+=0.12; s.angle+=s.spin; s.life-=s.decay; }
   joust.splinters = joust.splinters.filter(s => s.life > 0);
+  for (const b of joust.blood) { b.x+=b.vx; b.y+=b.vy; b.vy+=0.14; b.vx*=0.91; b.life-=b.decay; }
+  joust.blood = joust.blood.filter(b => b.life > 0);
 }
 
 // ── Clash resolution ──
 function resolveClash() {
   const k1 = joust.k1, k2 = joust.k2;
-  let h1 = rollHit(k1.str, k2.def); // k1 attacks k2
-  let h2 = rollHit(k2.str, k1.def); // k2 attacks k1
+  // STR efectiva según HP y estado de aturdimiento
+  let h1 = rollHit(getEffectiveStr(k1), k2.def); // k1 attacks k2
+  let h2 = rollHit(getEffectiveStr(k2), k1.def); // k2 attacks k1
 
   if (h1.type === 'lanceTip' || h2.type === 'lanceTip') {
     const lt = HIT_TABLE.find(h => h.type === 'lanceTip');
@@ -791,9 +832,20 @@ function resolveClash() {
   if (h1.brk) { k1.lanceIntact = false; k1.lanceStub = true; }
   if (h2.brk) { k2.lanceIntact = false; k2.lanceStub = true; }
 
-  // Wobble/fall
-  applyHitEffect(h1, k2);
-  applyHitEffect(h2, k1);
+  // Wobble/fall + HP + stun
+  const stunBefore1 = k1.stunned;
+  const stunBefore2 = k2.stunned;
+  applyHitEffect(h1, k2); // h1 impacta en k2
+  applyHitEffect(h2, k1); // h2 impacta en k1
+
+  // Detectar stun nuevo esta venida
+  joust.stunEvent = null;
+  if (!stunBefore2 && k2.stunned) joust.stunEvent = k2.name;
+  else if (!stunBefore1 && k1.stunned) joust.stunEvent = k1.name;
+
+  // Sangre en el defensor golpeado
+  if (h1.pts > 0) spawnBlood(k2.x, k2.y, Math.min(h1.pts * 4, 22));
+  if (h2.pts > 0) spawnBlood(k1.x, k1.y, Math.min(h2.pts * 4, 22));
 }
 
 function applyHitEffect(hit, defender) {
@@ -803,7 +855,41 @@ function applyHitEffect(hit, defender) {
     case 'shield':   defender.wobble = 0.12 * s; defender.wobbleDecay = 0.012; break;
     case 'helmet':   defender.wobble = 0.22 * s; defender.wobbleDecay = 0.010; break;
     case 'lanceTip': defender.wobble = 0.15 * s; defender.wobbleDecay = 0.012; break;
-    case 'unhorse':  defender.fallen = true; break;
+    case 'unhorse':  defender.fallen = true; defender.hp = 0; break;
+  }
+
+  // Daño de HP (escalado por DEF)
+  const baseDmg = HP_DAMAGE[hit.type] || 0;
+  if (baseDmg > 0) {
+    const defFactor = Math.max(0.3, 1 - (defender.def - 5) * 0.05);
+    const dmg = Math.max(1, Math.round(baseDmg * defFactor));
+    defender.hp = Math.max(0, defender.hp - dmg);
+
+    // Marca de sangre en el cuerpo del caballero (coords locales del sprite)
+    const markX = s * (6 + Math.random() * 16);
+    const markY = -10 + Math.random() * 30;
+    if (defender.bloodMarks.length < 10) {
+      defender.bloodMarks.push({ x: markX, y: markY, r: 2 + Math.random() * 3 });
+      if (Math.random() < 0.5) {
+        defender.bloodMarks.push({
+          x: markX + (Math.random() - 0.5) * 8,
+          y: markY + (Math.random() - 0.5) * 6,
+          r: 1.2 + Math.random() * 2,
+        });
+      }
+    }
+  }
+
+  // Probabilidad de aturdir según tipo de golpe y HP actual
+  let stunChance = 0;
+  if (hit.type === 'helmet')   stunChance = 0.30;
+  else if (hit.type === 'lanceTip') stunChance = 0.20;
+  const hpPct = defender.hp / defender.maxHp;
+  if (hpPct < 0.50) stunChance += 0.15;
+  if (hpPct < 0.25) stunChance += 0.20;
+  if (stunChance > 0 && !defender.stunned && Math.random() < stunChance) {
+    defender.stunned = true;
+    defender.stunTimer = 90 + Math.floor(Math.random() * 80);
   }
 }
 
@@ -880,6 +966,14 @@ function updateJoust() {
     }
   }
 
+  // Countdown del aturdimiento
+  for (const k of [k1, k2]) {
+    if (k && k.stunned && k.stunTimer > 0) {
+      k.stunTimer--;
+      if (k.stunTimer <= 0) k.stunned = false;
+    }
+  }
+
   // Smooth rotation
   for (const k of [k1, k2]) {
     if (!k) continue;
@@ -897,9 +991,13 @@ function updateJoust() {
 
   // ── CHARGE ──
   if (joust.subPhase === 'charge') {
-    // Accelerate to max speed
-    k1.speed = Math.min(k1.speed + 0.08, k1.maxSpeed);
-    k2.speed = Math.min(k2.speed + 0.08, k2.maxSpeed);
+    // Accelerate to max speed (reducido si está aturdido)
+    const k1Acc = k1.stunned ? 0.032 : 0.08;
+    const k2Acc = k2.stunned ? 0.032 : 0.08;
+    const k1Cap = k1.stunned ? k1.maxSpeed * 0.42 : k1.maxSpeed;
+    const k2Cap = k2.stunned ? k2.maxSpeed * 0.42 : k2.maxSpeed;
+    k1.speed = Math.min(k1.speed + k1Acc, k1Cap);
+    k2.speed = Math.min(k2.speed + k2Acc, k2Cap);
 
     k1.y += k1.speed * k1.baseDir;
     k2.y += k2.speed * k2.baseDir;
@@ -1165,6 +1263,14 @@ function drawParticles() {
     ctx.stroke();
     ctx.restore();
   }
+  // Gotas de sangre
+  for (const b of joust.blood) {
+    ctx.globalAlpha = b.life * 0.88;
+    ctx.fillStyle = b.life > 0.5 ? '#cc1010' : '#7a0a0a';
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.size * Math.max(0.3, b.life), 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.globalAlpha = 1;
 }
 
@@ -1305,6 +1411,48 @@ function drawJoustUI() {
   }
   ctx.restore();
 
+  // 5b. BARRAS DE HP (debajo del HUD principal)
+  {
+    const hpY = margin + hudH + 5;
+    const hpH = 7;
+    const hpW = 130;
+    const hpPadX = 8;
+
+    ctx.save();
+    // Fondo oscuro para la zona HP
+    ctx.fillStyle = 'rgba(0,0,0,0.52)';
+    ctx.beginPath();
+    ctx.roundRect(startX_HUD, hpY - 3, innerW, hpH + 18, [0, 0, 4, 4]);
+    ctx.fill();
+
+    // HP Caballero (izquierda)
+    const k1Pct = k1.hp / k1.maxHp;
+    const k1HpCol = k1Pct > 0.60 ? '#27ae60' : k1Pct > 0.30 ? '#e67e22' : '#c0392b';
+    ctx.fillStyle = 'rgba(255,255,255,0.10)';
+    ctx.beginPath(); ctx.roundRect(startX_HUD + hpPadX, hpY, hpW, hpH, 2); ctx.fill();
+    ctx.fillStyle = k1HpCol;
+    ctx.beginPath(); ctx.roundRect(startX_HUD + hpPadX, hpY, Math.max(2, hpW * k1Pct), hpH, 2); ctx.fill();
+
+    // HP Adversario (derecha, se vacía de derecha a izquierda)
+    const k2Pct = k2.hp / k2.maxHp;
+    const k2HpCol = k2Pct > 0.60 ? '#27ae60' : k2Pct > 0.30 ? '#e67e22' : '#c0392b';
+    const k2BarX = startX_HUD + innerW - hpPadX - hpW;
+    const k2FillW = Math.max(2, hpW * k2Pct);
+    ctx.fillStyle = 'rgba(255,255,255,0.10)';
+    ctx.beginPath(); ctx.roundRect(k2BarX, hpY, hpW, hpH, 2); ctx.fill();
+    ctx.fillStyle = k2HpCol;
+    ctx.beginPath(); ctx.roundRect(k2BarX + hpW - k2FillW, hpY, k2FillW, hpH, 2); ctx.fill();
+
+    // Etiquetas HP
+    ctx.font = 'bold 8px Almendra';
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.textAlign = 'left';
+    ctx.fillText(`HP ${k1.hp}/${k1.maxHp}${k1.stunned ? '  !! ATURDIDO' : ''}`, startX_HUD + hpPadX, hpY + hpH + 9);
+    ctx.textAlign = 'right';
+    ctx.fillText(`${k2.stunned ? 'ATURDIDO !!  ' : ''}${k2.hp}/${k2.maxHp} HP`, startX_HUD + innerW - hpPadX, hpY + hpH + 9);
+    ctx.restore();
+  }
+
   // 5. EFECTOS DE IMPACTO (Centrados dinámicamente)
   if (joust.subPhase === 'clash') {
     const a = Math.max(0, 1 - joust.phaseT/20);
@@ -1317,12 +1465,21 @@ function drawJoustUI() {
       if (maxPts >= 10) { txt = '¡DESMONTADO!'; col = '#ff4444'; }
       else if (maxPts >= 3) { txt = '¡GRAN GOLPE!'; col = '#e67e22'; }
       else if (maxPts === 0) { txt = joust.k1Hit?.type === 'miss' ? '¡FALLO!' : '¡TOQUE!'; col = '#a09080'; }
-      
+
       ctx.font = '52px MedievalSharp';
       ctx.fillStyle = 'rgba(0,0,0,0.6)';
       ctx.fillText(txt, W/2 + 4, H/2 + 4);
       ctx.fillStyle = col;
       ctx.fillText(txt, W/2, H/2);
+
+      // Notificación de aturdimiento
+      if (joust.stunEvent) {
+        ctx.font = '26px MedievalSharp';
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillText(`** ¡${joust.stunEvent} ATURDIDO! **`, W/2 + 2, H/2 + 52);
+        ctx.fillStyle = '#FFD700';
+        ctx.fillText(`** ¡${joust.stunEvent} ATURDIDO! **`, W/2, H/2 + 50);
+      }
       ctx.restore();
     }
   }

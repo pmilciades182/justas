@@ -26,10 +26,10 @@ export function drawJoustKnight(ctx, k, t, COL, LANE_X, HORSE_W, HORSE_H, KNIGHT
   // 3. Caballero
   ctx.save();
   ctx.translate(bob, 5);
-  
+
   // Capa inferior (Piernas)
   drawLegs(ctx, k.colors.armor, '#222', '#4a2810', KNIGHT_BW, KNIGHT_BH);
-  
+
   // Capa media (Torso y brazos)
   drawTorso(ctx, k.colors.armor, KNIGHT_BW, KNIGHT_BH);
   drawArms(ctx, k.colors.armor, k.colors.shield, shieldSide, KNIGHT_BW);
@@ -37,7 +37,35 @@ export function drawJoustKnight(ctx, k, t, COL, LANE_X, HORSE_W, HORSE_H, KNIGHT
   // Capa superior (Cabeza y Lanza)
   drawHead(ctx, k.colors.armor, k.colors.plume, KNIGHT_BH);
   drawLance(ctx, k.lanceIntact, k.lanceStub, shieldSide, COL.lance, LANCE_LEN, KNIGHT_BH);
-  
+
+  // Marcas de sangre acumuladas en el cuerpo
+  if (k.bloodMarks && k.bloodMarks.length > 0) {
+    for (const bm of k.bloodMarks) {
+      ctx.globalAlpha = 0.72;
+      ctx.fillStyle = '#8b0000';
+      ctx.beginPath();
+      ctx.arc(bm.x, bm.y, bm.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Estrellas de aturdimiento orbitando el yelmo
+  if (k.stunned) {
+    const headY = 18; // centro del yelmo en coords locales del sprite
+    for (let i = 0; i < 3; i++) {
+      const angle = t * 0.10 + (i * Math.PI * 2 / 3);
+      const sx = Math.cos(angle) * 16;
+      const sy = headY + Math.sin(angle) * 9;
+      ctx.globalAlpha = 0.85 + Math.sin(t * 0.18 + i) * 0.15;
+      ctx.fillStyle = '#FFD700';
+      ctx.font = '11px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('\u2605', sx, sy);
+    }
+    ctx.globalAlpha = 1;
+  }
+
   ctx.restore(); // Fin caballero
   ctx.restore(); // Fin rotación global
 }
