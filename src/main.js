@@ -1,4 +1,7 @@
-import { drawJoustKnight, drawSquire } from './knightDrawer.js';
+import { 
+  drawJoustKnight, drawSquire,
+  drawHorse, drawLegs, drawTorso, drawArms, drawHead, drawLance, drawShadow 
+} from './knightDrawer.js';
 
 // ═══════════════════════════════════════════════════════════════
 // JUSTA REAL — Prototipo completo de juego medieval de justas
@@ -132,16 +135,17 @@ function switchScreen(name) {
   $(`#screen-${name}`).classList.add('active');
   $$('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.screen === name));
 
-  // Hide topbar & nav during joust
-  const inJoust = name === 'joust';
-  $('#topbar').classList.toggle('hidden', inJoust);
-  $('#bottomnav').classList.toggle('hidden', inJoust);
+  // Hide topbar & nav during joust or designer
+  const immersive = (name === 'joust' || name === 'designer');
+  $('#topbar').classList.toggle('hidden', immersive);
+  $('#bottomnav').classList.toggle('hidden', immersive);
 
   if (name === 'home')   renderHome();
   if (name === 'roster') renderRoster();
   if (name === 'shop')   renderShop();
   if (name === 'team')   renderTeam();
   if (name === 'joust')  initJoustScreen();
+  if (name === 'designer') initDesigner();
 }
 
 // Bottom nav
@@ -191,11 +195,11 @@ function renderHome() {
 
   // Enable/disable joust button
   $('#btn-quick-joust').disabled = player.team.length < 1;
+  // Bind designer button
+  $('#btn-go-designer').onclick = () => switchScreen('designer');
 }
 
-$('#btn-quick-joust').addEventListener('click', () => {
-  switchScreen('joust');
-});
+$('#btn-quick-joust').onclick = () => switchScreen('joust');
 
 // ══════════════════════════════════════
 // §5  PLANTEL (ROSTER)
