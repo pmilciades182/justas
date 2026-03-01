@@ -528,22 +528,33 @@ $('#modal-pick-close').addEventListener('click', () => {
 
 const canvas = $('#canvas');
 const ctx = canvas.getContext('2d');
-const W = 390, H = 844;
-canvas.width = W; canvas.height = H;
+// Internal resolution (logical)
+let W = 390, H = 844;
 
 function resizeCanvas() {
   const screen = $('#screen-joust');
   const sw = screen.clientWidth || window.innerWidth;
   const sh = screen.clientHeight || window.innerHeight;
-  const scale = Math.min(sw / W, sh / H);
-  canvas.style.width = `${W * scale}px`;
-  canvas.style.height = `${H * scale}px`;
+  
+  // Update internal canvas resolution to match container
+  // This ensures 1:1 pixel mapping and uses ALL space
+  canvas.width = sw;
+  canvas.height = sh;
+  
+  // Update global W and H for logic
+  W = sw;
+  H = sh;
+  
+  // Update dependent constants if they were calculated using W/H
+  LANE_X = W / 2;
+  TRACK_X = LANE_X - TRACK_W / 2;
+  TRACK_BOT = H - 60;
 }
 
-// Track constants
-const LANE_X   = W / 2;
+// Track constants - make them let so they can be updated on resize
+let LANE_X   = W / 2;
 const TRACK_W  = 100;
-const TRACK_X  = LANE_X - TRACK_W / 2;
+let TRACK_X  = LANE_X - TRACK_W / 2;
 const LANCE_LEN    = 80;
 const KNIGHT_BW    = 26;
 const KNIGHT_BH    = 42;
@@ -551,7 +562,7 @@ const HORSE_W      = 22;
 const HORSE_H      = 60;
 const MAX_VENIDAS  = 4;
 const TRACK_TOP    = 60;
-const TRACK_BOT    = H - 60;
+let TRACK_BOT    = H - 60;
 
 // Hit types (same system as before)
 const HIT_TABLE = [
@@ -637,9 +648,9 @@ function makeJoustKnight(knightId, side, equipData) {
     squireEff: sqr ? sqr.eff : 0,
     colors: c,
     icon: kd.icon,
-    // Position & movement
+    // Position & movement - Adjusted Y to not be under HUD
     x: side === 'left' ? LANE_X - 16 : LANE_X + 16,
-    y: side === 'left' ? TRACK_TOP + 20 : TRACK_BOT - 20,
+    y: side === 'left' ? TRACK_TOP + 60 : TRACK_BOT - 60,
     baseDir: side === 'left' ? 1 : -1,  // 1 = going down, -1 = going up
     speed: 0,
     maxSpeed: baseSpeed,
@@ -1401,99 +1412,162 @@ function sText(text, x, y, fill, stroke = 'rgba(0,0,0,0.85)', lw = 4) {
 }
 
 function drawJoustUI() {
-  // Top HUD
   const k1 = joust.k1, k2 = joust.k2;
   if (!k1 || !k2) return;
 
-  // Panel bg
-  ctx.fillStyle = 'rgba(44, 30, 22, 0.8)';
+  const hudH = 100; 
+  const margin = 10;
+  const innerW = Math.min(W - margin * 2, 480); // Cap width for ultra-wide
+  const startX_HUD = (W - innerW) / 2;
+
+  // 1. MARCO PRINCIPAL DEL MARCADOR
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.8)';
+  ctx.shadowBlur = 20;
+  
+  // Fondo Madera Noble
+  ctx.fillStyle = '#2c1e16'; 
   ctx.beginPath();
-  ctx.roundRect(10, 6, W - 20, 50, 4);
+  ctx.roundRect(startX_HUD, margin, innerW, hudH, 2);
   ctx.fill();
+  
+  // Doble Borde Dorado
   ctx.strokeStyle = '#d4a017';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(10, 6, W - 20, 50);
+  ctx.lineWidth = 3;
+  ctx.strokeRect(startX_HUD + 2, margin + 2, innerW - 4, hudH - 4);
+  ctx.strokeStyle = '#a07a10';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(startX_HUD + 6, margin + 6, innerW - 12, hudH - 12);
+  ctx.restore();
 
-  // Names
-  ctx.font = 'bold 14px Almendra';
+  // 2. ESTANDARTES LATERALES
+  // Jugador (Siniestra)
+  ctx.fillStyle = '#7b1113';
+  ctx.fillRect(startX_HUD + 8, margin + 8, 130, hudH - 16);
+  // Rival (Diestra)
+  ctx.fillStyle = '#1a3a5f';
+  ctx.fillRect(startX_HUD + innerW - 138, margin + 8, 130, hudH - 16);
+
+  // 3. TEXTOS Y PUNTUACIÓN
+  ctx.save();
+  // Etiquetas de rol
+  ctx.font = 'bold 9px Almendra';
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
   ctx.textAlign = 'left';
-  ctx.fillStyle = k1.colors.plume;
-  ctx.fillText(k1.name, 18, 24);
+  ctx.fillText("CABALLERO REAL", startX_HUD + 15, margin + 22);
   ctx.textAlign = 'right';
-  ctx.fillStyle = k2.colors.plume;
-  ctx.fillText(k2.name, W - 18, 24);
+  ctx.fillText("ADVERSARIO", startX_HUD + innerW - 15, margin + 22);
 
-  // Score
-  ctx.font = '22px MedievalSharp';
-  ctx.textAlign = 'center';
+  // Nombres
+  ctx.font = 'bold 13px MedievalSharp';
   ctx.fillStyle = '#ffd54f';
-  ctx.fillText(`${joust.k1Points} : ${joust.k2Points}`, W/2, 28);
+  ctx.textAlign = 'left';
+  ctx.fillText(k1.name.toUpperCase(), startX_HUD + 15, margin + 85);
+  ctx.textAlign = 'right';
+  ctx.fillText(k2.name.toUpperCase(), startX_HUD + innerW - 15, margin + 85);
 
-  // Venida
-  ctx.font = '12px Almendra';
-  ctx.fillStyle = 'rgba(224, 208, 176, 0.7)';
-  ctx.fillText(`VENIDA ${joust.venida}/${MAX_VENIDAS}  ·  COMBATE ${joust.matchIdx + 1}`, W/2, 46);
+  // Iconos
+  ctx.font = '30px serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(k1.icon, startX_HUD + 15, margin + 58);
+  ctx.textAlign = 'right';
+  ctx.fillText(k2.icon, startX_HUD + innerW - 15, margin + 58);
 
-  // History at bottom
-  const hY = H - 14;
-  ctx.font = '11px Almendra';
+  // PUNTOS (Números Grandes)
+  ctx.font = 'bold 44px MedievalSharp';
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'right';
+  ctx.fillText(joust.k1Points, startX_HUD + 130, margin + 65);
+  ctx.textAlign = 'left';
+  ctx.fillText(joust.k2Points, startX_HUD + innerW - 130, margin + 65);
+  
+  ctx.font = 'bold 10px Almendra';
+  ctx.textAlign = 'right';
+  ctx.fillText("PTS", startX_HUD + 130, margin + 80);
+  ctx.textAlign = 'left';
+  ctx.fillText("PTS", startX_HUD + innerW - 130, margin + 80);
+  ctx.restore();
+
+  // 4. PANEL CENTRAL (Ronda y Progreso)
+  ctx.save();
   ctx.textAlign = 'center';
-  for (let i = 0; i < joust.history.length; i++) {
-    const h = joust.history[i];
-    const x = W/2 + (i - (joust.history.length-1)/2) * 60;
-    ctx.fillStyle = 'rgba(224, 208, 176, 0.5)';
-    ctx.fillText(`V${h.venida}: +${h.k1Hit.pts} / +${h.k2Hit.pts}`, x, hY);
-  }
+  ctx.fillStyle = '#d4a017';
+  ctx.font = 'bold 11px MedievalSharp';
+  ctx.fillText("VENIDA", W/2, margin + 25);
+  
+  ctx.font = 'bold 32px MedievalSharp';
+  ctx.fillStyle = '#fff';
+  ctx.fillText(`${joust.venida} / ${MAX_VENIDAS}`, W/2, margin + 58);
 
-  // Phase-specific text
+  // Mini-Escudos de progreso
+  const gap = 16;
+  const startX_Shields = W/2 - ((MAX_VENIDAS-1) * gap) / 2;
+  for(let i=0; i<MAX_VENIDAS; i++) {
+    const active = i < joust.history.length;
+    const current = i === joust.history.length;
+    
+    ctx.fillStyle = active ? '#ffd54f' : (current ? '#fff' : 'rgba(255,255,255,0.1)');
+    ctx.strokeStyle = active ? '#d4a017' : (current ? '#fff' : 'rgba(255,255,255,0.2)');
+    
+    ctx.beginPath();
+    const sx = startX_Shields + i*gap, sy = margin + 72;
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx + 5, sy + 2);
+    ctx.lineTo(sx + 5, sy + 9);
+    ctx.quadraticCurveTo(sx, sy + 13, sx - 5, sy + 9);
+    ctx.lineTo(sx - 5, sy + 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // 5. EFECTOS DE IMPACTO (Centrados dinámicamente)
   if (joust.subPhase === 'clash') {
     const a = Math.max(0, 1 - joust.phaseT/20);
     if (a > 0) {
+      ctx.save();
       ctx.globalAlpha = a;
-      ctx.font = '44px MedievalSharp';
       ctx.textAlign = 'center';
       const maxPts = Math.max(joust.k1Hit?.pts || 0, joust.k2Hit?.pts || 0);
-      let txt = '¡IMPACTO!', col = '#d4a017';
-      if (maxPts >= 10) { txt = '¡¡DESMONTADO!!'; col = '#7b1113'; }
+      let txt = '¡IMPACTO!', col = '#ffd54f';
+      if (maxPts >= 10) { txt = '¡DESMONTADO!'; col = '#ff4444'; }
       else if (maxPts >= 3) { txt = '¡GRAN GOLPE!'; col = '#e67e22'; }
       else if (maxPts === 0) { txt = joust.k1Hit?.type === 'miss' ? '¡FALLO!' : '¡TOQUE!'; col = '#a09080'; }
-      sText(txt, W/2, H/2 - 20, col, 'rgba(0,0,0,0.8)', 6);
-      ctx.globalAlpha = 1;
-    }
-  }
-
-  // Hit details after clash
-  if ((joust.subPhase === 'pass' || joust.subPhase === 'squire') && joust.k1Hit) {
-    const fadeIn = Math.min(1, joust.phaseT / 25);
-    const fadeOut = joust.subPhase === 'pass' && joust.phaseT > 100 ? Math.max(0, 1 - (joust.phaseT - 100) / 40) : 1;
-    const alpha = fadeIn * fadeOut;
-    if (alpha > 0.01) {
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = '#f4e4bc';
-      ctx.beginPath();
-      ctx.roundRect(20, H/2 - 30, W - 40, 60, 4);
-      ctx.fill();
-      ctx.strokeStyle = '#d4a017';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(20, H/2 - 30, W - 40, 60);
       
-      ctx.font = 'bold 14px Almendra';
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#2c1e16';
-      ctx.fillText(`${k1.name}: ${joust.k1Hit.label} (+${joust.k1Hit.pts})`, 30, H/2 + 5);
-      ctx.textAlign = 'right';
-      ctx.fillText(`${k2.name}: ${joust.k2Hit.label} (+${joust.k2Hit.pts})`, W - 30, H/2 + 5);
-      ctx.globalAlpha = 1;
+      ctx.font = '52px MedievalSharp';
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillText(txt, W/2 + 4, H/2 + 4);
+      ctx.fillStyle = col;
+      ctx.fillText(txt, W/2, H/2);
+      ctx.restore();
     }
   }
 
-  // Turn phase
-  if (joust.subPhase === 'turn') {
-    ctx.globalAlpha = 0.8;
-    ctx.font = '18px MedievalSharp';
-    ctx.textAlign = 'center';
-    sText(joust.venida < MAX_VENIDAS ? `Preparando venida ${joust.venida + 1}...` : 'Torneo Finalizado', W/2, H/2, '#ffd54f');
-    ctx.globalAlpha = 1;
+  // RESULTADO FLOTANTE (Posicionamiento basado en H)
+  if ((joust.subPhase === 'pass' || joust.subPhase === 'squire') && joust.k1Hit) {
+    const alpha = Math.min(1, joust.phaseT / 20) * (joust.subPhase === 'pass' && joust.phaseT > 100 ? Math.max(0, 1-(joust.phaseT-100)/20) : 1);
+    if (alpha > 0.01) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      const bw = 340, bh = 55;
+      const py = H - 180; // Siempre cerca de la parte inferior
+      ctx.fillStyle = '#f4e4bc';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.roundRect(W/2 - bw/2, py, bw, bh, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#d4a017'; ctx.lineWidth = 2;
+      ctx.strokeRect(W/2 - bw/2, py, bw, bh);
+      
+      ctx.font = 'bold 14px MedievalSharp';
+      ctx.fillStyle = '#2c1e16';
+      ctx.textAlign = 'center';
+      ctx.fillText("RESULTADO DE LA CARRERA", W/2, py + 22);
+      ctx.font = 'italic 14px Almendra';
+      ctx.fillText(`${joust.k1Hit.label.toUpperCase()} (+${joust.k1Hit.pts})  —  ${joust.k2Hit.label.toUpperCase()} (+${joust.k2Hit.pts})`, W/2, py + 42);
+      ctx.restore();
+    }
   }
 }
 
@@ -1549,30 +1623,50 @@ function initJoustScreen() {
 
 function showMatchIntro() {
   const overlay = $('#joust-overlay');
-  const pk = joust.playerTeam[joust.matchIdx];
-  const ek = joust.enemyTeam[joust.matchIdx];
-  const pkd = getKnightData(pk.knightId);
-  const ekd = getKnightData(ek.knightId);
+  const pkData = joust.playerTeam[joust.matchIdx];
+  const ekData = joust.enemyTeam[joust.matchIdx];
+  const pkd = getKnightData(pkData.knightId);
+  const ekd = getKnightData(ekData.knightId);
   const pc = KNIGHT_COLORS[pkd.colorIdx];
   const ec = KNIGHT_COLORS[ekd.colorIdx];
 
+  overlay.style.pointerEvents = 'auto';
   overlay.innerHTML = `
-    <div class="card text-center" style="padding:30px 20px; border: 4px double var(--gold); background-color: var(--card);">
-      <div style="font-family:MedievalSharp; font-size:16px; color:var(--text-dim); margin-bottom:12px; text-transform:uppercase">COMBATE ${joust.matchIdx + 1} DE ${joust.playerTeam.length}</div>
-      <div style="display:flex; align-items:center; justify-content:center; gap:20px; margin:16px 0">
-        <div>
-          <div style="font-size:50px">${pkd.icon}</div>
-          <div style="font-family:MedievalSharp; font-size:16px; color:${pc.plume}; margin-top:4px">${pkd.name}</div>
+    <div class="card text-center" style="padding:30px 20px; border: 4px double var(--gold); background-color: var(--card); max-width: 360px; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
+      <div style="font-family:MedievalSharp; font-size:14px; color:var(--text-dim); margin-bottom:15px; letter-spacing: 1px;">
+        ORDEN DE COMBATE: DUELO ${joust.matchIdx + 1} / ${joust.playerTeam.length}
+      </div>
+      
+      <div style="display:flex; align-items:flex-start; justify-content:center; gap:15px; margin:20px 0">
+        <!-- Jugador -->
+        <div style="flex: 1;">
+          <div style="font-size:55px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2))">${pkd.icon}</div>
+          <div style="font-family:MedievalSharp; font-size:16px; color:${pc.plume}; margin-top:8px; font-weight:bold">${pkd.name}</div>
+          <div style="font-family:Almendra; font-size:11px; color:#5d4037; margin-top:4px">
+            FUE ${pkd.str} · DEF ${pkd.def} · MON ${pkd.hor}
+          </div>
         </div>
-        <div style="font-family:MedievalSharp; font-size:32px; color:var(--red)">VS</div>
-        <div>
-          <div style="font-size:50px">${ekd.icon}</div>
-          <div style="font-family:MedievalSharp; font-size:16px; color:${ec.plume}; margin-top:4px">${ekd.name}</div>
+        
+        <div style="align-self: center; font-family:MedievalSharp; font-size:28px; color:var(--red); font-style: italic; text-shadow: 1px 1px 0 #fff">VS</div>
+        
+        <!-- Rival -->
+        <div style="flex: 1;">
+          <div style="font-size:55px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2))">${ekd.icon}</div>
+          <div style="font-family:MedievalSharp; font-size:16px; color:${ec.plume}; margin-top:8px; font-weight:bold">${ekd.name}</div>
+          <div style="font-family:Almendra; font-size:11px; color:#5d4037; margin-top:4px">
+            FUE ${ekd.str} · DEF ${ekd.def} · MON ${ekd.hor}
+          </div>
         </div>
       </div>
-      <button class="btn btn-gold btn-lg" id="btn-start-match">⚔ ¡A LA LIZA!</button>
+
+      <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 4px; margin-bottom: 20px; font-family: Almendra; font-size: 13px; color: #2c1e16;">
+        ${joust.playerMatchWins} victorias para tu casa — ${joust.enemyMatchWins} para el rival
+      </div>
+
+      <button class="btn btn-gold btn-lg" id="btn-start-match" style="width: 100%; box-shadow: 0 4px 0 #8b6b10;">
+        ⚔ ¡A LA LIZA!
+      </button>
     </div>`;
-  overlay.style.pointerEvents = 'auto';
 
   document.getElementById('btn-start-match').addEventListener('click', () => {
     overlay.innerHTML = '';
@@ -1616,43 +1710,57 @@ function showMatchResult() {
   const k1Unhorsed = joust.history.some(h => h.k2Hit.type === 'unhorse');
   const k2Unhorsed = joust.history.some(h => h.k1Hit.type === 'unhorse');
 
-  let winnerName, winnerColor;
+  let winnerName, winnerColor, statusText;
   let playerWon = false;
 
   if (k2Unhorsed && !k1Unhorsed) {
-    winnerName = k1.name; winnerColor = k1.colors.plume;
+    winnerName = k1.name; winnerColor = '#2d4a22'; statusText = '¡ADVERSARIO DESMONTADO!';
     playerWon = true;
   } else if (k1Unhorsed && !k2Unhorsed) {
-    winnerName = k2.name; winnerColor = k2.colors.plume;
+    winnerName = k2.name; winnerColor = 'var(--red)'; statusText = '¡HAS SIDO DESMONTADO!';
   } else if (k1Unhorsed && k2Unhorsed) {
-    winnerName = 'EMPATE'; winnerColor = '#d4a017';
+    winnerName = 'EMPATE'; winnerColor = '#666'; statusText = '¡AMBOS CAÍDOS!';
   } else if (joust.k1Points > joust.k2Points) {
-    winnerName = k1.name; winnerColor = k1.colors.plume;
+    winnerName = k1.name; winnerColor = '#2d4a22'; statusText = 'VICTORIA POR PUNTOS';
     playerWon = true;
   } else if (joust.k2Points > joust.k1Points) {
-    winnerName = k2.name; winnerColor = k2.colors.plume;
+    winnerName = k2.name; winnerColor = 'var(--red)'; statusText = 'DERROTA POR PUNTOS';
   } else {
-    winnerName = 'EMPATE'; winnerColor = '#d4a017';
+    winnerName = 'EMPATE'; winnerColor = '#666'; statusText = 'PUNTUACIÓN IGUALADA';
   }
 
   if (playerWon) joust.playerMatchWins++;
   else if (winnerName !== 'EMPATE') joust.enemyMatchWins++;
 
   const isLast = joust.matchIdx >= joust.playerTeam.length - 1;
-  const btnText = isLast ? '🏆 RESULTADOS' : '➡ SIGUIENTE';
+  const btnText = isLast ? '🏆 VER VERDICTO FINAL' : '➡ SIGUIENTE DUELO';
 
   const overlay = $('#joust-overlay');
-  overlay.innerHTML = `
-    <div class="card text-center" style="padding:24px 20px; border: 4px double var(--gold); background-color: var(--card);">
-      <div style="font-family:MedievalSharp; font-size:32px; color:${winnerColor}">${winnerName === 'EMPATE' ? '¡EMPATE!' : '¡VICTORIA!'}</div>
-      <div style="font-family:MedievalSharp; font-size:18px; color:var(--surface); margin:8px 0">${winnerName === 'EMPATE' ? '' : winnerName}</div>
-      <div style="font-family:MedievalSharp; font-size:40px; color:var(--red); margin:12px 0">${joust.k1Points} — ${joust.k2Points}</div>
-      <div style="font-family:Almendra; font-size:14px; color:var(--text-dim); margin:10px 0">
-        Torneo: ${joust.playerMatchWins} - ${joust.enemyMatchWins}
-      </div>
-      <button class="btn btn-gold btn-lg" id="btn-next-match">${btnText}</button>
-    </div>`;
   overlay.style.pointerEvents = 'auto';
+  overlay.innerHTML = `
+    <div class="card text-center" style="padding:25px; border: 4px double var(--gold); background-color: var(--card); max-width: 340px;">
+      <div style="font-family:MedievalSharp; font-size:14px; color:var(--text-dim); margin-bottom:10px">${statusText}</div>
+      <div style="font-family:MedievalSharp; font-size:36px; color:${winnerColor}; margin-bottom:5px">
+        ${winnerName === 'EMPATE' ? '¡EMPATE!' : '¡VICTORIA!'}
+      </div>
+      <div style="font-family:MedievalSharp; font-size:18px; color:#2c1e16; margin-bottom:15px">${winnerName === 'EMPATE' ? '' : winnerName}</div>
+      
+      <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin:15px 0; background:rgba(0,0,0,0.05); padding:15px; border-radius:4px;">
+        <div style="text-align:center">
+          <div style="font-family:Almendra; font-size:12px; color:var(--text-dim)">TU PUNTUACIÓN</div>
+          <div style="font-family:MedievalSharp; font-size:32px; color:#2c1e16">${joust.k1Points}</div>
+        </div>
+        <div style="font-size:24px; color:var(--gold)">—</div>
+        <div style="text-align:center">
+          <div style="font-family:Almendra; font-size:12px; color:var(--text-dim)">RIVAL</div>
+          <div style="font-family:MedievalSharp; font-size:32px; color:#2c1e16">${joust.k2Points}</div>
+        </div>
+      </div>
+
+      <button class="btn btn-gold btn-lg" id="btn-next-match" style="width: 100%">
+        ${btnText}
+      </button>
+    </div>`;
 
   document.getElementById('btn-next-match').addEventListener('click', () => {
     if (isLast) {
