@@ -8,7 +8,7 @@ import { resizeCanvas } from './constants.js';
 import { joust, setSubPhase } from './state.js';
 import { makeJoustKnight, generateEnemy, makeSquire } from './knights.js';
 import { switchScreen } from '../ui/nav.js';
-import { spawnConfetti } from './particles.js';
+import { spawnConfetti, spawnRoses, spawnTrash } from './particles.js';
 
 export function initJoustScreen() {
   resizeCanvas();
@@ -31,6 +31,9 @@ export function initJoustScreen() {
   joust.groundBlood = [];
   joust.groundSplinters = [];
   joust.hoofPrints = [];
+  joust.roses = [];
+  joust.trash = [];
+  joust.confetti = [];
 
   updateGlobalHUD();
   showKnightSelection();
@@ -265,6 +268,8 @@ export function startMatch() {
   joust.splinters = [];
   joust.blood = [];
   joust.confetti = [];
+  joust.roses = [];
+  joust.trash = [];
   // groundBlood, groundSplinters, and hoofPrints are NOT reset here to persist across matches
   joust.shakeAmt = 0;
   joust.flashAlpha = 0;
@@ -306,13 +311,21 @@ export function showMatchResult() {
     winnerName = 'EMPATE'; winnerColor = '#666'; statusText = 'PUNTUACIÓN IGUALADA';
   }
 
-  if (playerWon) {
-    joust.playerMatchWins++;
-    spawnConfetti(80);
-  }
-  else if (winnerName !== 'EMPATE') joust.enemyMatchWins++;
-
   updateGlobalHUD();
+
+  // FEEDBACK EFFECTS (Roses, Trash, Confetti)
+  const isDraw = winnerName === 'EMPATE';
+  if (playerWon) {
+    spawnConfetti(80);
+    spawnRoses('left', 25);
+    spawnTrash('right', 20);
+  } else if (!isDraw) {
+    spawnRoses('right', 25);
+    spawnTrash('left', 20);
+  } else {
+    spawnTrash('left', 10);
+    spawnTrash('right', 10);
+  }
 
   const isLast = joust.matchIdx >= joust.totalMatches - 1;
   const btnText = isLast ? '🏆 VER VERDICTO FINAL' : '➡ SIGUIENTE SELECCIÓN';

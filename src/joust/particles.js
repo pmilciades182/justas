@@ -109,6 +109,47 @@ export function spawnConfetti(count) {
   }
 }
 
+export function spawnRoses(side, count) {
+  const isLeft = side === 'left';
+  const spawnX = isLeft ? -20 : 420;
+  const colors = ['#f1c40f', '#9b59b6', '#fce4ec']; // Yellow, Violet, Light Pink
+  for (let i = 0; i < count; i++) {
+    joust.roses.push({
+      x: spawnX,
+      y: Math.random() * 800,
+      vx: (isLeft ? 1 : -1) * (2 + Math.random() * 4),
+      vy: (Math.random() - 0.5) * 2,
+      r: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.15,
+      life: 1,
+      decay: 0.005 + Math.random() * 0.01,
+      landed: false,
+      color: colors[Math.floor(Math.random() * colors.length)]
+    });
+  }
+}
+
+export function spawnTrash(side, count) {
+  const isLeft = side === 'left';
+  const spawnX = isLeft ? -20 : 420;
+  for (let i = 0; i < count; i++) {
+    const isTomato = Math.random() < 0.6;
+    joust.trash.push({
+      x: spawnX,
+      y: Math.random() * 800,
+      vx: (isLeft ? 1 : -1) * (3 + Math.random() * 5),
+      vy: (Math.random() - 0.5) * 3,
+      r: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.3,
+      life: 1,
+      decay: 0.008 + Math.random() * 0.015,
+      landed: false,
+      type: isTomato ? 'tomato' : 'rock',
+      color: isTomato ? (Math.random() < 0.5 ? '#7b0000' : '#1a0000') : '#7f8c8d' // Dark Red or Black for rotten tomatoes
+    });
+  }
+}
+
 export function updateParticles() {
   for (const p of joust.sparks) { p.x+=p.vx; p.y+=p.vy; p.vy+=0.09; p.vx*=0.97; p.life-=p.decay; }
   joust.sparks = joust.sparks.filter(p => p.life > 0);
@@ -127,6 +168,20 @@ export function updateParticles() {
     c.life -= c.decay;
   }
   joust.confetti = joust.confetti.filter(c => c.life > 0 && c.y < 1000);
+
+  // Roses & Trash update
+  [joust.roses, joust.trash].forEach(arr => {
+    for (const p of arr) {
+      if (!p.landed) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.r += p.vr;
+        p.vx *= 0.94;
+        p.vy *= 0.94;
+        if (Math.abs(p.vx) < 0.1) p.landed = true;
+      }
+    }
+  });
 
   // Huellas de casco se desvanecen lentamente
   for (const h of joust.hoofPrints) { h.alpha = Math.max(0, h.alpha - 0.0010); }

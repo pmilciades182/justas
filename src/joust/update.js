@@ -79,7 +79,7 @@ export function updateJoust() {
 
   // Global Sync / Match Flow
   if (joust.subPhase === 'clash') {
-    if (joust.phaseT > 20) {
+    if (joust.phaseT > 80) {
       setSubPhase('pass');
       if (!k1.fallen) { k1.phase = 'pass'; k1.phaseT = 0; }
       if (!k2.fallen) { k2.phase = 'pass'; k2.phaseT = 0; }

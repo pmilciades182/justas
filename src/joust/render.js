@@ -40,6 +40,8 @@ export function drawJoust() {
   drawTrack();
   drawSpeedLines();
   drawParticles();
+  drawRoses();
+  drawTrash();
   drawConfetti(); // Celebration!
 
   drawSquire(ctx, joust.squire1, joust.t, COL, joust.t);
@@ -265,6 +267,47 @@ function drawConfetti() {
   }
 }
 
+function drawRoses() {
+  for (const r of joust.roses) {
+    ctx.save();
+    ctx.translate(r.x, r.y);
+    ctx.rotate(r.r);
+    // Flower head
+    ctx.fillStyle = r.color;
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2;
+      ctx.arc(Math.cos(angle) * 3, Math.sin(angle) * 3, 3, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    // Center
+    ctx.fillStyle = '#f1c40f';
+    ctx.beginPath(); ctx.arc(0, 0, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawTrash() {
+  for (const t of joust.trash) {
+    ctx.save();
+    ctx.translate(t.x, t.y);
+    ctx.rotate(t.r);
+    if (t.type === 'tomato') {
+      ctx.fillStyle = t.color; // Use the specific rotten color
+      ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
+      // Little green leaf on top
+      ctx.fillStyle = '#27ae60';
+      ctx.beginPath(); ctx.arc(0, -2, 2, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.fillStyle = t.color; // rock color
+      ctx.beginPath();
+      ctx.moveTo(-3, -2); ctx.lineTo(3, -3); ctx.lineTo(4, 2); ctx.lineTo(-2, 4);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
 function drawSpeedLines() {
   if (joust.subPhase !== 'charge') return;
   const k1 = joust.k1, k2 = joust.k2;
@@ -292,7 +335,7 @@ function drawJoustUI() {
 
   // 6. Efectos de impacto
   if (joust.subPhase === 'clash') {
-    const a = Math.max(0, 1 - joust.phaseT/20);
+    const a = Math.max(0, 1 - joust.phaseT/80);
     if (a > 0) {
       ctx.save();
       ctx.globalAlpha = a;
