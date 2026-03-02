@@ -115,6 +115,7 @@ function drawTrack() {
 
   // 5. Decales (Sangre y astillas en el suelo)
   drawGroundMarks();
+  drawPersistentLances();
 
   // 6. Zonas de Entrega (Respetando bordes irregulares)
   ctx.save();
@@ -200,6 +201,34 @@ function drawGroundMarks() {
     ctx.lineWidth = 1.5;
     ctx.translate(s.x, s.y); ctx.rotate(s.angle);
     ctx.beginPath(); ctx.moveTo(-s.len / 2, 0); ctx.lineTo(s.len / 2, 0); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawPersistentLances() {
+  for (const l of joust.groundBrokenLances) {
+    ctx.save();
+    ctx.translate(l.x, l.y);
+    ctx.rotate(l.angle);
+    
+    // Sombra sutil de la pieza
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(-2, 2, l.len, 4);
+
+    // Pieza de madera
+    const grad = ctx.createLinearGradient(0, 0, 0, 4);
+    grad.addColorStop(0, '#5d4037');
+    grad.addColorStop(0.5, '#8d6e63');
+    grad.addColorStop(1, '#5d4037');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, l.len, 4);
+    
+    // Detalles de rotura (puntas astilladas)
+    ctx.fillStyle = '#3e2723';
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(3, 2); ctx.lineTo(0, 4); ctx.fill();
+    ctx.moveTo(l.len, 0); ctx.lineTo(l.len-3, 2); ctx.lineTo(l.len, 4); ctx.fill();
+    
     ctx.restore();
   }
 }

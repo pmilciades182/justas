@@ -150,13 +150,57 @@ export function spawnTrash(side, count) {
   }
 }
 
+export function spawnBrokenLance(x, y, side) {
+  // A large part of the lance that flies off
+  const targetX = Math.random() * 100 + (side === 'left' ? 20 : 270);
+  const targetY = y + (Math.random() - 0.5) * 200;
+  const duration = 40 + Math.random() * 20;
+  
+  joust.splinters.push({
+    isLarge: true,
+    startX: x, startY: y,
+    x: x, y: y,
+    tx: targetX, ty: targetY,
+    angle: Math.random() * Math.PI * 2,
+    spin: (Math.random() - 0.5) * 0.4,
+    t: 0,
+    maxT: duration,
+    life: 1,
+    decay: 0 // Doesn't decay while flying
+  });
+}
+
 export function updateParticles() {
   for (const p of joust.sparks) { p.x+=p.vx; p.y+=p.vy; p.vy+=0.09; p.vx*=0.97; p.life-=p.decay; }
   joust.sparks = joust.sparks.filter(p => p.life > 0);
   for (const d of joust.dust) { d.x+=d.vx; d.y+=d.vy; d.size*=1.02; d.life-=d.decay; }
   joust.dust = joust.dust.filter(d => d.life > 0);
-  for (const s of joust.splinters) { s.x+=s.vx; s.y+=s.vy; s.vy+=0.12; s.angle+=s.spin; s.life-=s.decay; }
-  joust.splinters = joust.splinters.filter(s => s.life > 0);
+  
+  // Splinters update (with large piece landing logic)
+  for (let i = joust.splinters.length - 1; i >= 0; i--) {
+    const s = joust.splinters[i];
+    if (s.isLarge) {
+      s.t++;
+      const pct = s.t / s.maxT;
+      // Parabolic arc
+      s.x = s.startX + (s.tx - s.startX) * pct;
+      s.y = s.startY + (s.ty - s.startY) * pct - Math.sin(pct * Math.PI) * 50;
+      s.angle += s.spin;
+      
+      if (pct >= 1) {
+        // LANDED: Move to persistent ground array
+        joust.groundBrokenLances.push({
+          x: s.tx, y: s.ty, angle: s.angle,
+          len: 25 + Math.random() * 15
+        });
+        joust.splinters.splice(i, 1);
+      }
+    } else {
+      s.x+=s.vx; s.y+=s.vy; s.vy+=0.12; s.angle+=s.spin; s.life-=s.decay;
+      if (s.life <= 0) joust.splinters.splice(i, 1);
+    }
+  }
+
   for (const b of joust.blood) { b.x+=b.vx; b.y+=b.vy; b.vy+=0.14; b.vx*=0.91; b.life-=b.decay; }
   joust.blood = joust.blood.filter(b => b.life > 0);
   

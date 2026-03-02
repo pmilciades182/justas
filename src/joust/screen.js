@@ -40,6 +40,7 @@ export function initJoustScreen() {
   joust.roses = [];
   joust.trash = [];
   joust.confetti = [];
+  joust.groundBrokenLances = [];
 
   updateGlobalHUD();
   showKnightSelection();

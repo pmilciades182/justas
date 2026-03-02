@@ -4,7 +4,7 @@
 
 import { HIT_TABLE, HP_DAMAGE, LANE_X } from './constants.js';
 import { joust } from './state.js';
-import { spawnSparks, spawnSplinters, spawnBlood, spawnGroundBlood, spawnGroundSplinters } from './particles.js';
+import { spawnSparks, spawnSplinters, spawnBlood, spawnGroundBlood, spawnGroundSplinters, spawnBrokenLance } from './particles.js';
 import { audio } from '../audio.js';
 
 export function rollHit(strBonus, defBonus) {
@@ -110,9 +110,11 @@ export function resolveClash() {
   const breakProb = 0.40;
   if (h1.type !== 'miss' && h1.type !== 'attaint' && Math.random() < breakProb) {
     k1.lanceIntact = false; k1.lanceStub = true;
+    spawnBrokenLance(impactX, impactY, 'left');
   }
   if (h2.type !== 'miss' && h2.type !== 'attaint' && Math.random() < breakProb) {
     k2.lanceIntact = false; k2.lanceStub = true;
+    spawnBrokenLance(impactX, impactY, 'right');
   }
 
   const stunBefore1 = k1.stunned;
