@@ -38,8 +38,8 @@ export const HIT_TABLE = [
 ];
 
 export const HP_DAMAGE = {
-  miss: 0, attaint: 0,
-  arm: 8, shield: 14, helmet: 22, lanceTip: 30, unhorse: 0,
+  miss: 0, attaint: 2,
+  arm: 15, shield: 25, helmet: 45, lanceTip: 60, unhorse: 100,
 };
 
 export function resizeCanvas() {

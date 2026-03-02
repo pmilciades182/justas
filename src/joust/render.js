@@ -323,9 +323,42 @@ function drawSpeechBubble(k) {
 function drawDeliveryIndicators(k) {
   if (k.lanceIntact || k.fallen || (k.phase !== 'charge' && k.phase !== 'ready')) return;
   if (k.lanceLoading <= 0) return;
+
   ctx.save();
+  const cx = k.x;
+  const cy = k.y - 45;
+  const radius = 12; // Larger radius
+
+  // Outer Glow / Pulse
+  const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+  ctx.shadowBlur = 10 * pulse;
+  ctx.shadowColor = '#ffd54f';
+
+  // Background Circle (High Contrast)
   ctx.beginPath();
-  ctx.arc(k.x, k.y - 30, 6, -Math.PI/2, -Math.PI/2 + (Math.PI * 2 * k.lanceLoading));
-  ctx.strokeStyle = '#d4a017'; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.arc(cx, cy, radius + 2, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fill();
+
+  // Progress Arc (Thick and Bright)
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, -Math.PI/2, -Math.PI/2 + (Math.PI * 2 * k.lanceLoading));
+  ctx.strokeStyle = '#ffd54f';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // "Sun" rays effect when loading
+  ctx.globalAlpha = 0.4 * pulse;
+  ctx.strokeStyle = '#d4a017';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 + (Date.now() * 0.002);
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle) * (radius + 4), cy + Math.sin(angle) * (radius + 4));
+    ctx.lineTo(cx + Math.cos(angle) * (radius + 8), cy + Math.sin(angle) * (radius + 8));
+    ctx.stroke();
+  }
+
   ctx.restore();
 }
