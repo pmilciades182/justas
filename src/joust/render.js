@@ -11,6 +11,17 @@ import {
 } from './constants.js';
 import { joust } from './state.js';
 
+// ── Texturas y Recursos ───────────────────────────────────────────────────
+const grassImg = new Image();
+grassImg.src = '/img/grass.jpg';
+let grassPattern = null;
+grassImg.onload = () => {
+  grassPattern = ctx.createPattern(grassImg, 'repeat');
+  // Detalle fino: escala 0.1
+  const matrix = new DOMMatrix().scale(0.1, 0.1);
+  grassPattern.setTransform(matrix);
+};
+
 // ── Ruido de campo estático generado una sola vez ─────────────────────────
 const TRACK_PEBBLES = Array.from({ length: 90 }, () => ({
   fx:  Math.random(), fy:  Math.random(),
