@@ -10,6 +10,7 @@ import { makeJoustKnight, generateEnemy, makeSquire } from './knights.js';
 import { switchScreen } from '../ui/nav.js';
 import { spawnConfetti, spawnRoses, spawnTrash } from './particles.js';
 import { knightSay } from './dialogue.js';
+import { audio } from '../audio.js';
 
 export function initJoustScreen() {
   resizeCanvas();
@@ -350,6 +351,7 @@ export function showMatchResult() {
     spawnConfetti(56); // 80 * 0.7
     spawnRoses('left', 17); // 25 * 0.7
     spawnTrash('right', 14); // 20 * 0.7
+    audio.playFanfareMatch(); // Triumphant point sound
   } else if (!isDraw) {
     spawnRoses('right', 17);
     spawnTrash('left', 14);
@@ -420,6 +422,7 @@ export function showTourneyResult() {
   if (won) {
     player.wins++;
     spawnConfetti(150);
+    audio.playFanfareTourney(); // Epic championship sound
   }
   else if (!draw) player.losses++;
 

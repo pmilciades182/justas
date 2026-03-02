@@ -5,6 +5,7 @@
 import { HIT_TABLE, HP_DAMAGE, LANE_X } from './constants.js';
 import { joust } from './state.js';
 import { spawnSparks, spawnSplinters, spawnBlood, spawnGroundBlood, spawnGroundSplinters } from './particles.js';
+import { audio } from '../audio.js';
 
 export function rollHit(strBonus, defBonus) {
   let r = Math.random();
@@ -82,6 +83,14 @@ export function resolveClash() {
   
   const maxPts = Math.max(h1.pts, h2.pts);
 
+  // Audio Clash
+  audio.playClash(maxPts >= 10 ? 1.5 : (maxPts >= 3 ? 1.0 : 0.5));
+  
+  // Sonido Metálico Adicional
+  if (h1.type === 'helmet' || h1.type === 'shield' || h2.type === 'helmet' || h2.type === 'shield') {
+    audio.playMetalHit(maxPts >= 3 ? 1.2 : 0.8);
+  }
+
   if (maxPts === 0 && h1.type === 'miss' && h2.type === 'miss') {
     joust.shakeAmt = 0; joust.flashAlpha = 0;
   } else if (maxPts === 0) {
@@ -114,6 +123,9 @@ export function resolveClash() {
 
   applyHitEffect(h1, k2, damageMult);
   applyHitEffect(h2, k1, damageMult);
+
+  // Check for unhorse fanfare (if player unhorses enemy)
+  if (h1.type === 'unhorse') audio.playFanfareUnhorse();
 
   joust.stunEvent = null;
   if (!stunBefore2 && k2.stunned) joust.stunEvent = k2.name;

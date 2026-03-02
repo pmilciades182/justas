@@ -7,7 +7,10 @@ import { player } from '../state.js';
 
 export let currentScreen = 'home';
 
-export const $ = s => document.querySelector(s);
+import { audio } from '../audio.js';
+
+export const $ = (s) => document.querySelector(s);
+
 export const $$ = s => document.querySelectorAll(s);
 
 const _handlers = {};
@@ -17,6 +20,7 @@ export function registerScreenHandler(name, fn) {
 }
 
 export function switchScreen(name) {
+  audio.playClick();
   currentScreen = name;
   $$('.screen').forEach(s => s.classList.remove('active'));
   $(`#screen-${name}`)?.classList.add('active');

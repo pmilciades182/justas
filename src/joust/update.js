@@ -8,6 +8,7 @@ import { spawnDust, spawnHoofPrint, updateParticles } from './particles.js';
 import { resolveClash } from './physics.js';
 import { updateSquireTracking, updateSquireDelivery, activateSquire } from './squire.js';
 import { knightSay, updateKnightSpeech } from './dialogue.js';
+import { audio } from '../audio.js';
 
 export function updateJoust() {
   const k1 = joust.k1, k2 = joust.k2;
@@ -198,6 +199,9 @@ function updateKnight(k, sq) {
       
       k.speed = Math.min(k.speed + currentAcc, cap);
       k.y += k.speed * k.baseDir;
+
+      // Gallop sound update
+      audio.updateGallop(k.speed);
       
       // MAXIMUM ADVANCE LIMIT (Past the other end) - Adjusted for high speed overlap
       const trackLimit = k.baseDir === 1 ? TRACK_BOT - 30 : TRACK_TOP + 30;
@@ -240,6 +244,9 @@ function updateKnight(k, sq) {
 
       if (k.speed > 0.5 && joust.t % 4 === 0) spawnDust(k.x, k.y - k.baseDir * (HORSE_H / 2 + 4));
       if (k.speed > 0.5 && joust.t % 16 === 0) spawnHoofPrint(k);
+
+      // Gallop sound update during pass
+      audio.updateGallop(k.speed);
 
       if (k.speed < 0.08) {
         k.phase = 'turn';

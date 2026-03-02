@@ -13,9 +13,19 @@ import { updateJoust } from './joust/update.js';
 import { drawJoust } from './joust/render.js';
 import { updateJoustHUD } from './joust/hud.js';
 import { joust } from './joust/state.js';
+import { audio } from './audio.js';
 
 // Cargar partida guardada
 loadGame();
+
+// Inicializar audio al primer clic (política de navegadores)
+window.addEventListener('click', (e) => {
+  audio.init();
+  // Sonido global para botones y elementos interactivos
+  if (e.target.closest('button, .nav-tab, .equip-item, .selection-item, .shop-item')) {
+    audio.playClick();
+  }
+});
 
 // Registrar handlers de pantalla (evita dependencias circulares en nav.js)
 registerScreenHandler('home',   renderHome);
