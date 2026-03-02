@@ -109,7 +109,8 @@ export function resolveClash() {
   const stunBefore1 = k1.stunned;
   const stunBefore2 = k2.stunned;
   const totalImpactSpeed = k1.speed + k2.speed;
-  const damageMult = totalImpactSpeed / 4.5;
+  // Damage multiplier with a max cap of 2.2x to maintain balance
+  const damageMult = Math.min(2.2, totalImpactSpeed / 4.5);
 
   applyHitEffect(h1, k2, damageMult);
   applyHitEffect(h2, k1, damageMult);

@@ -269,14 +269,22 @@ function drawJoustUI() {
       let txt = '¡IMPACTO!'; let col = '#ffd54f';
       if (maxPts >= 10) { txt = '¡DESMONTADO!'; col = '#ff4444'; }
       else if (maxPts >= 3) { txt = '¡GRAN GOLPE!'; col = '#e67e22'; }
-      ctx.font = '28px MedievalSharp';
+      
+      // Shadow layer
+      ctx.font = 'bold 56px MedievalSharp';
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillText(txt, W/2 + 4, H/2 + 4);
+      
+      // Main text
       ctx.fillStyle = col;
       ctx.fillText(txt, W/2, H/2);
       
       if (joust.stunEvent) {
-        ctx.font = '16px MedievalSharp';
+        ctx.font = 'bold 28px MedievalSharp';
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillText(`** ¡${joust.stunEvent} ATURDIDO! **`, W/2 + 2, H/2 + 52);
         ctx.fillStyle = '#FFD700';
-        ctx.fillText(`** ¡${joust.stunEvent} ATURDIDO! **`, W/2, H/2 + 35);
+        ctx.fillText(`** ¡${joust.stunEvent} ATURDIDO! **`, W/2, H/2 + 50);
       }
       ctx.restore();
     }
