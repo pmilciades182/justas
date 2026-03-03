@@ -11,6 +11,7 @@ import { switchScreen } from '../ui/nav.js';
 import { spawnConfetti, spawnRoses, spawnTrash } from './particles.js';
 import { knightSay } from './dialogue.js';
 import { audio } from '../audio.js';
+import { initAbilities } from './abilities.js';
 
 export function initJoustScreen() {
   resizeCanvas();
@@ -301,6 +302,7 @@ export function startMatch() {
   knightSay(joust.k1, 'war_cry');
   knightSay(joust.k2, 'war_cry');
 
+  initAbilities();
   setSubPhase('charge');
 }
 
