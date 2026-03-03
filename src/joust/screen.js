@@ -22,11 +22,12 @@ export function initJoustScreen() {
     equip: player.equip[kid] || { armor: null, horse: null, squire: null, shield: 'madera' },
     hp: 100,
     maxHp: 100,
-    fatigue: 0
+    fatigue: 0,
+    abilityShieldT: 0
   }));
   
   const enemyResult = generateEnemy(4);
-  joust.enemyTeam = enemyResult.knights.map(k => ({ ...k, hp: 100, maxHp: 100, fatigue: 0 }));
+  joust.enemyTeam = enemyResult.knights.map(k => ({ ...k, hp: 100, maxHp: 100, fatigue: 0, abilityShieldT: 0 }));
   joust.enemySquadData = enemyResult.squadData;
 
   joust.matchIdx = 0;

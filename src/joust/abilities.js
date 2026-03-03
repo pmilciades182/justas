@@ -18,8 +18,8 @@ export function initAbilities() {
       // ONLY active during game
       if (!joust.active) return;
       
-      // Basic check for phase (only during charge or clash)
-      if (joust.subPhase !== 'charge' && joust.subPhase !== 'clash') return;
+      // Allow in all phases except results, as long as k1 exists and is not fallen
+      if (joust.subPhase === 'result' || !joust.k1 || joust.k1.fallen) return;
 
       if (newBtn.classList.contains('cooldown')) return;
 
@@ -42,11 +42,21 @@ export function initAbilities() {
 }
 
 function handleAbilityTrigger(id) {
+  console.log(`[Abilities] Triggering: ${id}`);
   if (id === 'btn-defensa') {
-    if (joust.k1 && joust.k1.shield) {
-      // Activate shield
-      joust.k1.abilityShieldT = joust.k1.shield.duration;
-      console.log(`SHIELD ACTIVATED: ${joust.k1.shield.name} for ${joust.k1.abilityShieldT}ms`);
+    if (joust.k1) {
+      if (joust.k1.shield) {
+        // Activate shield
+        joust.k1.abilityShieldT = joust.k1.shield.duration || 2000;
+        console.log(`[Abilities] Shield activated for ${joust.k1.name}. Duration: ${joust.k1.abilityShieldT}ms`);
+      } else {
+        console.warn(`[Abilities] Knight ${joust.k1.name} has no shield equipped!`);
+        // Fallback for testing
+        joust.k1.abilityShieldT = 2000;
+        console.log(`[Abilities] Shield activated (FALLBACK) for 2000ms`);
+      }
+    } else {
+      console.error("[Abilities] No player knight (k1) found in joust state!");
     }
   }
 }

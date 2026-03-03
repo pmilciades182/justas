@@ -17,7 +17,13 @@ export function drawJoustKnight(ctx, k, t, COL, LANE_X, HORSE_W, HORSE_H, KNIGHT
   // 1. Sombra (Base)
   drawShadow(ctx, HORSE_W, HORSE_H);
 
-  // 2. Caballo
+  // 2. Aura de Habilidad (detrás del caballo)
+  if (k.abilityShieldT > 0 && !k.fallen) {
+    if (t % 60 === 0) console.log(`[Render] Drawing aura for ${k.name}. T: ${k.abilityShieldT}, Color: ${k.colors.shield}`);
+    drawShieldAura(ctx, k.abilityShieldT, k.colors.shield, t);
+  }
+
+  // 3. Caballo
   ctx.save();
   ctx.translate(bob * 0.4, 0);
   drawHorse(ctx, k.colors.horse, COL.horseDark, t, HORSE_W, HORSE_H);
@@ -304,4 +310,121 @@ export function drawSquire(ctx, sq, t, COL, joustT) {
     ctx.beginPath(); ctx.moveTo(faceDir * 14, -20); ctx.lineTo(faceDir * 14, 20); ctx.stroke();
   }
   ctx.restore();
+}
+
+export function drawShieldAura(ctx, shieldT, color, t) {
+  ctx.save();
+  const cy = -10; 
+  const baseRadius = 60; // Increased 40%+ from 42
+  const alpha = Math.min(0.7, shieldT / 500);
+  
+  const auraColor = '#3498db'; 
+  const darkBlue = '#2980b9';
+
+  // 1. Coordinated "Smoke" Clouds
+  const sharedPulse = Math.sin(t * 0.06);
+  const sharedSize = Math.cos(t * 0.04);
+
+  for (let i = 0; i < 8; i++) {
+    // Fixed angular distribution with a single rotation speed
+    const angle = (t * 0.03) + (i * Math.PI * 2 / 8);
+    
+    // Orbit moves in/out in sync
+    const orbitDist = (baseRadius * 0.25) + sharedPulse * 10;
+    const px = Math.cos(angle) * orbitDist;
+    const py = cy + Math.sin(angle) * orbitDist;
+    
+    // Size pulses in sync (or with a small sequential wave)
+    const waveOffset = Math.sin(t * 0.1 + i * 0.5) * 5; 
+    const pRadius = (baseRadius * 0.7) + sharedSize * 10 + waveOffset;
+
+    ctx.beginPath();
+    ctx.arc(px, py, pRadius, 0, Math.PI * 2);
+    ctx.fillStyle = i % 2 === 0 ? auraColor : darkBlue;
+    ctx.globalAlpha = alpha * 0.35;
+    ctx.fill();
+    
+    // Stronger Cell-shaded edges
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = alpha * 0.25;
+    ctx.stroke();
+  }
+
+  // 2. Multiple Outer Bounds (Triple Layered Cell Edges)
+  [0, 4, -4].forEach((offset, idx) => {
+    ctx.beginPath();
+    const r = baseRadius + offset + Math.sin(t * 0.1 + idx) * 4;
+    ctx.arc(0, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = idx === 0 ? '#fff' : auraColor;
+    ctx.lineWidth = idx === 0 ? 3 : 1;
+    ctx.globalAlpha = alpha * (0.4 - idx * 0.1);
+    ctx.stroke();
+  });
+
+  // 3. Stronger Inner "Energy" Glow
+  const grad = ctx.createRadialGradient(0, cy, 0, 0, cy, baseRadius + 10);
+  grad.addColorStop(0, 'rgba(52, 152, 219, 0)');
+  grad.addColorStop(0.6, 'rgba(52, 152, 219, 0.5)');
+  grad.addColorStop(0.9, 'rgba(255, 255, 255, 0.3)');
+  grad.addColorStop(1, 'rgba(52, 152, 219, 0)');
+  
+  ctx.beginPath();
+  ctx.arc(0, cy, baseRadius + 10, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.globalAlpha = alpha;
+  ctx.fill();
+
+  // 4. Rotating Protective Icons (Crosses and Shields)
+  const iconCount = 4;
+  for (let i = 0; i < iconCount; i++) {
+    // Shields Orbit
+    ctx.save();
+    const sAngle = (t * 0.05) + (i * Math.PI * 2 / iconCount);
+    const sx = Math.cos(sAngle) * (baseRadius + 15);
+    const sy = cy + Math.sin(sAngle) * (baseRadius + 15);
+    ctx.translate(sx, sy);
+    ctx.rotate(sAngle + Math.PI / 2); // Face outward
+    
+    drawMiniShield(ctx, '#fff', auraColor, alpha);
+    ctx.restore();
+
+    // Crosses Orbit (Opposite direction, slightly closer)
+    ctx.save();
+    const cAngle = (-t * 0.07) + (i * Math.PI * 2 / iconCount) + Math.PI/4;
+    const cx = Math.cos(cAngle) * (baseRadius - 10);
+    const cy2 = cy + Math.sin(cAngle) * (baseRadius - 10);
+    ctx.translate(cx, cy2);
+    ctx.rotate(-t * 0.1); // Spin on itself
+    
+    drawMiniCross(ctx, '#fff', alpha);
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function drawMiniShield(ctx, stroke, fill, alpha) {
+  ctx.globalAlpha = alpha * 0.8;
+  ctx.fillStyle = fill;
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2;
+  
+  ctx.beginPath();
+  ctx.moveTo(-6, -8);
+  ctx.lineTo(6, -8);
+  ctx.lineTo(6, 2);
+  ctx.quadraticCurveTo(0, 10, -6, 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+}
+
+function drawMiniCross(ctx, color, alpha) {
+  ctx.globalAlpha = alpha * 0.9;
+  ctx.fillStyle = color;
+  // Vertical bar
+  ctx.fillRect(-1.5, -7, 3, 14);
+  // Horizontal bar
+  ctx.fillRect(-5, -2, 10, 3);
 }

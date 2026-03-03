@@ -55,6 +55,15 @@ export function updateJoust() {
       k.abilityShieldT = Math.max(0, k.abilityShieldT - 16.6);
     }
   });
+
+  // Toggle UI Bar visibility
+  const bar = document.getElementById('joust-abilities');
+  if (bar) {
+    // Show during the whole match, only hide when results overlay is shown or match is inactive
+    const isResult = joust.subPhase === 'result';
+    const shouldShow = joust.active && !isResult;
+    bar.classList.toggle('show', shouldShow);
+  }
   
   // Robustness: Fallen knights stop speaking
   if (k1.fallen) k1.speechText = '';

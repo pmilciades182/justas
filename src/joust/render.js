@@ -59,9 +59,6 @@ export function drawJoust() {
   drawSquire(ctx, joust.squire1, joust.t, COL, joust.t);
   drawSquire(ctx, joust.squire2, joust.t, COL, joust.t);
 
-  drawShieldAura(joust.k1);
-  drawShieldAura(joust.k2);
-
   drawJoustKnight(ctx, joust.k1, joust.t, COL, LANE_X, HORSE_W, HORSE_H, KNIGHT_BW, KNIGHT_BH, LANCE_LEN);
   drawJoustKnight(ctx, joust.k2, joust.t, COL, LANE_X, HORSE_W, HORSE_H, KNIGHT_BW, KNIGHT_BH, LANCE_LEN);
 
@@ -337,38 +334,6 @@ function drawJoustUI() {
   drawDeliveryIndicators(k2);
   drawSpeechBubble(k1);
   drawSpeechBubble(k2);
-}
-
-function drawShieldAura(k) {
-  if (!k || k.abilityShieldT <= 0 || k.fallen) return;
-
-  ctx.save();
-  const pulse = Math.sin(Date.now() * 0.012) * 0.2 + 0.8;
-  const alpha = Math.min(0.6, k.abilityShieldT / 500); 
-  
-  ctx.translate(k.x, k.y);
-  
-  ctx.beginPath();
-  ctx.arc(0, 0, 35 * pulse, 0, Math.PI * 2);
-  ctx.strokeStyle = k.colors.shield;
-  ctx.lineWidth = 4;
-  ctx.globalAlpha = alpha;
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(0, 0, 42 * pulse, 0, Math.PI * 2);
-  ctx.strokeStyle = k.colors.shield;
-  ctx.lineWidth = 2;
-  ctx.globalAlpha = alpha * 0.4;
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(0, 0, 35 * pulse, 0, Math.PI * 2);
-  ctx.fillStyle = k.colors.shield;
-  ctx.globalAlpha = alpha * 0.15;
-  ctx.fill();
-
-  ctx.restore();
 }
 
 function drawSpeechBubble(k) {
