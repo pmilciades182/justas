@@ -496,6 +496,13 @@
       z-index: 40;
       flex-shrink: 0;
       box-shadow: 0 -10px 20px rgba(0,0,0,0.5);
+      
+      /* Animation */
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transform: translateY(100%);
+    }
+    #joust-abilities.show {
+      transform: translateY(0);
     }
     .ability-btn {
       width: 23%;
@@ -804,6 +811,7 @@
         <button class="shop-tab active" data-tab="knights">Caballeros</button>
         <button class="shop-tab" data-tab="armors">Armaduras</button>
         <button class="shop-tab" data-tab="horses">Caballos</button>
+        <button class="shop-tab" data-tab="shields">Escudos</button>
         <button class="shop-tab" data-tab="squires">Escuderos</button>
       </div>
       <div id="shop-list"></div>
@@ -923,6 +931,7 @@
       <div class="shop-tabs" id="equip-tabs">
         <button class="shop-tab active" data-etab="armor">Armadura</button>
         <button class="shop-tab" data-etab="horse">Caballo</button>
+        <button class="shop-tab" data-etab="shield">Escudo</button>
         <button class="shop-tab" data-etab="squire">Escudero</button>
       </div>
       <div id="equip-list"></div>

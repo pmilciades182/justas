@@ -35,6 +35,14 @@ export const DB_SQUIRES = [
   { id: 'vetera',  name: 'Veterano',      eff: 4, cost: 350, desc: 'El mejor del reino' },
 ];
 
+export const DB_SHIELDS = [
+  { id: 'madera',  name: 'Escudo de Madera', defB: 1, duration: 1500, cost: 0,   desc: 'Protección mínima' },
+  { id: 'reforz',  name: 'Escudo Reforzado', defB: 2, duration: 2000, cost: 100, desc: 'Bordes de metal' },
+  { id: 'acero',   name: 'Escudo de Acero',  defB: 3, duration: 2500, cost: 200, desc: 'Sólido y pesado' },
+  { id: 'pavon',   name: 'Pavés Real',       defB: 4, duration: 3000, cost: 350, desc: 'Cobertura total' },
+  { id: 'leyenda', name: 'Escudo de Leyenda', defB: 6, duration: 4000, cost: 600, desc: 'Forjado por dioses' },
+];
+
 export const KNIGHT_COLORS = [
   { armor: '#b0bec5', plume: '#e74c3c', shield: '#c0392b', horse: '#5c3317' },
   { armor: '#546e7a', plume: '#3498db', shield: '#2471a3', horse: '#4a2810' },
@@ -55,6 +63,7 @@ export function getKnightData(id) { return DB_KNIGHTS.find(k => k.id === id); }
 export function getArmorData(id)  { return DB_ARMORS.find(a => a.id === id); }
 export function getHorseData(id)  { return DB_HORSES.find(h => h.id === id); }
 export function getSquireData(id) { return DB_SQUIRES.find(s => s.id === id); }
+export function getShieldData(id) { return DB_SHIELDS.find(sh => sh.id === id); }
 
 export const WAR_CRIES = [
   "¡POR EL HONOR Y LA GLORIA!", "¡DEUS VULT!", "¡POR MI ESTIRPE!", "¡SENTID EL ACERO!",

@@ -34,6 +34,10 @@ export function getEffectiveStr(k) {
   else if (hpPct < 0.50) str -= 2;
   else if (hpPct < 0.75) str -= 1;
   if (k.stunned) str -= 2;
+  
+  // Ability: Shield reduces attack power
+  if (k.abilityShieldT > 0) str -= 4; 
+
   return Math.max(1, str);
 }
 
@@ -162,8 +166,17 @@ export function applyHitEffect(hit, defender, damageMult = 1.0) {
 
   const baseDmg = HP_DAMAGE[hit.type] || 0;
   if (baseDmg > 0) {
-    const defFactor = Math.max(0.3, 1 - (defender.def - 5) * 0.05);
-    const dmg = Math.max(1, Math.round(baseDmg * defFactor * damageMult));
+    let effectiveDef = defender.def;
+    let finalDmgMult = damageMult;
+
+    // Ability: Shield increases defense and reduces final damage
+    if (defender.abilityShieldT > 0) {
+      effectiveDef += 8;
+      finalDmgMult *= 0.5;
+    }
+
+    const defFactor = Math.max(0.3, 1 - (effectiveDef - 5) * 0.05);
+    const dmg = Math.max(1, Math.round(baseDmg * defFactor * finalDmgMult));
     defender.hp = Math.max(0, defender.hp - dmg);
 
     const markX = s * (6 + Math.random() * 16);

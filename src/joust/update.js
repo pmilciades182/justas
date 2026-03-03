@@ -48,6 +48,13 @@ export function updateJoust() {
   // Individual Knight Logic
   updateKnight(k1, joust.squire1);
   updateKnight(k2, joust.squire2);
+
+  // Update Ability Timers (assuming ~60fps, so ~16.6ms per frame)
+  [k1, k2].forEach(k => {
+    if (k.abilityShieldT > 0) {
+      k.abilityShieldT = Math.max(0, k.abilityShieldT - 16.6);
+    }
+  });
   
   // Robustness: Fallen knights stop speaking
   if (k1.fallen) k1.speechText = '';

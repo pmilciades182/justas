@@ -19,7 +19,7 @@ export function initJoustScreen() {
 
   joust.playerTeam = player.team.map(kid => ({
     knightId: kid,
-    equip: player.equip[kid] || { armor: null, horse: null, squire: null },
+    equip: player.equip[kid] || { armor: null, horse: null, squire: null, shield: 'madera' },
     hp: 100,
     maxHp: 100,
     fatigue: 0

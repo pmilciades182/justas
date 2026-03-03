@@ -3,7 +3,7 @@
 // ══════════════════════════════════════
 
 import { player, saveGame, countAvailable } from '../state.js';
-import { getKnightData, getArmorData, getHorseData, getSquireData, KNIGHT_COLORS, DB_ARMORS, DB_HORSES, DB_SQUIRES } from '../data.js';
+import { getKnightData, getArmorData, getHorseData, getSquireData, getShieldData, KNIGHT_COLORS, DB_ARMORS, DB_HORSES, DB_SQUIRES, DB_SHIELDS } from '../data.js';
 import { $, $$ , refreshGold } from './nav.js';
 
 let currentEquipTab = 'armor';
@@ -22,6 +22,7 @@ export function renderRoster() {
     const arm = eq.armor ? getArmorData(eq.armor) : null;
     const hrs = eq.horse ? getHorseData(eq.horse) : null;
     const sqr = eq.squire ? getSquireData(eq.squire) : null;
+    const shd = eq.shield ? getShieldData(eq.shield) : null;
 
     const div = document.createElement('div');
     div.className = 'card';
@@ -47,6 +48,10 @@ export function renderRoster() {
         <div class="mini-slot">
           <div class="icon">${hrs ? '🐴' : '➕'}</div>
           <div class="label">${hrs ? hrs.name : 'Caballo'}</div>
+        </div>
+        <div class="mini-slot">
+          <div class="icon">${shd ? '🛡️' : '➕'}</div>
+          <div class="label">${shd ? shd.name : 'Escudo'}</div>
         </div>
         <div class="mini-slot">
           <div class="icon">${sqr ? '🧑' : '➕'}</div>
@@ -82,8 +87,9 @@ export function renderEquipTab() {
 
   let db;
   if (currentEquipTab === 'armor')  { db = DB_ARMORS; }
-  if (currentEquipTab === 'horse')  { db = DB_HORSES; }
-  if (currentEquipTab === 'squire') { db = DB_SQUIRES; }
+  else if (currentEquipTab === 'horse')  { db = DB_HORSES; }
+  else if (currentEquipTab === 'shield') { db = DB_SHIELDS; }
+  else if (currentEquipTab === 'squire') { db = DB_SQUIRES; }
 
   const grid = document.createElement('div');
   grid.className = 'equip-grid';
@@ -115,6 +121,7 @@ export function renderEquipTab() {
     if (item.defB !== undefined) statsHtml += `<span class="stat-badge def" style="background:#fff">🛡 +${item.defB}</span>`;
     if (item.spdB !== undefined && item.spdB !== 0) statsHtml += `<span class="stat-badge str" style="background:#fff">⚡ ${item.spdB > 0 ? '+' : ''}${item.spdB}</span>`;
     if (item.eff  !== undefined) statsHtml += `<span class="stat-badge hor" style="background:#fff">⭐ ${item.eff}</span>`;
+    if (item.duration !== undefined) statsHtml += `<span class="stat-badge spd" style="background:#fff">⏱️ ${(item.duration/1000).toFixed(1)}s</span>`;
 
     div.innerHTML = `
       <div class="item-name">${item.name}</div>

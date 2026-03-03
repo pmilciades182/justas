@@ -2,7 +2,7 @@
 // OBJETOS RUNTIME: CABALLERO, ESCUDERO
 // ══════════════════════════════════════
 
-import { DB_KNIGHTS, DB_ARMORS, DB_HORSES, DB_SQUIRES, KNIGHT_COLORS, getKnightData, getArmorData, getHorseData, getSquireData, ENEMY_SQUADS } from '../data.js';
+import { DB_KNIGHTS, DB_ARMORS, DB_HORSES, DB_SQUIRES, DB_SHIELDS, KNIGHT_COLORS, getKnightData, getArmorData, getHorseData, getSquireData, getShieldData, ENEMY_SQUADS } from '../data.js';
 import { LANE_X, TRACK_TOP, TRACK_BOT, TRACK_W, TRACK_X } from './constants.js';
 
 export function makeJoustKnight(knightId, side, equipData, customData = null) {
@@ -11,6 +11,7 @@ export function makeJoustKnight(knightId, side, equipData, customData = null) {
   const arm = equipData.armor ? getArmorData(equipData.armor) : null;
   const hrs = equipData.horse ? getHorseData(equipData.horse) : null;
   const sqr = equipData.squire ? getSquireData(equipData.squire) : null;
+  const shd = equipData.shield ? getShieldData(equipData.shield) : null;
 
   const totalDef = kd.def + (arm ? arm.defB : 0);
   const spdMod = (hrs ? hrs.spdB : 0) + (arm ? arm.spdB : 0);
@@ -23,6 +24,7 @@ export function makeJoustKnight(knightId, side, equipData, customData = null) {
     def: totalDef,
     hor: kd.hor,
     squireEff: sqr ? sqr.eff : (kd.squireEff || 0),
+    shield: shd, // Store full shield data
     colors: c,
     icon: kd.icon,
     x: side === 'left' ? LANE_X - 16 : LANE_X + 16,
@@ -52,6 +54,8 @@ export function makeJoustKnight(knightId, side, equipData, customData = null) {
     speechText: '',
     speechTimer: 0,
     speechType: 'normal', // normal | prominent
+    // Ability states
+    abilityShieldT: 0, // Remaining shield time in ms
   };
 }
 
@@ -74,7 +78,8 @@ export function generateEnemy(count) {
     equip: {
       armor: k.armor,
       horse: k.horse,
-      squire: k.squire
+      squire: k.squire,
+      shield: 'madera' // Basic shield for everyone
     }
   }));
 

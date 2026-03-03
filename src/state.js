@@ -13,9 +13,10 @@ export function defaultSave() {
     armors:  ['malla', 'malla'],
     horses:  ['rocin', 'rocin'],
     squires: ['novato'],
+    shields: ['madera', 'madera'],
     equip: {
-      roland: { armor: 'malla', horse: 'rocin', squire: 'novato' },
-      dorian: { armor: 'malla', horse: 'rocin', squire: null },
+      roland: { armor: 'malla', horse: 'rocin', squire: 'novato', shield: 'madera' },
+      dorian: { armor: 'malla', horse: 'rocin', squire: null, shield: 'madera' },
     },
     team: ['roland', 'dorian'],
   };

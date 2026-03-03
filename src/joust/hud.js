@@ -34,8 +34,14 @@ export function updateJoustHUD() {
 
   if (r1 && r2) {
     if (showRibbon) {
-      r1.innerHTML = `<div>${joust.k1Hit.label}</div><div style="font-size:10px; opacity:0.8">+${joust.k1Hit.pts} PTS</div>`;
-      r2.innerHTML = `<div>${joust.k2Hit.label}</div><div style="font-size:10px; opacity:0.8">+${joust.k2Hit.pts} PTS</div>`;
+      let l1 = joust.k1Hit.label;
+      let l2 = joust.k2Hit.label;
+
+      if (joust.k2.abilityShieldT > 0 && joust.k1Hit.pts > 0) l1 = "BLOQUEO";
+      if (joust.k1.abilityShieldT > 0 && joust.k2Hit.pts > 0) l2 = "BLOQUEO";
+
+      r1.innerHTML = `<div>${l1}</div><div style="font-size:10px; opacity:0.8">+${joust.k1Hit.pts} PTS</div>`;
+      r2.innerHTML = `<div>${l2}</div><div style="font-size:10px; opacity:0.8">+${joust.k2Hit.pts} PTS</div>`;
       r1.classList.add('show');
       r2.classList.add('show');
     } else {

@@ -3,7 +3,7 @@
 // ══════════════════════════════════════
 
 import { player, saveGame } from '../state.js';
-import { DB_KNIGHTS, DB_ARMORS, DB_HORSES, DB_SQUIRES, KNIGHT_COLORS } from '../data.js';
+import { DB_KNIGHTS, DB_ARMORS, DB_HORSES, DB_SQUIRES, DB_SHIELDS, KNIGHT_COLORS } from '../data.js';
 import { $, $$, refreshGold } from './nav.js';
 
 let currentShopTab = 'knights';
@@ -17,6 +17,7 @@ export function renderShop() {
   if (currentShopTab === 'knights') items = DB_KNIGHTS;
   else if (currentShopTab === 'armors') items = DB_ARMORS;
   else if (currentShopTab === 'horses') items = DB_HORSES;
+  else if (currentShopTab === 'shields') items = DB_SHIELDS;
   else items = DB_SQUIRES;
 
   items.forEach(item => {
@@ -40,9 +41,10 @@ export function renderShop() {
     if (item.spdB !== undefined && item.spdB !== 0) statsHtml += `<span class="stat-badge spd">VEL ${item.spdB > 0 ? '+' : ''}${item.spdB}</span>`;
     if (item.sta !== undefined) statsHtml += `<span class="stat-badge hor">STA ${item.sta}</span>`;
     if (item.eff !== undefined) statsHtml += `<span class="stat-badge spd">EFI ${item.eff}</span>`;
+    if (item.duration !== undefined) statsHtml += `<span class="stat-badge spd">TIEMPO ${(item.duration/1000).toFixed(1)}s</span>`;
 
     const iconBg = item.colorIdx !== undefined ? KNIGHT_COLORS[item.colorIdx].shield : 'var(--card-hover)';
-    const icon = item.icon || (currentShopTab === 'armors' ? '🛡' : currentShopTab === 'horses' ? '🐴' : '🧑');
+    const icon = item.icon || (currentShopTab === 'armors' ? '🛡' : currentShopTab === 'horses' ? '🐴' : currentShopTab === 'shields' ? '🛡️' : '🧑');
 
     div.innerHTML = `
       <div class="card-row">
@@ -74,12 +76,13 @@ export function buyItem(itemId) {
     if (player.gold < item.cost) return;
     player.gold -= item.cost;
     player.knights.push(itemId);
-    player.equip[itemId] = { armor: null, horse: null, squire: null };
+    player.equip[itemId] = { armor: null, horse: null, squire: null, shield: null };
     saveGame(); renderShop(); return;
   }
   item = DB_ARMORS.find(a => a.id === itemId);
   if (item) { invKey = 'armors'; }
   else { item = DB_HORSES.find(h => h.id === itemId); if (item) invKey = 'horses'; }
+  if (!item) { item = DB_SHIELDS.find(sh => sh.id === itemId); if (item) invKey = 'shields'; }
   if (!item) { item = DB_SQUIRES.find(s => s.id === itemId); if (item) invKey = 'squires'; }
   if (!item) return;
   if (player.gold < item.cost) return;
