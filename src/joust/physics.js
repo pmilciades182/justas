@@ -75,7 +75,12 @@ export function resolveClash() {
     
     // HP Bonus: Add up to 25% extra probability if defender has 0 HP
     const hpBonus2 = (1 - (k2.hp / k2.maxHp)) * 0.25;
-    const finalProb1 = prob1 + hpBonus2;
+    
+    // RPS Synergy: Speed > Defense (+20% unhorse chance)
+    const rpsBonus1 = (k1.abilityHorseT > 0 && k2.abilityShieldT > 0) ? 0.20 : 0;
+    
+    const finalProb1 = prob1 + hpBonus2 + rpsBonus1;
+    if (rpsBonus1 > 0) knightSay(k1, "¡PERFORAR DEFENSA!", 'prominent');
 
     if (k2.guard === 'low' && k1.guard === 'high' && k1.lanceIntact && Math.random() < finalProb1) {
       h1 = HIT_TABLE.find(h => h.type === 'unhorse');
@@ -86,7 +91,12 @@ export function resolveClash() {
     // K2's hit attempt
     let prob2 = unhorseProbs[joust.venida] || 0.05;
     const hpBonus1 = (1 - (k1.hp / k1.maxHp)) * 0.25;
-    const finalProb2 = prob2 + hpBonus1;
+    
+    // RPS Synergy: Speed > Defense (+20% unhorse chance)
+    const rpsBonus2 = (k2.abilityHorseT > 0 && k1.abilityShieldT > 0) ? 0.20 : 0;
+    
+    const finalProb2 = prob2 + hpBonus1 + rpsBonus2;
+    if (rpsBonus2 > 0) knightSay(k2, "¡PERFORAR DEFENSA!", 'prominent');
 
     if (k1.guard === 'low' && k2.guard === 'high' && k2.lanceIntact && Math.random() < finalProb2) {
       h2 = HIT_TABLE.find(h => h.type === 'unhorse');
@@ -130,7 +140,6 @@ export function resolveClash() {
   }
 
   // BREAKABLE LANCE LOGIC 
-  // Synergy: Attack ability increases break chance by 50%
   const baseBreakProb = 0.40;
   const b1 = k1.abilityAttackT > 0 ? baseBreakProb * 1.5 : baseBreakProb;
   const b2 = k2.abilityAttackT > 0 ? baseBreakProb * 1.5 : baseBreakProb;
@@ -147,11 +156,22 @@ export function resolveClash() {
   const stunBefore1 = k1.stunned;
   const stunBefore2 = k2.stunned;
   const totalImpactSpeed = k1.speed + k2.speed;
-  // Damage multiplier with a max cap of 2.2x to maintain balance
-  const damageMult = Math.min(2.2, totalImpactSpeed / 4.5);
+  
+  // RPS Synergy: Attack > Speed (+50% damage)
+  let dmgMult1 = Math.min(2.2, totalImpactSpeed / 4.5);
+  let dmgMult2 = Math.min(2.2, totalImpactSpeed / 4.5);
+  
+  if (k1.abilityAttackT > 0 && k2.abilityHorseT > 0) {
+    dmgMult1 *= 1.5;
+    knightSay(k1, "¡CASTIGAR IMPULSO!", 'prominent');
+  }
+  if (k2.abilityAttackT > 0 && k1.abilityHorseT > 0) {
+    dmgMult2 *= 1.5;
+    knightSay(k2, "¡CASTIGAR IMPULSO!", 'prominent');
+  }
 
-  applyHitEffect(h1, k2, damageMult);
-  applyHitEffect(h2, k1, damageMult);
+  applyHitEffect(h1, k2, dmgMult1);
+  applyHitEffect(h2, k1, dmgMult2);
 
   // Check for unhorse fanfare (if player unhorses enemy)
   if (h1.type === 'unhorse') audio.playFanfareUnhorse();
@@ -224,6 +244,15 @@ export function applyHitEffect(hit, defender, damageMult = 1.0) {
   
   // Synergy: Defense gives total stun immunity
   if (defender.abilityShieldT > 0) stunChance = 0;
+
+  // RPS Synergy: Defense > Attack (Recoil Stun)
+  // If defender is defending and attacker is attacking -> Attacker might get stunned
+  const attacker = (defender === joust.k1) ? joust.k2 : joust.k1;
+  if (defender.abilityShieldT > 0 && attacker.abilityAttackT > 0) {
+    attacker.stunned = true;
+    attacker.stunRounds = 2;
+    knightSay(defender, "¡CONTRA-ATAQUE!", 'prominent');
+  }
 
   if (stunChance > 0 && !defender.stunned && Math.random() < stunChance) {
     defender.stunned = true;

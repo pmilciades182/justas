@@ -195,36 +195,46 @@ function updateAIAbilities(k, opponent) {
     return;
   }
 
-  // 2. TACTICAL FREEZE
-  // Use if player is close and has an active ability, or just to stop them
+  // 2. COUNTER-AI LOGIC (Reacting to player)
+  
+  // IF player is ATTACKING -> AI tries DEFENSE (Defense beats Attack)
+  if (opponent.abilityAttackT > 0 && k.cdShield <= 0 && distY < 250) {
+    handleAbilityTrigger('btn-defensa', k);
+    return;
+  }
+
+  // IF player is DEFENDING -> AI tries SPEED (Speed beats Defense)
+  if (opponent.abilityShieldT > 0 && k.cdHorse <= 0 && distY < 250) {
+    handleAbilityTrigger('btn-espolear', k);
+    return;
+  }
+
+  // IF player is SPURRING (SPEED) -> AI tries ATTACK (Attack beats Speed)
+  if (opponent.abilityHorseT > 0 && k.cdAttack <= 0 && distY < 200) {
+    handleAbilityTrigger('btn-ataque', k);
+    return;
+  }
+
+  // 3. TACTICAL FREEZE
   if (k.equipStats.armor?.special === 'freeze' && k.cdSpecial <= 0) {
-    if (distY < 250 && (opponent.abilityActive || Math.random() < 0.3)) {
+    if (distY < 250 && (opponent.abilityActive || Math.random() < 0.2)) {
       handleAbilityTrigger('btn-especial', k);
       return;
     }
   }
 
-  // 3. DEFENSE
-  // Use if HP is mid-low and opponent is close, or if opponent is attacking
-  if (k.cdShield <= 0) {
-    const shouldDefend = (k.hp < 60 && distY < 180) || (opponent.abilityAttackT > 0 && distY < 220);
-    if (shouldDefend) {
-      handleAbilityTrigger('btn-defensa', k);
-      return;
-    }
+  // 4. GENERAL USAGE (If no specific counter)
+  if (k.cdShield <= 0 && k.hp < 60 && distY < 180) {
+    handleAbilityTrigger('btn-defensa', k);
+    return;
   }
 
-  // 4. ATTACK (Fury)
-  // Use when very close to impact to maximize strength
-  if (k.cdAttack <= 0 && distY < 120 && k.hp > 25) {
+  if (k.cdAttack <= 0 && distY < 120) {
     handleAbilityTrigger('btn-ataque', k);
     return;
   }
 
-  // 5. SPUR (Speed)
-  // Use at the start of the charge to gain momentum
   if (k.cdHorse <= 0 && k.phase === 'charge' && k.speed < k.maxSpeed) {
-    // Only if not too close to the end already
     const trackLen = TRACK_BOT - TRACK_TOP;
     const distFromStart = k.baseDir === 1 ? (k.y - TRACK_TOP) : (TRACK_BOT - k.y);
     if (distFromStart < trackLen * 0.4) {
