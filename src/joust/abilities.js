@@ -4,6 +4,7 @@
 
 import { joust } from './state.js';
 import { knightSay } from './dialogue.js';
+import { audio } from '../audio.js';
 
 export function initAbilities() {
   const buttons = document.querySelectorAll('.ability-btn');
@@ -44,6 +45,7 @@ export function handleAbilityTrigger(id, k) {
 
   if (id === 'btn-defensa') {
     if (k.equipStats.shield) {
+      if (isPlayer) audio.playAbilityDefense();
       k.abilityShieldT = k.equipStats.shield.dur;
       k.cdShield = k.equipStats.shield.cd;
       k.abilityActive = true;
@@ -52,6 +54,7 @@ export function handleAbilityTrigger(id, k) {
   } 
   else if (id === 'btn-ataque') {
     if (k.equipStats.lance) {
+      if (isPlayer) audio.playAbilityAttack();
       k.abilityAttackT = k.equipStats.lance.dur;
       k.cdAttack = k.equipStats.lance.cd;
       k.abilityActive = true;
@@ -60,6 +63,7 @@ export function handleAbilityTrigger(id, k) {
   }
   else if (id === 'btn-espolear') {
     if (k.equipStats.horse) {
+      if (isPlayer) audio.playAbilitySpur();
       k.abilityHorseT = k.equipStats.horse.dur;
       k.cdHorse = k.equipStats.horse.cd;
       k.abilityActive = true;
@@ -68,6 +72,7 @@ export function handleAbilityTrigger(id, k) {
   }
   else if (id === 'btn-especial') {
     if (k.equipStats.armor) {
+      if (isPlayer) audio.playAbilitySpecial();
       const spec = k.equipStats.armor.special;
       k.abilitySpecialT = k.equipStats.armor.dur;
       k.cdSpecial = k.equipStats.armor.cd;

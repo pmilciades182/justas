@@ -222,6 +222,43 @@ class AudioManager {
     mel.forEach(n => this._note(n.f, now + n.t, 0.3, 'square', 0.12));
   }
 
+  // ── ABILITY ACTIVATION FANFARES ──
+
+  playAbilityDefense() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    // Solid, high-pitched protective chime
+    this._note(523.25, now, 0.1, 'sine', 0.2);
+    this._note(659.25, now + 0.05, 0.4, 'sine', 0.15);
+  }
+
+  playAbilityAttack() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    // Aggressive rising sawtooth
+    this._note(220.00, now, 0.1, 'sawtooth', 0.2);
+    this._note(261.63, now + 0.08, 0.1, 'sawtooth', 0.2);
+    this._note(329.63, now + 0.16, 0.3, 'sawtooth', 0.2);
+  }
+
+  playAbilitySpur() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    // Rapid galloping pulses
+    for(let i=0; i<3; i++) {
+      this._note(440.00, now + i*0.08, 0.05, 'square', 0.12);
+    }
+  }
+
+  playAbilitySpecial() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    // Mystical arpeggio
+    [392.00, 523.25, 783.99, 1046.50].forEach((f, i) => {
+      this._note(f, now + i*0.06, 0.5, 'sine', 0.1);
+    });
+  }
+
   _note(freq, start, duration, type = 'sine', vol = 0.1) {
     if (!this.ctx) return;
     const st = Math.max(this.ctx.currentTime, start);
