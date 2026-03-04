@@ -6,6 +6,7 @@ import { HIT_TABLE, HP_DAMAGE, LANE_X } from './constants.js';
 import { joust } from './state.js';
 import { spawnSparks, spawnSplinters, spawnBlood, spawnGroundBlood, spawnGroundSplinters, spawnBrokenLance } from './particles.js';
 import { audio } from '../audio.js';
+import { knightSay } from './dialogue.js';
 
 export function rollHit(strBonus, defBonus, unhorseProb = 0.05) {
   // 1. Roll for unhorse FIRST based on the new venida rules
@@ -65,22 +66,19 @@ export function resolveClash() {
     const lt = HIT_TABLE.find(h => h.type === 'lanceTip');
     h1 = lt; h2 = lt;
   } else {
-    // Determine who can actually reach whom
     const r1 = k1.lanceIntact ? 95 : 25;
     const r2 = k2.lanceIntact ? 95 : 25;
 
-    // K1's hit attempt
-    const unhorseProbs = { 1: 0.05, 2: 0.10, 3: 0.30, 4: 0.60 };
+    const unhorseProbs = { 1: 0.05, 2: 0.10, 3: 0.35, 4: 0.50 };
+    
+    // K1's attempt
     let prob1 = unhorseProbs[joust.venida] || 0.05;
-    
-    // HP Bonus: Add up to 25% extra probability if defender has 0 HP
     const hpBonus2 = (1 - (k2.hp / k2.maxHp)) * 0.25;
-    
-    // RPS Synergy: Speed > Defense (+20% unhorse chance)
-    const rpsBonus1 = (k1.abilityHorseT > 0 && k2.abilityShieldT > 0) ? 0.20 : 0;
-    
-    const finalProb1 = prob1 + hpBonus2 + rpsBonus1;
-    if (rpsBonus1 > 0) knightSay(k1, "¡PERFORAR DEFENSA!", 'prominent');
+    const tierH1 = k1.equipStats.horse?.tier || 1;
+    const rpsBonus1 = (k1.abilityHorseT > 0 && k2.abilityShieldT > 0) ? (0.10 + tierH1 * 0.04) : 0;
+    const isAtkVsDef1 = (k1.abilityAttackT > 0 && k2.abilityShieldT > 0);
+    const finalProb1 = prob1 + hpBonus2 + (isAtkVsDef1 ? 0 : rpsBonus1);
+    if (rpsBonus1 > 0 && !isAtkVsDef1) knightSay(k1, `¡PERFORAR T${tierH1}!`, 'prominent');
 
     if (k2.guard === 'low' && k1.guard === 'high' && k1.lanceIntact && Math.random() < finalProb1) {
       h1 = HIT_TABLE.find(h => h.type === 'unhorse');
@@ -88,15 +86,14 @@ export function resolveClash() {
       h1 = (k1.lanceIntact && distY <= r1 && k1.frozenT <= 0) ? rollHit(getEffectiveStr(k1), k2.def, finalProb1) : HIT_TABLE.find(h => h.type === 'miss');
     }
 
-    // K2's hit attempt
+    // K2's attempt
     let prob2 = unhorseProbs[joust.venida] || 0.05;
     const hpBonus1 = (1 - (k1.hp / k1.maxHp)) * 0.25;
-    
-    // RPS Synergy: Speed > Defense (+20% unhorse chance)
-    const rpsBonus2 = (k2.abilityHorseT > 0 && k1.abilityShieldT > 0) ? 0.20 : 0;
-    
-    const finalProb2 = prob2 + hpBonus1 + rpsBonus2;
-    if (rpsBonus2 > 0) knightSay(k2, "¡PERFORAR DEFENSA!", 'prominent');
+    const tierH2 = k2.equipStats.horse?.tier || 1;
+    const rpsBonus2 = (k2.abilityHorseT > 0 && k1.abilityShieldT > 0) ? (0.10 + tierH2 * 0.04) : 0;
+    const isAtkVsDef2 = (k2.abilityAttackT > 0 && k1.abilityShieldT > 0);
+    const finalProb2 = prob2 + hpBonus1 + (isAtkVsDef2 ? 0 : rpsBonus2);
+    if (rpsBonus2 > 0 && !isAtkVsDef2) knightSay(k2, `¡PERFORAR T${tierH2}!`, 'prominent');
 
     if (k1.guard === 'low' && k2.guard === 'high' && k2.lanceIntact && Math.random() < finalProb2) {
       h2 = HIT_TABLE.find(h => h.type === 'unhorse');
@@ -153,30 +150,31 @@ export function resolveClash() {
     spawnBrokenLance(impactX, impactY, 'right');
   }
 
-  const stunBefore1 = k1.stunned;
-  const stunBefore2 = k2.stunned;
   const totalImpactSpeed = k1.speed + k2.speed;
   
-  // RPS Synergy: Attack > Speed (+50% damage)
+  // RPS Synergy: Attack > Speed (Scales with Tier: 30% + Tier*10%)
   let dmgMult1 = Math.min(2.2, totalImpactSpeed / 4.5);
   let dmgMult2 = Math.min(2.2, totalImpactSpeed / 4.5);
   
   if (k1.abilityAttackT > 0 && k2.abilityHorseT > 0) {
-    dmgMult1 *= 1.5;
-    knightSay(k1, "¡CASTIGAR IMPULSO!", 'prominent');
+    const tierA1 = k1.equipStats.lance?.tier || 1;
+    dmgMult1 *= (1.3 + tierA1 * 0.1);
+    knightSay(k1, `¡CASTIGAR T${tierA1}!`, 'prominent');
   }
   if (k2.abilityAttackT > 0 && k1.abilityHorseT > 0) {
-    dmgMult2 *= 1.5;
-    knightSay(k2, "¡CASTIGAR IMPULSO!", 'prominent');
+    const tierA2 = k2.equipStats.lance?.tier || 1;
+    dmgMult2 *= (1.3 + tierA2 * 0.1);
+    knightSay(k2, `¡CASTIGAR T${tierA2}!`, 'prominent');
   }
 
   applyHitEffect(h1, k2, dmgMult1);
   applyHitEffect(h2, k1, dmgMult2);
 
-  // Check for unhorse fanfare (if player unhorses enemy)
   if (h1.type === 'unhorse') audio.playFanfareUnhorse();
 
   joust.stunEvent = null;
+  const stunBefore1 = k1.stunned;
+  const stunBefore2 = k2.stunned;
   if (!stunBefore2 && k2.stunned) joust.stunEvent = k2.name;
   else if (!stunBefore1 && k1.stunned) joust.stunEvent = k1.name;
 
@@ -212,7 +210,6 @@ export function applyHitEffect(hit, defender, damageMult = 1.0) {
     let effectiveDef = defender.def;
     let finalDmgMult = damageMult;
 
-    // Ability: Shield increases defense and reduces final damage
     if (defender.abilityShieldT > 0) {
       effectiveDef += 8;
       finalDmgMult *= 0.5;
@@ -222,7 +219,6 @@ export function applyHitEffect(hit, defender, damageMult = 1.0) {
     const dmg = Math.max(1, Math.round(baseDmg * defFactor * finalDmgMult));
     defender.hp = Math.max(0, defender.hp - dmg);
 
-    // Rule: if HP reaches 0, force permanent stun until healed
     if (defender.hp <= 0) {
       defender.stunned = true;
       defender.stunRounds = 99;
@@ -242,16 +238,15 @@ export function applyHitEffect(hit, defender, damageMult = 1.0) {
   if (hpPct < 0.50) stunChance += 0.15;
   if (hpPct < 0.25) stunChance += 0.20;
   
-  // Synergy: Defense gives total stun immunity
   if (defender.abilityShieldT > 0) stunChance = 0;
 
-  // RPS Synergy: Defense > Attack (Recoil Stun)
-  // If defender is defending and attacker is attacking -> Attacker might get stunned
+  // RPS Synergy: Defense > Attack (Recoil Stun) - Scales with Tier
   const attacker = (defender === joust.k1) ? joust.k2 : joust.k1;
-  if (defender.abilityShieldT > 0 && attacker.abilityAttackT > 0) {
+  if (defender.abilityShieldT > 0 && attacker.abilityAttackT <= 0 && attacker.abilityHorseT <= 0) {
+    const tierS = defender.equipStats.shield?.tier || 1;
     attacker.stunned = true;
-    attacker.stunRounds = 2;
-    knightSay(defender, "¡CONTRA-ATAQUE!", 'prominent');
+    attacker.stunRounds = (tierS <= 2) ? 1 : (tierS <= 4 ? 2 : 3);
+    knightSay(defender, `¡CONTRA-T${tierS}!`, 'prominent');
   }
 
   if (stunChance > 0 && !defender.stunned && Math.random() < stunChance) {

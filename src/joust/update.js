@@ -28,7 +28,19 @@ export function updateJoust() {
 
   // AI Logic
   if (k2 && !k2.fallen && !k2.stunned && k2.frozenT <= 0) {
-    updateAIAbilities(k2, k1);
+    // Humanize reaction: delay response to player abilities
+    if (k1.abilityActive && k2.aiReactionT === undefined) {
+      // First time detecting player ability this charge
+      k2.aiReactionT = 15 + Math.random() * 25; // ~250ms to 600ms delay
+    }
+    
+    if (k2.aiReactionT > 0) {
+      k2.aiReactionT--;
+    } else {
+      updateAIAbilities(k2, k1);
+    }
+  } else if (k2) {
+    k2.aiReactionT = undefined; // Reset when not in a state to react
   }
 
   // Decay shake & flash
