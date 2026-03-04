@@ -28,6 +28,8 @@ export function rollHit(strBonus, defBonus) {
 }
 
 export function getEffectiveStr(k) {
+  if (k.frozenT > 0) return 0; // Frozen knights can't hit back effectively
+
   let str = k.str;
   const hpPct = k.hp / k.maxHp;
   if (hpPct < 0.25) str -= 3;
@@ -37,6 +39,9 @@ export function getEffectiveStr(k) {
   
   // Ability: Shield reduces attack power
   if (k.abilityShieldT > 0) str -= 4; 
+
+  // Ability: Attack (Fury) increases strength significantly
+  if (k.abilityAttackT > 0) str += 6;
 
   return Math.max(1, str);
 }
@@ -62,14 +67,14 @@ export function resolveClash() {
     if (k2.guard === 'low' && k1.guard === 'high' && k1.lanceIntact) {
       h1 = HIT_TABLE.find(h => h.type === 'unhorse');
     } else {
-      h1 = (k1.lanceIntact && distY <= r1) ? rollHit(getEffectiveStr(k1), k2.def) : HIT_TABLE.find(h => h.type === 'miss');
+      h1 = (k1.lanceIntact && distY <= r1 && k1.frozenT <= 0) ? rollHit(getEffectiveStr(k1), k2.def) : HIT_TABLE.find(h => h.type === 'miss');
     }
 
     // K2's hit attempt
     if (k1.guard === 'low' && k2.guard === 'high' && k2.lanceIntact) {
       h2 = HIT_TABLE.find(h => h.type === 'unhorse');
     } else {
-      h2 = (k2.lanceIntact && distY <= r2) ? rollHit(getEffectiveStr(k2), k1.def) : HIT_TABLE.find(h => h.type === 'miss');
+      h2 = (k2.lanceIntact && distY <= r2 && k2.frozenT <= 0) ? rollHit(getEffectiveStr(k2), k1.def) : HIT_TABLE.find(h => h.type === 'miss');
     }
   }
 
@@ -80,17 +85,14 @@ export function resolveClash() {
   joust.history.push({ venida: joust.venida, k1Hit: h1, k2Hit: h2 });
 
   const impactX = LANE_X;
-  // Visual impact point should be at the defender's center for more realism
   let impactY = (k1.y + k2.y) / 2;
   if (h1.pts > h2.pts) impactY = k2.y;
   else if (h2.pts > h1.pts) impactY = k1.y;
   
   const maxPts = Math.max(h1.pts, h2.pts);
 
-  // Audio Clash
   audio.playClash(maxPts >= 10 ? 1.5 : (maxPts >= 3 ? 1.0 : 0.5));
   
-  // Sonido Metálico Adicional
   if (h1.type === 'helmet' || h1.type === 'shield' || h2.type === 'helmet' || h2.type === 'shield') {
     audio.playMetalHit(maxPts >= 3 ? 1.2 : 0.8);
   }
@@ -110,13 +112,17 @@ export function resolveClash() {
     joust.shakeAmt = 20; joust.flashAlpha = 0.9;
   }
 
-  // BREAKABLE LANCE LOGIC (40% probability if it was a hit)
-  const breakProb = 0.40;
-  if (h1.type !== 'miss' && h1.type !== 'attaint' && Math.random() < breakProb) {
+  // BREAKABLE LANCE LOGIC 
+  // Synergy: Attack ability increases break chance by 50%
+  const baseBreakProb = 0.40;
+  const b1 = k1.abilityAttackT > 0 ? baseBreakProb * 1.5 : baseBreakProb;
+  const b2 = k2.abilityAttackT > 0 ? baseBreakProb * 1.5 : baseBreakProb;
+
+  if (h1.type !== 'miss' && h1.type !== 'attaint' && Math.random() < b1) {
     k1.lanceIntact = false; k1.lanceStub = true;
     spawnBrokenLance(impactX, impactY, 'left');
   }
-  if (h2.type !== 'miss' && h2.type !== 'attaint' && Math.random() < breakProb) {
+  if (h2.type !== 'miss' && h2.type !== 'attaint' && Math.random() < b2) {
     k2.lanceIntact = false; k2.lanceStub = true;
     spawnBrokenLance(impactX, impactY, 'right');
   }
@@ -192,6 +198,10 @@ export function applyHitEffect(hit, defender, damageMult = 1.0) {
   const hpPct = defender.hp / defender.maxHp;
   if (hpPct < 0.50) stunChance += 0.15;
   if (hpPct < 0.25) stunChance += 0.20;
+  
+  // Synergy: Defense gives total stun immunity
+  if (defender.abilityShieldT > 0) stunChance = 0;
+
   if (stunChance > 0 && !defender.stunned && Math.random() < stunChance) {
     defender.stunned = true;
     const rnd = Math.random();

@@ -58,20 +58,25 @@ const PHRASES = {
   ]
 };
 
-export function knightSay(k, category, type = 'normal') {
+export function knightSay(k, categoryOrText, type = 'normal') {
   if (k.speechTimer > 0 && type === 'normal') return; // Don't interrupt if normal
   
   let list;
-  if (category === 'war_cry') {
+  if (categoryOrText === 'war_cry') {
     list = WAR_CRIES;
     k.speechType = 'prominent';
+    k.speechText = list[Math.floor(Math.random() * list.length)];
+  } else if (PHRASES[categoryOrText]) {
+    list = PHRASES[categoryOrText];
+    k.speechType = type;
+    k.speechText = list[Math.floor(Math.random() * list.length)];
   } else {
-    list = PHRASES[category] || PHRASES.reaction;
-    k.speechType = 'normal';
+    // Treat as raw text
+    k.speechText = categoryOrText;
+    k.speechType = type;
   }
 
-  k.speechText = list[Math.floor(Math.random() * list.length)];
-  k.speechTimer = k.speechType === 'prominent' ? 120 : 90; // Half duration: 2s/1.5s approx
+  k.speechTimer = k.speechType === 'prominent' ? 120 : 90;
 }
 
 export function updateKnightSpeech(k) {

@@ -656,7 +656,7 @@
       padding: 5px;
       box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
     }
-    .ability-btn:active:not(.cooldown) {
+    .ability-btn:active:not(.cooldown):not(.locked) {
       transform: scale(0.85);
       background: #3d2b1f;
       border-color: #fff !important;
@@ -664,6 +664,20 @@
     .ability-btn.cooldown {
       cursor: not-allowed;
       filter: grayscale(1) brightness(0.7);
+    }
+    .ability-btn.locked {
+      cursor: not-allowed;
+      filter: brightness(0.5);
+      opacity: 0.8;
+    }
+    .ability-btn.locked::after {
+      content: '🔒';
+      position: absolute;
+      font-size: 20px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-shadow: 0 0 10px #000;
+      z-index: 10;
     }
     .ability-icon { font-size: 24px; margin-bottom: 2px; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
     .ability-name { font-size: 9px; font-family: 'MedievalSharp'; text-transform: uppercase; color: var(--gold-bright); }
@@ -983,7 +997,7 @@
           <div class="ability-cooldown-overlay"></div>
         </button>
         <button class="ability-btn" id="btn-especial">
-          <span class="ability-icon">🔥</span>
+          <span class="ability-icon">⭐</span>
           <span class="ability-name">Especial</span>
           <div class="ability-cooldown-overlay"></div>
         </button>

@@ -39,11 +39,11 @@ export const DB_HORSES = [
 
 // 4. ARMADURAS (Especial/Resistencia - Purple)
 export const DB_ARMORS = [
-  { id: 'a1', name: 'Cota de Malla',     tier: 1, cost: 0,   hp: 0,   cd: 5000, dur: 2000, desc: 'Eslabones oxidados.' },
-  { id: 'a2', name: 'Placas Parciales',  tier: 2, cost: 250, hp: 10,  cd: 4300, dur: 3000, desc: 'Protege zonas vitales.' },
-  { id: 'a3', name: 'Armadura Completa', tier: 3, cost: 500, hp: 25,  cd: 3600, dur: 4000, desc: 'Acero pulido.' },
-  { id: 'a4', name: 'Armadura de Justa', tier: 4, cost: 900, hp: 40,  cd: 3000, dur: 5000, desc: 'Optimizada para el impacto.' },
-  { id: 'a5', name: 'Baluarte Titán',    tier: 5, cost: 1600, hp: 60, cd: 2300, dur: 7000, desc: 'Invulnerable.' },
+  { id: 'a1', name: 'Cota de Malla',     tier: 1, cost: 0,   hp: 0,   cd: 5000, dur: 100,  special: 'heal',   desc: 'Restauración básica (30% HP).' },
+  { id: 'a2', name: 'Placas Parciales',  tier: 2, cost: 250, hp: 10,  cd: 4300, dur: 100,  special: 'heal',   desc: 'Zonas reforzadas (30% HP).' },
+  { id: 'a3', name: 'Armadura Glacial',  tier: 3, cost: 500, hp: 20,  cd: 6000, dur: 3000, special: 'freeze', desc: 'Aura invernal (Congela 3s).' },
+  { id: 'a4', name: 'Armadura de Justa', tier: 4, cost: 900, hp: 40,  cd: 3000, dur: 100,  special: 'heal',   desc: 'Óptima para impactos (30% HP).' },
+  { id: 'a5', name: 'Baluarte Ártico',   tier: 5, cost: 1600, hp: 60, cd: 4000, dur: 3000, special: 'freeze', desc: 'Cero absoluto (Congela 3s).' },
 ];
 
 // ESCUDEROS (Pasivos - Extra)
@@ -64,11 +64,11 @@ export const KNIGHT_COLORS = [
 ];
 
 export const DB_KNIGHTS = [
-  { id: 'k1', name: 'Sir Roland',   str: 5, def: 5, hor: 5, icon: '🦁', colorIdx: 0 },
-  { id: 'k2', name: 'Sir Dorian',   str: 4, def: 6, hor: 5, icon: '🦅', colorIdx: 1 },
-  { id: 'k3', name: 'Lady Elara',   str: 6, def: 4, hor: 6, icon: '🦄', colorIdx: 2 },
-  { id: 'k4', name: 'Barón Valen',  str: 7, def: 3, hor: 4, icon: '🐗', colorIdx: 3 },
-  { id: 'k5', name: 'Sir Kael',     str: 5, def: 5, hor: 5, icon: '🐺', colorIdx: 4 },
+  { id: 'k1', name: 'Sir Roland',   str: 5, def: 5, hor: 5, icon: '🦁', colorIdx: 0, cost: 0 },
+  { id: 'k2', name: 'Sir Dorian',   str: 4, def: 6, hor: 5, icon: '🦅', colorIdx: 1, cost: 0 },
+  { id: 'k3', name: 'Lady Elara',   str: 6, def: 4, hor: 6, icon: '🦄', colorIdx: 2, cost: 500 },
+  { id: 'k4', name: 'Barón Valen',  str: 7, def: 3, hor: 4, icon: '🐗', colorIdx: 3, cost: 800 },
+  { id: 'k5', name: 'Sir Kael',     str: 5, def: 5, hor: 5, icon: '🐺', colorIdx: 4, cost: 1200 },
 ];
 
 // Helpers

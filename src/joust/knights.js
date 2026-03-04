@@ -79,7 +79,10 @@ export function makeJoustKnight(knightId, side, equipData, customData = null) {
     cdSpecial: 0,
     
     // Global lock flag
-    abilityActive: false
+    abilityActive: false,
+    
+    // External status effects
+    frozenT: 0
   };
 }
 

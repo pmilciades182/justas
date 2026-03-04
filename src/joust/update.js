@@ -65,6 +65,9 @@ export function updateJoust() {
 
     // Update global active flag
     k.abilityActive = (k.abilityShieldT > 0 || k.abilityAttackT > 0 || k.abilityHorseT > 0 || k.abilitySpecialT > 0);
+
+    // Decrease Status Effects
+    if (k.frozenT > 0) k.frozenT = Math.max(0, k.frozenT - 16.6);
   });
 
   // Toggle UI Bar visibility
@@ -179,6 +182,13 @@ export function updateJoust() {
 
 function updateKnight(k, sq) {
   if (!k) return;
+  
+  // Status Effect: Frozen (Stops everything)
+  if (k.frozenT > 0) {
+    audio.updateGallop(0); // Stop sound if frozen
+    return;
+  }
+
   k.phaseT++;
 
   // GUARD STATUS: High guard only if enough speed and not stunned

@@ -3,6 +3,7 @@
 // ══════════════════════════════════════
 
 import { joust } from './state.js';
+import { knightSay } from './dialogue.js';
 
 export function initAbilities() {
   const buttons = document.querySelectorAll('.ability-btn');
@@ -87,10 +88,31 @@ function handleAbilityTrigger(id) {
   }
   else if (id === 'btn-especial') {
     if (k.equipStats.armor) {
+      const spec = k.equipStats.armor.special;
       k.abilitySpecialT = k.equipStats.armor.dur;
       k.cdSpecial = k.equipStats.armor.cd;
       k.abilityActive = true;
-      console.log(`[Abilities] Special Active: ${k.abilitySpecialT}ms`);
+
+      if (spec === 'heal') {
+        const healAmt = k.maxHp * 0.3;
+        k.hp = Math.min(k.maxHp, k.hp + healAmt);
+        k.stunned = false; 
+        knightSay(k, "¡RESTAURACIÓN DIVINA!", 'prominent');
+        console.log(`[Abilities] Healed for ${healAmt} HP & Removed Stun`);
+      } 
+      else if (spec === 'freeze') {
+        const enemy = joust.k2;
+        if (enemy) {
+          enemy.frozenT = 3000;
+          enemy.abilityShieldT = 0;
+          enemy.abilityAttackT = 0;
+          enemy.abilityHorseT = 0;
+          enemy.abilitySpecialT = 0;
+          enemy.abilityActive = false;
+          knightSay(k, "¡CERO ABSOLUTO!", 'prominent');
+          console.log(`[Abilities] Enemy FROZEN & Abilities CANCELED`);
+        }
+      }
     }
   }
 }
@@ -114,42 +136,30 @@ function updateButtonState(id, current, max) {
   if (!btn) return;
   
   const overlay = btn.querySelector('.ability-cooldown-overlay');
-  
+  const k = joust.k1;
+  const isThisActive = (id === 'btn-defensa' && k.abilityShieldT > 0) ||
+                       (id === 'btn-ataque'  && k.abilityAttackT > 0) ||
+                       (id === 'btn-espolear' && k.abilityHorseT > 0) ||
+                       (id === 'btn-especial' && k.abilitySpecialT > 0);
+
   if (current > 0) {
     btn.classList.add('cooldown');
+    btn.classList.remove('locked');
     if (overlay && max > 0) {
-      // Calculate percentage
       const pct = (current / max) * 100;
       overlay.style.transform = `translateY(${100 - pct}%)`; 
-      // Note: CSS animation was 'from 0 to 100', here we manually set it
-      // actually, let's just set height or transform manually to match the remaining CD
-      // translateY(0%) covers full button (100% waiting)
-      // translateY(100%) covers nothing (0% waiting)
-      
-      // If CD is full (just started), we want full cover -> translateY(0)
-      // If CD is near 0, we want no cover -> translateY(100)
-      
-      // So pct is % remaining (e.g. 90%). We want 90% cover.
-      // translate 0% is full cover. translate 100% is no cover.
-      // So translate = 100 - pct? 
-      // If 100% remaining -> translate 0%. Correct.
-      // If 0% remaining -> translate 100%. Correct.
-      
-      // Disable CSS animation if we are controlling it manually
       overlay.style.animation = 'none';
     }
   } else {
-    // If not on cooldown, check if we are locked by another active ability
-    if (isAnyAbilityActive()) {
-       // Visual feedback for "Locked but ready"? 
-       // Maybe just gray it out slightly or keep regular pointer-events-none?
-       // For now, let's just rely on the click handler doing nothing, 
-       // but maybe add a 'locked' class for visual dimming.
+    btn.classList.remove('cooldown');
+    if (overlay) overlay.style.transform = 'translateY(100%)';
+
+    // If NOT on cooldown, check if we should be locked
+    // Locked if: ANY other ability is active, but I am NOT the active one
+    if (isAnyAbilityActive() && !isThisActive) {
        btn.classList.add('locked');
     } else {
-       btn.classList.remove('cooldown');
        btn.classList.remove('locked');
-       if (overlay) overlay.style.transform = 'translateY(100%)';
     }
   }
 }

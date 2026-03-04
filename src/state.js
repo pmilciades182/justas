@@ -37,6 +37,11 @@ export function loadGame() {
       // Merge with default to ensure new fields exist
       player = { ...defaultSave(), ...data };
       
+      // Fix potential NaN in gold
+      if (isNaN(player.gold) || player.gold === null || player.gold === undefined) {
+        player.gold = 500;
+      }
+
       // Migration: Ensure equip objects have all fields mandatory
       for (const kid in player.equip) {
         if (!player.equip[kid].lance)  player.equip[kid].lance  = 'l1';
