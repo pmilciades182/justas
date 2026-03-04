@@ -19,10 +19,12 @@ class AudioManager {
   }
 
   async init() {
-    if (!this.ctx) {
+    if (this.ctx) return; 
+    
+    try {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
       
-      // Configure Limiter (Compressor) to reduce dynamic range
+      // Configure Limiter (Compressor)
       this.limiter = this.ctx.createDynamicsCompressor();
       this.limiter.threshold.setValueAtTime(-12, this.ctx.currentTime);
       this.limiter.knee.setValueAtTime(30, this.ctx.currentTime);
@@ -31,28 +33,26 @@ class AudioManager {
       this.limiter.release.setValueAtTime(0.25, this.ctx.currentTime);
       
       this.limiter.connect(this.ctx.destination);
-      
-      console.log("Audio Engine Created with Limiter");
-    }
-    if (this.ctx.state === 'suspended') {
-      await this.ctx.resume();
+      console.log("Audio Engine Initialized");
+    } catch (e) {
+      console.error("Failed to init AudioContext", e);
     }
   }
 
   async _checkContext() {
     if (!this.ctx) await this.init();
-    if (this.ctx.state === 'suspended') await this.ctx.resume();
-    return true;
+    if (this.ctx && this.ctx.state === 'suspended') await this.ctx.resume();
+    return !!this.ctx;
   }
 
   // ── MUSIC SYSTEM ──
 
   async playMusic(trackKey) {
-    await this._checkContext();
+    if (!(await this._checkContext())) return;
+    
     const url = this.tracks[trackKey];
     if (!url) return;
 
-    // If already playing this track, don't restart
     if (this.currentMusic && this.currentMusic.dataset.track === trackKey) return;
 
     this.stopMusic();
@@ -66,9 +66,12 @@ class AudioManager {
     this.musicGain.gain.setValueAtTime(0.4 * this.masterVolume, this.ctx.currentTime);
 
     source.connect(this.musicGain);
-    this.musicGain.connect(this.limiter); // Pass through limiter
+    if (this.limiter) this.musicGain.connect(this.limiter);
+    else this.musicGain.connect(this.ctx.destination);
 
-    audioEl.play().catch(e => console.warn("Music auto-play blocked", e));
+    audioEl.play().catch(e => {
+      // Silently fail autoplay - will work on next user interaction
+    });
     this.currentMusic = audioEl;
   }
 
@@ -81,8 +84,12 @@ class AudioManager {
 
   setMusicVolume(vol, fadeSeconds = 0.5) {
     if (!this.musicGain || !this.ctx) return;
-    const target = vol * this.masterVolume;
-    this.musicGain.gain.exponentialRampToValueAtTime(Math.max(0.001, target), this.ctx.currentTime + fadeSeconds);
+    const target = Math.max(0.001, vol * this.masterVolume);
+    try {
+      this.musicGain.gain.exponentialRampToValueAtTime(target, this.ctx.currentTime + fadeSeconds);
+    } catch(e) {
+      this.musicGain.gain.value = target;
+    }
   }
 
   // ── SFX ──
@@ -98,7 +105,8 @@ class AudioManager {
     gain.gain.setValueAtTime(0.12 * this.masterVolume, now);
     gain.gain.linearRampToValueAtTime(0, now + 0.05);
     osc.connect(gain);
-    gain.connect(this.limiter);
+    if (this.limiter) gain.connect(this.limiter);
+    else gain.connect(this.ctx.destination);
     osc.start();
     osc.stop(now + 0.05);
   }
@@ -123,7 +131,8 @@ class AudioManager {
     modulator.connect(modGain);
     modGain.connect(carrier.frequency);
     carrier.connect(carrierGain);
-    carrierGain.connect(this.limiter);
+    if (this.limiter) carrierGain.connect(this.limiter);
+    else carrierGain.connect(this.ctx.destination);
 
     carrier.start(); modulator.start();
     carrier.stop(now + 0.2); modulator.stop(now + 0.2);
@@ -145,7 +154,8 @@ class AudioManager {
     gain.gain.setValueAtTime(0.5 * intensity * this.masterVolume, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
     noise.connect(gain);
-    gain.connect(this.limiter);
+    if (this.limiter) gain.connect(this.limiter);
+    else gain.connect(this.ctx.destination);
     noise.start();
   }
 
@@ -170,7 +180,8 @@ class AudioManager {
     gain.gain.setValueAtTime(vol, now);
     gain.gain.linearRampToValueAtTime(0, now + 0.12);
     osc.connect(gain);
-    gain.connect(this.limiter);
+    if (this.limiter) gain.connect(this.limiter);
+    else gain.connect(this.ctx.destination);
     osc.start();
     osc.stop(now + 0.12);
   }
@@ -222,7 +233,8 @@ class AudioManager {
     gain.gain.linearRampToValueAtTime(vol * this.masterVolume, st + 0.02);
     gain.gain.linearRampToValueAtTime(0, st + duration);
     osc.connect(gain);
-    gain.connect(this.limiter);
+    if (this.limiter) gain.connect(this.limiter);
+    else gain.connect(this.ctx.destination);
     osc.start(st);
     osc.stop(st + duration + 0.1);
   }

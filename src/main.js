@@ -19,8 +19,17 @@ import { audio } from './audio.js';
 loadGame();
 
 // Inicializar audio al primer clic (política de navegadores)
+let firstClick = true;
 window.addEventListener('click', (e) => {
-  audio.init();
+  if (firstClick) {
+    firstClick = false;
+    audio.init().then(() => {
+      switchScreen('home'); // Trigger music after context is ready
+    });
+  } else {
+    audio.init();
+  }
+  
   // Sonido global para botones y elementos interactivos
   if (e.target.closest('button, .nav-tab, .equip-item, .selection-item, .shop-item')) {
     audio.playClick();
@@ -48,6 +57,6 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// Init
-switchScreen('home'); // Now use switchScreen to ensure music starts
+// Init visual only
+renderHome(); 
 gameLoop();
