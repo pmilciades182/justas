@@ -39,11 +39,11 @@ export const DB_HORSES = [
 
 // 4. ARMADURAS (Especial/Resistencia - Purple)
 export const DB_ARMORS = [
-  { id: 'a1', name: 'Cota de Malla',     tier: 1, cost: 0,   hp: 0,   cd: 5000, dur: 100,  special: 'heal',   desc: 'Restauración básica (30% HP).' },
-  { id: 'a2', name: 'Placas Parciales',  tier: 2, cost: 250, hp: 10,  cd: 4300, dur: 100,  special: 'heal',   desc: 'Zonas reforzadas (30% HP).' },
-  { id: 'a3', name: 'Armadura Glacial',  tier: 3, cost: 500, hp: 20,  cd: 6000, dur: 3000, special: 'freeze', desc: 'Aura invernal (Congela 3s).' },
-  { id: 'a4', name: 'Armadura de Justa', tier: 4, cost: 900, hp: 40,  cd: 3000, dur: 100,  special: 'heal',   desc: 'Óptima para impactos (30% HP).' },
-  { id: 'a5', name: 'Baluarte Ártico',   tier: 5, cost: 1600, hp: 60, cd: 4000, dur: 3000, special: 'freeze', desc: 'Cero absoluto (Congela 3s).' },
+  { id: 'a1', name: 'Cota de Malla',     tier: 1, cost: 0,   hp: 0,   cd: 5000, dur: 3000,  special: 'heal',   desc: 'Restauración básica (30% HP).' },
+  { id: 'a2', name: 'Placas Parciales',  tier: 2, cost: 250, hp: 10,  cd: 4300, dur: 3600,  special: 'heal',   desc: 'Zonas reforzadas (30% HP).' },
+  { id: 'a3', name: 'Armadura Glacial',  tier: 3, cost: 500, hp: 20,  cd: 6000, dur: 4800,  special: 'freeze', desc: 'Aura invernal (Congela).' },
+  { id: 'a4', name: 'Armadura de Justa', tier: 4, cost: 900, hp: 40,  cd: 3000, dur: 6000,  special: 'heal',   desc: 'Óptima para impactos (30% HP).' },
+  { id: 'a5', name: 'Baluarte Ártico',   tier: 5, cost: 1600, hp: 60, cd: 4000, dur: 7200,  special: 'freeze', desc: 'Cero absoluto (Congela).' },
 ];
 
 // ESCUDEROS (Pasivos - Extra)

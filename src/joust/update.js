@@ -304,7 +304,7 @@ function updateKnight(k, sq) {
         k.phaseT = 0;
         
         // Aturdimiento decrece al terminar de girar (fin de su venida)
-        if (k.stunned) {
+        if (k.stunned && k.hp > 0) {
           k.stunRounds--;
           if (k.stunRounds <= 0) k.stunned = false;
         }

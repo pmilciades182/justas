@@ -103,14 +103,14 @@ function handleAbilityTrigger(id) {
       else if (spec === 'freeze') {
         const enemy = joust.k2;
         if (enemy) {
-          enemy.frozenT = 3000;
+          enemy.frozenT = k.equipStats.armor.dur; // SYNC with equipment dur
           enemy.abilityShieldT = 0;
           enemy.abilityAttackT = 0;
           enemy.abilityHorseT = 0;
           enemy.abilitySpecialT = 0;
           enemy.abilityActive = false;
           knightSay(k, "¡CERO ABSOLUTO!", 'prominent');
-          console.log(`[Abilities] Enemy FROZEN & Abilities CANCELED`);
+          console.log(`[Abilities] Enemy FROZEN for ${enemy.frozenT}ms`);
         }
       }
     }

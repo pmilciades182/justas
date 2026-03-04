@@ -43,12 +43,16 @@ export function drawJoustKnight(ctx, k, t, COL, LANE_X, HORSE_W, HORSE_H, KNIGHT
   // Status Effect Overlay: Frozen
   if (k.frozenT > 0) {
     ctx.save();
-    ctx.globalAlpha = 0.4;
+    ctx.globalAlpha = 0.45;
     ctx.fillStyle = '#add8e6';
     ctx.beginPath();
-    ctx.roundRect(-HORSE_W/2 - 5, -HORSE_H/2 - 15, HORSE_W + 10, HORSE_H + 30, 8);
+    ctx.roundRect(-HORSE_W/2 - 10, -HORSE_H/2 - 20, HORSE_W + 20, HORSE_H + 40, 12);
     ctx.fill();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+    // Some ice shine
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-20, -40, 40, 5);
     ctx.restore();
   }
 
@@ -81,7 +85,7 @@ export function drawJoustKnight(ctx, k, t, COL, LANE_X, HORSE_W, HORSE_H, KNIGHT
 
   // Estrellas de aturdimiento orbitando el yelmo
   if (k.stunned) {
-    const headY = 18; // centro del yelmo en coords locales del sprite
+    const headY = 18; 
     for (let i = 0; i < 3; i++) {
       const angle = t * 0.10 + (i * Math.PI * 2 / 3);
       const sx = Math.cos(angle) * 16;
@@ -95,8 +99,8 @@ export function drawJoustKnight(ctx, k, t, COL, LANE_X, HORSE_W, HORSE_H, KNIGHT
     ctx.globalAlpha = 1;
   }
 
-  ctx.restore(); // Fin caballero
-  ctx.restore(); // Fin rotación global
+  ctx.restore(); 
+  ctx.restore(); 
 }
 
 // === COMPONENTES INDIVIDUALES ===
@@ -258,12 +262,11 @@ export function drawSquire(ctx, sq, t, COL, joustT) {
 export function drawShieldAura(ctx, shieldT, color, t) {
   ctx.save();
   const cy = -10; 
-  const baseRadius = 75; // Increased even more
+  const baseRadius = 75; 
   const alpha = Math.min(0.7, shieldT / 500);
   const auraColor = '#3498db'; 
   const darkBlue = '#2980b9';
 
-  // 1. Coordinated "Smoke" Clouds (Increased to 14)
   for (let i = 0; i < 14; i++) {
     const angle = (t * 0.03) + (i * Math.PI * 2 / 14);
     const sharedPulse = Math.sin(t * 0.06);
@@ -283,7 +286,6 @@ export function drawShieldAura(ctx, shieldT, color, t) {
     ctx.stroke();
   }
 
-  // 2. Triple Layered Sharp Edges
   [0, 6, -6, 12].forEach((offset, idx) => {
     ctx.beginPath();
     const r = baseRadius + offset + Math.sin(t * 0.1 + idx) * 5;
@@ -294,17 +296,14 @@ export function drawShieldAura(ctx, shieldT, color, t) {
     ctx.stroke();
   });
 
-  // 3. Rotating Icons (Increased to 8 each)
   const iconCount = 8;
   for (let i = 0; i < iconCount; i++) {
-    // Shields
     ctx.save();
     const sAngle = (t * 0.04) + (i * Math.PI * 2 / iconCount);
     ctx.translate(Math.cos(sAngle)*(baseRadius+25), cy+Math.sin(sAngle)*(baseRadius+25));
     ctx.rotate(sAngle + Math.PI/2);
     drawMiniShield(ctx, '#fff', auraColor, alpha);
     ctx.restore();
-    // Crosses
     ctx.save();
     const cAngle = (-t * 0.06) + (i * Math.PI * 2 / iconCount);
     ctx.translate(Math.cos(cAngle)*(baseRadius-15), cy+Math.sin(cAngle)*(baseRadius-15));
@@ -332,14 +331,12 @@ export function drawHorseAura(ctx, horseT, t, dir) {
   const alpha = Math.min(0.7, horseT / 400);
   const color = '#f1c40f';
 
-  // 1. Double Wind Distortion
   for(let j=0; j<2; j++) {
     const ringT = ((t + j*10) * 0.05) % 1;
     ctx.beginPath(); ctx.arc(0, -20, baseRadius * (1 + ringT*1.5), 0, Math.PI * 2);
     ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.globalAlpha = alpha * (1 - ringT) * 0.4; ctx.stroke();
   }
 
-  // 2. Speed Streaks (Increased to 15)
   for (let i = 0; i < 15; i++) {
     const seed = (i * 137.5);
     const x = ((seed % 100) - 50);
@@ -351,7 +348,6 @@ export function drawHorseAura(ctx, horseT, t, dir) {
     }
   }
 
-  // 3. Flowing Arrows (Increased to 10)
   for (let i = 0; i < 10; i++) {
     const offsetT = (t * 0.15 + i * 2) % 10;
     const progress = offsetT / 10;
@@ -371,14 +367,12 @@ export function drawAttackAura(ctx, attackT, t, dir) {
   const alpha = Math.min(0.7, attackT / 400);
   const color = '#e74c3c';
 
-  // 1. Triple Glow
   [20, 40, 60].forEach(off => {
     const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, baseRadius + off);
     grad.addColorStop(0, 'rgba(231, 76, 60, 0.4)'); grad.addColorStop(1, 'rgba(231, 76, 60, 0)');
     ctx.beginPath(); ctx.arc(0, 0, baseRadius + off, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.globalAlpha = alpha * 0.5; ctx.fill();
   });
 
-  // 2. Flowing Swords (Increased to 10)
   for (let i = 0; i < 10; i++) {
     const offsetT = (t * 0.18 + i * 1.5) % 10;
     const progress = offsetT / 10;
@@ -390,7 +384,6 @@ export function drawAttackAura(ctx, attackT, t, dir) {
     ctx.fillRect(0,-6,2,12); ctx.fillRect(-5,-1.5,5,3); ctx.restore();
   }
 
-  // 3. Sharp Energy Sparks (Increased to 15)
   for (let i = 0; i < 15; i++) {
     const sx = (Math.random()-0.5)*130; const sy = (Math.random()-0.5)*130;
     ctx.globalAlpha = alpha * 0.8; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
@@ -401,47 +394,114 @@ export function drawAttackAura(ctx, attackT, t, dir) {
 
 export function drawSpecialAura(ctx, specialT, t, type) {
   ctx.save();
-  const cy = -10;
-  const baseRadius = 70;
-  const alpha = Math.min(0.7, specialT / 400);
+  const cy = 10;
+  const baseRadius = 100; // Balanced from 140
+  const alpha = Math.min(0.8, specialT / 500);
   const purple = '#9b59b6';
 
-  // 1. Core Rotating Rings (Special base)
-  for(let i=0; i<3; i++) {
+  // 1. Massive Pulsing Glow
+  const grad = ctx.createRadialGradient(0, cy, 0, 0, cy, baseRadius * 1.5);
+  grad.addColorStop(0, 'rgba(155, 89, 182, 0.4)');
+  grad.addColorStop(0.7, 'rgba(155, 89, 182, 0.1)');
+  grad.addColorStop(1, 'rgba(155, 89, 182, 0)');
+  ctx.beginPath(); ctx.arc(0, cy, baseRadius * 1.5, 0, Math.PI * 2);
+  ctx.fillStyle = grad; ctx.globalAlpha = alpha; ctx.fill();
+
+  // 2. Multiple Ornate Concentric Circles
+  [1, 0.85, 0.7, 1.15, 1.3].forEach((m, idx) => {
     ctx.beginPath();
-    const r = baseRadius + Math.sin(t * 0.05 + i) * 10;
-    ctx.arc(0, cy, r, t*0.02*i, t*0.02*i + Math.PI);
-    ctx.strokeStyle = purple; ctx.lineWidth = 3; ctx.globalAlpha = alpha * 0.4;
+    const r = baseRadius * m + Math.sin(t * 0.04 + idx) * 8;
+    ctx.arc(0, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = idx % 2 === 0 ? purple : '#fff';
+    ctx.lineWidth = idx === 0 ? 4 : 1.5;
+    ctx.globalAlpha = alpha * (0.4 - idx * 0.05);
+    ctx.stroke();
+  });
+
+  // 3. The Great Pentagram (Layered)
+  [1, 0.6].forEach((m, idx) => {
+    ctx.save();
+    ctx.translate(0, cy);
+    ctx.rotate(t * (idx === 0 ? 0.015 : -0.025)); 
+    ctx.beginPath();
+    const pts = 5;
+    const r = baseRadius * m;
+    for (let i = 0; i <= pts * 2; i++) {
+      const radius = i % 2 === 0 ? r : r * 0.38;
+      const currAng = (i * Math.PI) / pts;
+      ctx.lineTo(Math.cos(currAng) * radius, Math.sin(currAng) * radius);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = idx === 0 ? '#fff' : purple;
+    ctx.lineWidth = idx === 0 ? 5 : 3;
+    ctx.globalAlpha = alpha * 0.7;
+    ctx.stroke();
+    if(idx === 0) {
+      ctx.fillStyle = purple; ctx.globalAlpha = alpha * 0.15; ctx.fill();
+    }
+    ctx.restore();
+  });
+
+  // 4. Sacred Geometry Layer (Hexagons)
+  ctx.save();
+  ctx.translate(0, cy);
+  ctx.rotate(t * -0.01);
+  for(let j=0; j<3; j++) {
+    ctx.beginPath();
+    const r = baseRadius * (0.5 + j * 0.2);
+    for(let s=0; s<=6; s++) {
+      const sa = (s * Math.PI * 2) / 6;
+      ctx.lineTo(Math.cos(sa)*r, Math.sin(sa)*r);
+    }
+    ctx.strokeStyle = purple; ctx.lineWidth = 1; ctx.globalAlpha = alpha * 0.3;
     ctx.stroke();
   }
+  ctx.restore();
 
-  // 2. Specific Effects
+  // 5. Array of Rotating Runes (Increased to 12)
+  const runeCount = 12;
+  for (let i = 0; i < runeCount; i++) {
+    const ang = (t * -0.025) + (i * Math.PI * 2 / runeCount);
+    ctx.save();
+    ctx.translate(Math.cos(ang) * (baseRadius + 25), cy + Math.sin(ang) * (baseRadius + 25));
+    ctx.rotate(t * 0.06 + i);
+    ctx.globalAlpha = alpha * 0.6;
+    ctx.strokeStyle = i % 2 === 0 ? '#fff' : purple;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const sides = (i % 3) + 3; // Triangles, Squares, Pentagons
+    for(let s=0; s<=sides; s++) {
+      const sa = (s * Math.PI * 2) / sides;
+      ctx.lineTo(Math.cos(sa)*10, Math.sin(sa)*10);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 6. Massive Particle Storm (Heal/Freeze)
   if (type === 'heal') {
-    // Green Plus Icons
-    const count = 6;
-    for(let i=0; i<count; i++) {
-      const offsetT = (t * 0.1 + i*2) % 10;
-      const prog = offsetT / 10;
+    for(let i=0; i<18; i++) {
+      const offT = (t * 0.08 + i*3.5) % 15;
+      const prog = offT / 15;
       ctx.save();
-      ctx.translate((Math.sin(i)*40), -40 + prog*120);
+      ctx.translate((Math.sin(i*1.5)*100), cy - 100 + prog * 200);
       ctx.globalAlpha = alpha * Math.sin(prog*Math.PI);
       ctx.fillStyle = '#2ecc71';
-      ctx.fillRect(-2, -6, 4, 12); ctx.fillRect(-6, -2, 12, 4);
+      ctx.fillRect(-3, -10, 6, 20); ctx.fillRect(-10, -3, 20, 6); // Larger crosses
       ctx.restore();
     }
   } else if (type === 'freeze') {
-    // Cyan Snowflakes
-    const count = 6;
-    for(let i=0; i<count; i++) {
-      const ang = (t * 0.04) + (i * Math.PI * 2 / count);
+    for(let i=0; i<18; i++) {
+      const ang = (t * 0.035) + (i * Math.PI * 2 / 18);
+      const rDist = (baseRadius * 0.4) + Math.sin(t*0.05 + i)*40;
       ctx.save();
-      ctx.translate(Math.cos(ang)*baseRadius, cy+Math.sin(ang)*baseRadius);
-      ctx.rotate(t*0.05);
-      ctx.globalAlpha = alpha * 0.8;
-      ctx.strokeStyle = '#34e7e4'; ctx.lineWidth = 2;
+      ctx.translate(Math.cos(ang)*rDist, cy+Math.sin(ang)*rDist);
+      ctx.rotate(t*0.08);
+      ctx.globalAlpha = alpha * 0.9;
+      ctx.strokeStyle = '#34e7e4'; ctx.lineWidth = 2.5;
       for(let j=0; j<3; j++) {
         ctx.rotate(Math.PI/3);
-        ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(6,0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-10,0); ctx.lineTo(10,0); ctx.stroke();
       }
       ctx.restore();
     }

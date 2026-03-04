@@ -7,12 +7,18 @@ import { joust } from './state.js';
 import { spawnSparks, spawnSplinters, spawnBlood, spawnGroundBlood, spawnGroundSplinters, spawnBrokenLance } from './particles.js';
 import { audio } from '../audio.js';
 
-export function rollHit(strBonus, defBonus) {
+export function rollHit(strBonus, defBonus, unhorseProb = 0.05) {
+  // 1. Roll for unhorse FIRST based on the new venida rules
+  if (Math.random() < unhorseProb) {
+    return HIT_TABLE.find(h => h.type === 'unhorse');
+  }
+
+  // 2. If not unhorsed, roll for other hits using adjusted weights
   let r = Math.random();
   const strFactor = 1 + (strBonus - 5) * 0.04;
   const defFactor = 1 + (defBonus - 5) * 0.04;
 
-  const adjusted = HIT_TABLE.map(h => {
+  const adjusted = HIT_TABLE.filter(h => h.type !== 'unhorse').map(h => {
     let p = h.prob;
     if (h.type === 'miss') p *= defFactor / strFactor;
     else if (h.pts >= 3) p *= strFactor / defFactor;
@@ -64,17 +70,28 @@ export function resolveClash() {
     const r2 = k2.lanceIntact ? 95 : 25;
 
     // K1's hit attempt
-    if (k2.guard === 'low' && k1.guard === 'high' && k1.lanceIntact) {
+    const unhorseProbs = { 1: 0.05, 2: 0.10, 3: 0.30, 4: 0.60 };
+    let prob1 = unhorseProbs[joust.venida] || 0.05;
+    
+    // HP Bonus: Add up to 25% extra probability if defender has 0 HP
+    const hpBonus2 = (1 - (k2.hp / k2.maxHp)) * 0.25;
+    const finalProb1 = prob1 + hpBonus2;
+
+    if (k2.guard === 'low' && k1.guard === 'high' && k1.lanceIntact && Math.random() < finalProb1) {
       h1 = HIT_TABLE.find(h => h.type === 'unhorse');
     } else {
-      h1 = (k1.lanceIntact && distY <= r1 && k1.frozenT <= 0) ? rollHit(getEffectiveStr(k1), k2.def) : HIT_TABLE.find(h => h.type === 'miss');
+      h1 = (k1.lanceIntact && distY <= r1 && k1.frozenT <= 0) ? rollHit(getEffectiveStr(k1), k2.def, finalProb1) : HIT_TABLE.find(h => h.type === 'miss');
     }
 
     // K2's hit attempt
-    if (k1.guard === 'low' && k2.guard === 'high' && k2.lanceIntact) {
+    let prob2 = unhorseProbs[joust.venida] || 0.05;
+    const hpBonus1 = (1 - (k1.hp / k1.maxHp)) * 0.25;
+    const finalProb2 = prob2 + hpBonus1;
+
+    if (k1.guard === 'low' && k2.guard === 'high' && k2.lanceIntact && Math.random() < finalProb2) {
       h2 = HIT_TABLE.find(h => h.type === 'unhorse');
     } else {
-      h2 = (k2.lanceIntact && distY <= r2 && k2.frozenT <= 0) ? rollHit(getEffectiveStr(k2), k1.def) : HIT_TABLE.find(h => h.type === 'miss');
+      h2 = (k2.lanceIntact && distY <= r2 && k2.frozenT <= 0) ? rollHit(getEffectiveStr(k2), k1.def, finalProb2) : HIT_TABLE.find(h => h.type === 'miss');
     }
   }
 
@@ -184,6 +201,12 @@ export function applyHitEffect(hit, defender, damageMult = 1.0) {
     const defFactor = Math.max(0.3, 1 - (effectiveDef - 5) * 0.05);
     const dmg = Math.max(1, Math.round(baseDmg * defFactor * finalDmgMult));
     defender.hp = Math.max(0, defender.hp - dmg);
+
+    // Rule: if HP reaches 0, force permanent stun until healed
+    if (defender.hp <= 0) {
+      defender.stunned = true;
+      defender.stunRounds = 99;
+    }
 
     const markX = s * (6 + Math.random() * 16);
     const markY = -10 + Math.random() * 30;
