@@ -8,42 +8,27 @@ import { knightSay } from './dialogue.js';
 export function initAbilities() {
   const buttons = document.querySelectorAll('.ability-btn');
   buttons.forEach(btn => {
-    // Reset any previous cooldowns
     btn.classList.remove('cooldown');
-    
-    // Remove old listeners to avoid duplicates
     const newBtn = btn.cloneNode(true);
     btn.parentNode.replaceChild(newBtn, btn);
 
     newBtn.addEventListener('click', (e) => {
-      // ONLY active during game
       if (!joust.active) return;
-      
-      // Allow in all phases except results, as long as k1 exists and is not fallen
       if (joust.subPhase === 'result' || !joust.k1 || joust.k1.fallen) return;
+      if (isAbilityOnCooldown(newBtn.id, joust.k1) || joust.k1.abilityActive) return;
 
-      // Logic check: Is this ability on cooldown?
-      // Logic check: Is ANY ability currently active? (Mutual exclusion)
-      if (isAbilityOnCooldown(newBtn.id) || isAnyAbilityActive()) return;
-
-      // Start cooldown
-      newBtn.classList.add('cooldown');
-      
-      // Get button color for particles BEFORE adding cooldown class (to avoid grayscale)
       const color = getComputedStyle(newBtn).borderTopColor;
       spawnButtonParticles(e.clientX, e.clientY, color);
 
-      // TRIGGER GAME MECHANIC
-      handleAbilityTrigger(newBtn.id);
+      // TRIGGER for player (k1)
+      handleAbilityTrigger(newBtn.id, joust.k1);
     });
   });
 
-  // Start the UI update loop for cooldowns
   requestAnimationFrame(updateAbilityUI);
 }
 
-function isAbilityOnCooldown(btnId) {
-  const k = joust.k1;
+function isAbilityOnCooldown(btnId, k) {
   if (!k) return true;
   if (btnId === 'btn-defensa') return k.cdShield > 0;
   if (btnId === 'btn-ataque') return k.cdAttack > 0;
@@ -52,22 +37,17 @@ function isAbilityOnCooldown(btnId) {
   return false;
 }
 
-function isAnyAbilityActive() {
-  const k = joust.k1;
-  if (!k) return false;
-  return k.abilityActive; // This flag is true if ANY duration > 0
-}
+export function handleAbilityTrigger(id, k) {
+  if (!k || k.abilityActive || k.fallen) return;
 
-function handleAbilityTrigger(id) {
-  const k = joust.k1;
-  if (!k) return;
+  const isPlayer = (k === joust.k1);
 
   if (id === 'btn-defensa') {
     if (k.equipStats.shield) {
       k.abilityShieldT = k.equipStats.shield.dur;
       k.cdShield = k.equipStats.shield.cd;
       k.abilityActive = true;
-      console.log(`[Abilities] Shield Active: ${k.abilityShieldT}ms`);
+      if (!isPlayer) console.log(`[AI] Defense Activated`);
     }
   } 
   else if (id === 'btn-ataque') {
@@ -75,7 +55,7 @@ function handleAbilityTrigger(id) {
       k.abilityAttackT = k.equipStats.lance.dur;
       k.cdAttack = k.equipStats.lance.cd;
       k.abilityActive = true;
-      console.log(`[Abilities] Attack Active: ${k.abilityAttackT}ms`);
+      if (!isPlayer) console.log(`[AI] Attack Activated`);
     }
   }
   else if (id === 'btn-espolear') {
@@ -83,7 +63,7 @@ function handleAbilityTrigger(id) {
       k.abilityHorseT = k.equipStats.horse.dur;
       k.cdHorse = k.equipStats.horse.cd;
       k.abilityActive = true;
-      console.log(`[Abilities] Horse Active: ${k.abilityHorseT}ms`);
+      if (!isPlayer) console.log(`[AI] Spur Activated`);
     }
   }
   else if (id === 'btn-especial') {
@@ -98,19 +78,17 @@ function handleAbilityTrigger(id) {
         k.hp = Math.min(k.maxHp, k.hp + healAmt);
         k.stunned = false; 
         knightSay(k, "¡RESTAURACIÓN DIVINA!", 'prominent');
-        console.log(`[Abilities] Healed for ${healAmt} HP & Removed Stun`);
       } 
       else if (spec === 'freeze') {
-        const enemy = joust.k2;
-        if (enemy) {
-          enemy.frozenT = k.equipStats.armor.dur; // SYNC with equipment dur
-          enemy.abilityShieldT = 0;
-          enemy.abilityAttackT = 0;
-          enemy.abilityHorseT = 0;
-          enemy.abilitySpecialT = 0;
-          enemy.abilityActive = false;
+        const target = isPlayer ? joust.k2 : joust.k1;
+        if (target) {
+          target.frozenT = k.equipStats.armor.dur;
+          target.abilityShieldT = 0;
+          target.abilityAttackT = 0;
+          target.abilityHorseT = 0;
+          target.abilitySpecialT = 0;
+          target.abilityActive = false;
           knightSay(k, "¡CERO ABSOLUTO!", 'prominent');
-          console.log(`[Abilities] Enemy FROZEN for ${enemy.frozenT}ms`);
         }
       }
     }
@@ -118,7 +96,6 @@ function handleAbilityTrigger(id) {
 }
 
 function updateAbilityUI() {
-  // Keep loop running if joust screen is active, even if match logic is paused/ended
   const joustScreen = document.getElementById('screen-joust');
   if (!joustScreen || !joustScreen.classList.contains('active')) return;
 
@@ -144,7 +121,6 @@ function updateButtonState(id, current, max) {
                        (id === 'btn-espolear' && k.abilityHorseT > 0) ||
                        (id === 'btn-especial' && k.abilitySpecialT > 0);
 
-  // NEW: Check if any UI overlay is active (Menu, Selection, Intro, Result)
   const uiOverlay = document.getElementById('joust-overlay');
   const isUIActive = (uiOverlay && uiOverlay.innerHTML.trim() !== "") || joust.subPhase === 'result';
 
@@ -160,9 +136,7 @@ function updateButtonState(id, current, max) {
     btn.classList.remove('cooldown');
     if (overlay) overlay.style.transform = 'translateY(100%)';
 
-    // If NOT on cooldown, check if we should be locked
-    // Locked if: ANY other ability is active OR any UI menu is open
-    if (isUIActive || (isAnyAbilityActive() && !isThisActive)) {
+    if (isUIActive || (k.abilityActive && !isThisActive)) {
        btn.classList.add('locked');
     } else {
        btn.classList.remove('locked');

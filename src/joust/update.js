@@ -9,6 +9,7 @@ import { resolveClash } from './physics.js';
 import { updateSquireTracking, updateSquireDelivery, activateSquire } from './squire.js';
 import { knightSay, updateKnightSpeech } from './dialogue.js';
 import { audio } from '../audio.js';
+import { handleAbilityTrigger } from './abilities.js';
 
 export function updateJoust() {
   const k1 = joust.k1, k2 = joust.k2;
@@ -17,8 +18,6 @@ export function updateJoust() {
   // Toggle UI Bar visibility (Run even if not active to allow hiding/showing transitions)
   const bar = document.getElementById('joust-abilities');
   if (bar) {
-    // Keep visible during the whole match AND result screen
-    // Only hide if we are NOT in the joust screen at all (handled by nav usually) or specific cases
     const shouldShow = joust.active || joust.subPhase === 'result';
     bar.classList.toggle('show', !!shouldShow);
   }
@@ -26,6 +25,11 @@ export function updateJoust() {
   if (!joust.active) return;
   joust.t++;
   joust.phaseT++;
+
+  // AI Logic
+  if (k2 && !k2.fallen && !k2.stunned && k2.frozenT <= 0) {
+    updateAIAbilities(k2, k1);
+  }
 
   // Decay shake & flash
   if (joust.shakeAmt > 0.3) joust.shakeAmt *= 0.85; else joust.shakeAmt = 0;
@@ -176,6 +180,56 @@ export function updateJoust() {
           startNextVenida();
         }
       }
+    }
+  }
+}
+
+function updateAIAbilities(k, opponent) {
+  if (!k || !opponent || k.abilityActive || k.fallen) return;
+
+  const distY = Math.abs(k.y - opponent.y);
+  
+  // 1. EMERGENCY HEAL (Highest priority)
+  if (k.hp < 35 && k.cdSpecial <= 0 && k.equipStats.armor?.special === 'heal') {
+    handleAbilityTrigger('btn-especial', k);
+    return;
+  }
+
+  // 2. TACTICAL FREEZE
+  // Use if player is close and has an active ability, or just to stop them
+  if (k.equipStats.armor?.special === 'freeze' && k.cdSpecial <= 0) {
+    if (distY < 250 && (opponent.abilityActive || Math.random() < 0.3)) {
+      handleAbilityTrigger('btn-especial', k);
+      return;
+    }
+  }
+
+  // 3. DEFENSE
+  // Use if HP is mid-low and opponent is close, or if opponent is attacking
+  if (k.cdShield <= 0) {
+    const shouldDefend = (k.hp < 60 && distY < 180) || (opponent.abilityAttackT > 0 && distY < 220);
+    if (shouldDefend) {
+      handleAbilityTrigger('btn-defensa', k);
+      return;
+    }
+  }
+
+  // 4. ATTACK (Fury)
+  // Use when very close to impact to maximize strength
+  if (k.cdAttack <= 0 && distY < 120 && k.hp > 25) {
+    handleAbilityTrigger('btn-ataque', k);
+    return;
+  }
+
+  // 5. SPUR (Speed)
+  // Use at the start of the charge to gain momentum
+  if (k.cdHorse <= 0 && k.phase === 'charge' && k.speed < k.maxSpeed) {
+    // Only if not too close to the end already
+    const trackLen = TRACK_BOT - TRACK_TOP;
+    const distFromStart = k.baseDir === 1 ? (k.y - TRACK_TOP) : (TRACK_BOT - k.y);
+    if (distFromStart < trackLen * 0.4) {
+      handleAbilityTrigger('btn-espolear', k);
+      return;
     }
   }
 }
