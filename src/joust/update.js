@@ -212,17 +212,21 @@ function updateKnight(k, sq) {
       break;
 
     case 'charge':
+      // Ability: Horse (Spur) - Significant speed boost
+      let abilitySpeedBoost = 1.0;
+      if (k.abilityHorseT > 0) abilitySpeedBoost = 1.8;
+
       // HORSE MECHANICS: Triple progressive acceleration based on position
       const trackLen = TRACK_BOT - TRACK_TOP;
       const distFromStart = k.baseDir === 1 ? (k.y - TRACK_TOP) : (TRACK_BOT - k.y);
       const progress = Math.max(0, Math.min(1, distFromStart / trackLen));
       
       const baseAcc = k.stunned ? 0.075 : 0.18;
-      const currentAcc = baseAcc + (progress * 0.12); 
+      const currentAcc = (baseAcc + (progress * 0.12)) * (k.abilityHorseT > 0 ? 1.5 : 1.0); 
       
       // Fatigue affects max speed, but with a safety floor (min 40% of base maxSpeed)
       const fatigueFactor = Math.max(0.4, 1 - (k.fatigue / 100) * 0.5);
-      const cap = (k.stunned ? k.maxSpeed * 0.42 : k.maxSpeed) * fatigueFactor;
+      const cap = (k.stunned ? k.maxSpeed * 0.42 : k.maxSpeed) * fatigueFactor * abilitySpeedBoost;
       
       k.speed = Math.min(k.speed + currentAcc, cap);
       k.y += k.speed * k.baseDir;

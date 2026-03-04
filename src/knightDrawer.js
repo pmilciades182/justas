@@ -22,6 +22,10 @@ export function drawJoustKnight(ctx, k, t, COL, LANE_X, HORSE_W, HORSE_H, KNIGHT
     if (t % 60 === 0) console.log(`[Render] Drawing aura for ${k.name}. T: ${k.abilityShieldT}, Color: ${k.colors.shield}`);
     drawShieldAura(ctx, k.abilityShieldT, k.colors.shield, t);
   }
+  
+  if (k.abilityHorseT > 0 && !k.fallen) {
+    drawHorseAura(ctx, k.abilityHorseT, t, k.baseDir);
+  }
 
   // 3. Caballo
   ctx.save();
@@ -427,4 +431,96 @@ function drawMiniCross(ctx, color, alpha) {
   ctx.fillRect(-1.5, -7, 3, 14);
   // Horizontal bar
   ctx.fillRect(-5, -2, 10, 3);
+}
+
+export function drawHorseAura(ctx, horseT, t, dir) {
+  ctx.save();
+  const baseRadius = 50;
+  const alpha = Math.min(0.7, horseT / 400);
+  const color = '#f1c40f'; // Golden
+
+  // 1. Wind Distortion (Expanding shockwaves behind)
+  const ringT = (t * 0.05) % 1;
+  ctx.beginPath();
+  ctx.arc(0, -20, baseRadius * (1 + ringT), 0, Math.PI * 2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = alpha * (1 - ringT) * 0.3;
+  ctx.stroke();
+
+  // 2. Speed Streaks (Motion lines)
+  const streakCount = 8;
+  for (let i = 0; i < streakCount; i++) {
+    const seed = (i * 137.5);
+    const x = ((seed % 80) - 40);
+    const speed = 15 + (seed % 10);
+    const len = 30 + (seed % 40);
+    const yStart = -60;
+    const yPos = yStart + ((t * speed + seed) % 200);
+    
+    if (yPos > -80 && yPos < 120) {
+      const streakAlpha = alpha * (1 - Math.abs(yPos - 20) / 100);
+      ctx.globalAlpha = streakAlpha * 0.4;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x, yPos, 1.5, len);
+    }
+  }
+
+  // 3. Flowing Directional Arrows
+  const arrowCount = 5;
+  for (let i = 0; i < arrowCount; i++) {
+    const offsetT = (t * 0.12 + i * (1 / arrowCount) * 10) % 10;
+    const progress = offsetT / 10; // 0 to 1
+    
+    // Spread arrows horizontally
+    const x = ((i * 30) % 70) - 35;
+    // Move forward (Local Y is forward)
+    const y = -30 + progress * 140;
+    
+    const arrowAlpha = alpha * Math.sin(progress * Math.PI); // Fade in and out
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.PI / 2); // Point forward
+    ctx.globalAlpha = arrowAlpha;
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+
+    // Sharper Arrow Shape
+    ctx.beginPath();
+    ctx.moveTo(8, 0);
+    ctx.lineTo(-4, -6);
+    ctx.lineTo(-1, -6);
+    ctx.lineTo(-1, -12);
+    ctx.lineTo(1, -12);
+    ctx.lineTo(1, -6);
+    ctx.lineTo(-4, 6); // Typo check: this was for a different orientation, corrected below
+    
+    // Simple robust arrow
+    ctx.beginPath();
+    ctx.moveTo(10, 0);
+    ctx.lineTo(0, -7);
+    ctx.lineTo(0, -3);
+    ctx.lineTo(-10, -3);
+    ctx.lineTo(-10, 3);
+    ctx.lineTo(0, 3);
+    ctx.lineTo(0, 7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 4. Golden Motion Blur (Radial light)
+  const grad = ctx.createRadialGradient(0, 20, 0, 0, 20, baseRadius + 20);
+  grad.addColorStop(0, 'rgba(241, 196, 15, 0.3)');
+  grad.addColorStop(1, 'rgba(241, 196, 15, 0)');
+  ctx.beginPath();
+  ctx.arc(0, 20, baseRadius + 20, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.globalAlpha = alpha;
+  ctx.fill();
+
+  ctx.restore();
 }
