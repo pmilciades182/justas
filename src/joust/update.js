@@ -2,7 +2,7 @@
 // BUCLE DE ACTUALIZACIÓN DE LA JUSTA
 // ══════════════════════════════════════
 
-import { TRACK_TOP, TRACK_BOT, HORSE_H, MAX_VENIDAS, DELIVERY_ZONE_PCT } from './constants.js';
+import { TRACK_TOP, TRACK_BOT, HORSE_H, MAX_VENIDAS, DELIVERY_ZONE_PCT, W, H } from './constants.js';
 import { joust, setSubPhase } from './state.js';
 import { spawnDust, spawnHoofPrint, updateParticles } from './particles.js';
 import { resolveClash } from './physics.js';
@@ -15,7 +15,16 @@ export function updateJoust() {
   const k1 = joust.k1, k2 = joust.k2;
   updateParticles(); 
 
-  // Toggle UI Bar visibility (Run even if not active to allow hiding/showing transitions)
+  // Handle Music Volume based on UI activity
+  const uiOverlay = document.getElementById('joust-overlay');
+  const isUIActive = (uiOverlay && uiOverlay.innerHTML.trim() !== "") || joust.subPhase === 'result';
+  if (isUIActive) {
+    audio.setMusicVolume(0.15); // Lower during menus
+  } else {
+    audio.setMusicVolume(0.45); // Higher during action
+  }
+
+  // Toggle UI Bar visibility
   const bar = document.getElementById('joust-abilities');
   if (bar) {
     const shouldShow = joust.active || joust.subPhase === 'result';
@@ -27,11 +36,9 @@ export function updateJoust() {
   joust.phaseT++;
 
   // AI Logic
-  if (k2 && !k2.fallen && !k2.stunned && k2.frozenT <= 0) {
-    // Humanize reaction: delay response to player abilities
+  if (k1 && k2 && !k2.fallen && !k2.stunned && k2.frozenT <= 0) {
     if (k1.abilityActive && k2.aiReactionT === undefined) {
-      // First time detecting player ability this charge
-      k2.aiReactionT = 15 + Math.random() * 25; // ~250ms to 600ms delay
+      k2.aiReactionT = 15 + Math.random() * 25; 
     }
     
     if (k2.aiReactionT > 0) {
@@ -40,7 +47,7 @@ export function updateJoust() {
       updateAIAbilities(k2, k1);
     }
   } else if (k2) {
-    k2.aiReactionT = undefined; // Reset when not in a state to react
+    k2.aiReactionT = undefined;
   }
 
   // Decay shake & flash
@@ -74,35 +81,28 @@ export function updateJoust() {
   updateKnight(k1, joust.squire1);
   updateKnight(k2, joust.squire2);
 
-  // Update Ability Timers (assuming ~60fps, so ~16.6ms per frame)
+  // Update Ability Timers
   [k1, k2].forEach(k => {
-    // Decrease Active Durations
     if (k.abilityShieldT > 0) k.abilityShieldT = Math.max(0, k.abilityShieldT - 16.6);
     if (k.abilityAttackT > 0) k.abilityAttackT = Math.max(0, k.abilityAttackT - 16.6);
     if (k.abilityHorseT > 0)  k.abilityHorseT  = Math.max(0, k.abilityHorseT - 16.6);
     if (k.abilitySpecialT > 0) k.abilitySpecialT = Math.max(0, k.abilitySpecialT - 16.6);
 
-    // Decrease Cooldowns
     if (k.cdShield > 0) k.cdShield = Math.max(0, k.cdShield - 16.6);
     if (k.cdAttack > 0) k.cdAttack = Math.max(0, k.cdAttack - 16.6);
     if (k.cdHorse > 0)  k.cdHorse  = Math.max(0, k.cdHorse - 16.6);
     if (k.cdSpecial > 0) k.cdSpecial = Math.max(0, k.cdSpecial - 16.6);
 
-    // Update global active flag
     k.abilityActive = (k.abilityShieldT > 0 || k.abilityAttackT > 0 || k.abilityHorseT > 0 || k.abilitySpecialT > 0);
-
-    // Decrease Status Effects
     if (k.frozenT > 0) k.frozenT = Math.max(0, k.frozenT - 16.6);
   });
 
-  // Robustness: Fallen knights stop speaking
   if (k1 && k1.fallen) k1.speechText = '';
   if (k2 && k2.fallen) k2.speechText = '';
   
   updateKnightSpeech(k1);
   updateKnightSpeech(k2);
 
-  // Trigger random dialogues
   if (joust.t % 300 === 0) {
     [k1, k2].forEach(k => {
       if (k.hp > 0 && !k.fallen) {
@@ -113,32 +113,21 @@ export function updateJoust() {
     });
   }
 
-  // CLASH DETECTION (Tip-to-Center Precision with Orientation Check)
+  // CLASH DETECTION
   if (joust.subPhase !== 'clash' && joust.subPhase !== 'result' && !k1.fallen && !k2.fallen) {
-    const lanceReach = 95;
-    const bodyReach = 25;
-    
-    const r1 = k1.lanceIntact ? lanceReach : bodyReach;
-    const r2 = k2.lanceIntact ? lanceReach : bodyReach;
-
-    // Approaching check: must be moving towards each other
+    const r1 = k1.lanceIntact ? 95 : 25;
+    const r2 = k2.lanceIntact ? 95 : 25;
     const k1Approaching = (k1.baseDir === 1 && k1.y < k2.y) || (k1.baseDir === -1 && k1.y > k2.y);
     const k2Approaching = (k2.baseDir === 1 && k2.y < k1.y) || (k2.baseDir === -1 && k2.y > k1.y);
-
-    // Orientation check: rotation must match direction (0/PI with small tolerance for wobble)
     const k1FacingFront = Math.abs(Math.sin(k1.rotation)) < 0.5; 
     const k2FacingFront = Math.abs(Math.sin(k2.rotation)) < 0.5;
 
     let clashTriggered = false;
-
     if (k1FacingFront && k2FacingFront && (k1.phase === 'charge' || k2.phase === 'charge')) {
-      // Check if K1's lance/body reaches K2's center
       if (k1Approaching) {
         const dist = k1.baseDir === 1 ? (k2.y - k1.y) : (k1.y - k2.y);
         if (dist <= r1) clashTriggered = true;
       }
-      
-      // Check if K2's lance/body reaches K1's center
       if (!clashTriggered && k2Approaching) {
         const dist = k2.baseDir === 1 ? (k1.y - k2.y) : (k2.y - k1.y);
         if (dist <= r2) clashTriggered = true;
@@ -153,7 +142,6 @@ export function updateJoust() {
     }
   }
 
-  // Global Sync / Match Flow
   if (joust.subPhase === 'clash') {
     if (joust.phaseT > 80) {
       setSubPhase('pass');
@@ -170,24 +158,17 @@ export function updateJoust() {
       if (k1.fallen || k2.fallen || joust.venida >= MAX_VENIDAS) {
         setSubPhase('result');
       } else {
-        // If lances are broken, we might be in 'squire' subPhase
         const needsSquire1 = !k1.lanceIntact && k1.squireEff > 0;
         const needsSquire2 = !k2.lanceIntact && k2.squireEff > 0;
-        
         if ((needsSquire1 && !k1.lanceIntact) || (needsSquire2 && !k2.lanceIntact)) {
            if (joust.subPhase !== 'squire') {
              setSubPhase('squire');
              if (needsSquire1) activateSquire(joust.squire1, k1);
              if (needsSquire2) activateSquire(joust.squire2, k2);
            }
-           
-           // Check if squires finished
            const sq1Ready = !needsSquire1 || (joust.squire1.phase === 'watching' && k1.lanceIntact);
            const sq2Ready = !needsSquire2 || (joust.squire2.phase === 'watching' && k2.lanceIntact);
-           
-           if (sq1Ready && sq2Ready) {
-             startNextVenida();
-           }
+           if (sq1Ready && sq2Ready) startNextVenida();
         } else {
           startNextVenida();
         }
@@ -198,54 +179,37 @@ export function updateJoust() {
 
 function updateAIAbilities(k, opponent) {
   if (!k || !opponent || k.abilityActive || k.fallen) return;
-
   const distY = Math.abs(k.y - opponent.y);
-  
-  // 1. EMERGENCY HEAL (Highest priority)
   if (k.hp < 35 && k.cdSpecial <= 0 && k.equipStats.armor?.special === 'heal') {
     handleAbilityTrigger('btn-especial', k);
     return;
   }
-
-  // 2. COUNTER-AI LOGIC (Reacting to player)
-  
-  // IF player is ATTACKING -> AI tries DEFENSE (Defense beats Attack)
   if (opponent.abilityAttackT > 0 && k.cdShield <= 0 && distY < 250) {
     handleAbilityTrigger('btn-defensa', k);
     return;
   }
-
-  // IF player is DEFENDING -> AI tries SPEED (Speed beats Defense)
   if (opponent.abilityShieldT > 0 && k.cdHorse <= 0 && distY < 250) {
     handleAbilityTrigger('btn-espolear', k);
     return;
   }
-
-  // IF player is SPURRING (SPEED) -> AI tries ATTACK (Attack beats Speed)
   if (opponent.abilityHorseT > 0 && k.cdAttack <= 0 && distY < 200) {
     handleAbilityTrigger('btn-ataque', k);
     return;
   }
-
-  // 3. TACTICAL FREEZE
   if (k.equipStats.armor?.special === 'freeze' && k.cdSpecial <= 0) {
     if (distY < 250 && (opponent.abilityActive || Math.random() < 0.2)) {
       handleAbilityTrigger('btn-especial', k);
       return;
     }
   }
-
-  // 4. GENERAL USAGE (If no specific counter)
   if (k.cdShield <= 0 && k.hp < 60 && distY < 180) {
     handleAbilityTrigger('btn-defensa', k);
     return;
   }
-
   if (k.cdAttack <= 0 && distY < 120) {
     handleAbilityTrigger('btn-ataque', k);
     return;
   }
-
   if (k.cdHorse <= 0 && k.phase === 'charge' && k.speed < k.maxSpeed) {
     const trackLen = TRACK_BOT - TRACK_TOP;
     const distFromStart = k.baseDir === 1 ? (k.y - TRACK_TOP) : (TRACK_BOT - k.y);
@@ -258,76 +222,40 @@ function updateAIAbilities(k, opponent) {
 
 function updateKnight(k, sq) {
   if (!k) return;
-  
-  // Status Effect: Frozen (Stops everything)
   if (k.frozenT > 0) {
-    audio.updateGallop(0); // Stop sound if frozen
+    audio.updateGallop(0);
     return;
   }
-
   k.phaseT++;
-
-  // GUARD STATUS: High guard only if enough speed and not stunned
-  // Guardia Baja if: stunned OR speed < 70% of max
-  if (k.stunned || k.speed < k.maxSpeed * 0.7) {
-    k.guard = 'low';
-  } else {
-    k.guard = 'high';
-  }
+  if (k.stunned || k.speed < k.maxSpeed * 0.7) k.guard = 'low'; else k.guard = 'high';
 
   switch (k.phase) {
     case 'ready':
-      // Knights MUST wait for delivery if they don't have a lance
       if (!k.lanceIntact) {
         if (joust.t % 120 === 0 && Math.random() < 0.4) knightSay(k, 'waiting');
-        // Squire efficiency affects delivery speed - Reduced by 20%
         const deliverySpeed = (0.015 + (k.squireEff / 10) * 0.035) * 0.8;
         k.lanceLoading = Math.min(1, k.lanceLoading + deliverySpeed);
-        if (k.lanceLoading >= 1) {
-          k.lanceIntact = true;
-          k.lanceStub = false;
-        }
+        if (k.lanceLoading >= 1) { k.lanceIntact = true; k.lanceStub = false; }
       }
-
-      // Transition to charge only if we have a lance and match is active
       const canCharge = k.lanceIntact && (joust.subPhase === 'charge' || joust.subPhase === 'pass' || joust.subPhase === 'turn');
-      if (canCharge) {
-         k.phase = 'charge';
-         k.phaseT = 0;
-      }
+      if (canCharge) { k.phase = 'charge'; k.phaseT = 0; }
       break;
 
     case 'charge':
-      // Ability: Horse (Spur) - Significant speed boost
-      let abilitySpeedBoost = 1.0;
-      if (k.abilityHorseT > 0) abilitySpeedBoost = 1.8;
-
-      // HORSE MECHANICS: Triple progressive acceleration based on position
+      let abilitySpeedBoost = k.abilityHorseT > 0 ? 1.8 : 1.0;
       const trackLen = TRACK_BOT - TRACK_TOP;
       const distFromStart = k.baseDir === 1 ? (k.y - TRACK_TOP) : (TRACK_BOT - k.y);
       const progress = Math.max(0, Math.min(1, distFromStart / trackLen));
-      
       const baseAcc = k.stunned ? 0.075 : 0.18;
       const currentAcc = (baseAcc + (progress * 0.12)) * (k.abilityHorseT > 0 ? 1.5 : 1.0); 
-      
-      // Fatigue affects max speed, but with a safety floor (min 40% of base maxSpeed)
       const fatigueFactor = Math.max(0.4, 1 - (k.fatigue / 100) * 0.5);
       const cap = (k.stunned ? k.maxSpeed * 0.42 : k.maxSpeed) * fatigueFactor * abilitySpeedBoost;
-      
       k.speed = Math.min(k.speed + currentAcc, cap);
       k.y += k.speed * k.baseDir;
-
-      // Gallop sound update
       audio.updateGallop(k.speed);
-      
-      // MAXIMUM ADVANCE LIMIT (Past the other end) - Adjusted for high speed overlap
       const trackLimit = k.baseDir === 1 ? TRACK_BOT - 30 : TRACK_TOP + 30;
       const reachedLimit = k.baseDir === 1 ? (k.y >= trackLimit) : (k.y <= trackLimit);
-      if (reachedLimit && joust.subPhase === 'charge') {
-         k.phase = 'pass';
-         k.phaseT = 0;
-      }
-
+      if (reachedLimit && joust.subPhase === 'charge') { k.phase = 'pass'; k.phaseT = 0; }
       if (joust.t % 3 === 0) spawnDust(k.x, k.y - k.baseDir * (HORSE_H/2 + 4));
       if (joust.t % 16 === 0) spawnHoofPrint(k);
       break;
@@ -350,26 +278,14 @@ function updateKnight(k, sq) {
       }
       const endY = k.baseDir === 1 ? TRACK_BOT - 25 : TRACK_TOP + 25;
       const distToEnd = Math.abs(endY - k.y);
-
-      if (distToEnd > 80) {
-        k.speed = Math.max(k.maxSpeed * 0.6, k.speed - 0.008);
-      } else {
-        k.speed = Math.max(0, k.speed - 0.07);
-      }
+      if (distToEnd > 80) k.speed = Math.max(k.maxSpeed * 0.6, k.speed - 0.008);
+      else k.speed = Math.max(0, k.speed - 0.07);
       k.y += k.speed * k.baseDir;
       k.y = Math.max(TRACK_TOP + 10, Math.min(TRACK_BOT - 10, k.y));
-
       if (k.speed > 0.5 && joust.t % 4 === 0) spawnDust(k.x, k.y - k.baseDir * (HORSE_H / 2 + 4));
       if (k.speed > 0.5 && joust.t % 16 === 0) spawnHoofPrint(k);
-
-      // Gallop sound update during pass
       audio.updateGallop(k.speed);
-
-      if (k.speed < 0.08) {
-        k.phase = 'turn';
-        k.phaseT = 0;
-        k.targetRotation = k.rotation + Math.PI;
-      }
+      if (k.speed < 0.08) { k.phase = 'turn'; k.phaseT = 0; k.targetRotation = k.rotation + Math.PI; }
       break;
 
     case 'turn':
@@ -378,12 +294,7 @@ function updateKnight(k, sq) {
         k.rotation = k.targetRotation;
         k.phase = 'ready';
         k.phaseT = 0;
-        
-        // Aturdimiento decrece al terminar de girar (fin de su venida)
-        if (k.stunned && k.hp > 0) {
-          k.stunRounds--;
-          if (k.stunRounds <= 0) k.stunned = false;
-        }
+        if (k.stunned && k.hp > 0) { k.stunRounds--; if (k.stunRounds <= 0) k.stunned = false; }
       }
       break;
   }

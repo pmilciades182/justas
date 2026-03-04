@@ -19,7 +19,8 @@ export function registerScreenHandler(name, fn) {
   _handlers[name] = fn;
 }
 
-export function switchScreen(name) {
+export async function switchScreen(name) {
+  await audio.init(); // Ensure context is ready
   audio.playClick();
   currentScreen = name;
   $$('.screen').forEach(s => s.classList.remove('active'));
@@ -29,6 +30,15 @@ export function switchScreen(name) {
   const immersive = (name === 'joust' || name === 'designer');
   $('#topbar')?.classList.toggle('hidden', immersive);
   $('#bottomnav')?.classList.toggle('hidden', immersive);
+
+  // Music logic
+  if (['home', 'roster', 'shop', 'team'].includes(name)) {
+    audio.playMusic('menu');
+  } else if (name === 'joust') {
+    audio.playMusic('combat');
+  } else {
+    audio.stopMusic();
+  }
 
   if (_handlers[name]) _handlers[name]();
   refreshGold();

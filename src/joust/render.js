@@ -17,7 +17,6 @@ grassImg.src = '/img/grass.jpg';
 let grassPattern = null;
 grassImg.onload = () => {
   grassPattern = ctx.createPattern(grassImg, 'repeat');
-  // Detalle fino: escala 0.1
   const matrix = new DOMMatrix().scale(0.1, 0.1);
   grassPattern.setTransform(matrix);
 };
@@ -45,9 +44,11 @@ const RIGHT_EDGE_NOISE = Array.from({ length: EDGE_SAMPLES + 1 }, () => (Math.ra
 
 export function drawJoust() {
   ctx.save();
+  
   if (joust.shakeAmt > 0) {
     ctx.translate((Math.random()-0.5)*joust.shakeAmt, (Math.random()-0.5)*joust.shakeAmt);
   }
+  
   ctx.clearRect(-20, -20, W+40, H+40);
 
   drawTrack();
@@ -73,7 +74,7 @@ export function drawJoust() {
 
 function drawTrack() {
   // 1. Hierba base (Color sólido)
-  ctx.fillStyle = '#2d5a27'; // Un verde bosque profundo
+  ctx.fillStyle = '#2d5a27'; 
   ctx.fillRect(0, 0, W, H);
 
   // 2. Variaciones sutiles de color en la hierba (Manchas estáticas)
@@ -87,35 +88,30 @@ function drawTrack() {
 
   // 3. Tierra con bordes irregulares
   ctx.beginPath();
-  // Borde izquierdo (hacia abajo)
   for (let i = 0; i <= EDGE_SAMPLES; i++) {
     const y = (i / EDGE_SAMPLES) * H;
     ctx.lineTo(TRACK_X + LEFT_EDGE_NOISE[i], y);
   }
-  // Borde derecho (hacia arriba)
   for (let i = EDGE_SAMPLES; i >= 0; i--) {
     const y = (i / EDGE_SAMPLES) * H;
     ctx.lineTo(TRACK_X + TRACK_W + RIGHT_EDGE_NOISE[i], y);
   }
   ctx.closePath();
   
-  // Rellenar tierra base
   ctx.fillStyle = COL.dirt;
   ctx.fill();
 
-  // Rellenar degradado de surcos sobre el mismo camino irregular
   ctx.save();
-  ctx.clip(); // Limitar el degradado al área irregular de tierra
+  ctx.clip(); 
   const trackGradient = ctx.createLinearGradient(TRACK_X, 0, TRACK_X + TRACK_W, 0);
   trackGradient.addColorStop(0, 'rgba(0,0,0,0.12)');
-  trackGradient.addColorStop(0.3, 'rgba(0,0,0,0.28)'); // Surco izq
-  trackGradient.addColorStop(0.5, 'rgba(0,0,0,0.35)'); // Centro
-  trackGradient.addColorStop(0.7, 'rgba(0,0,0,0.28)'); // Surco der
+  trackGradient.addColorStop(0.3, 'rgba(0,0,0,0.28)'); 
+  trackGradient.addColorStop(0.5, 'rgba(0,0,0,0.35)'); 
+  trackGradient.addColorStop(0.7, 'rgba(0,0,0,0.28)'); 
   trackGradient.addColorStop(1, 'rgba(0,0,0,0.12)');
   ctx.fillStyle = trackGradient;
   ctx.fillRect(TRACK_X - 20, 0, TRACK_W + 40, H);
 
-  // 4. Piedrecillas (también dentro del clip)
   for (const p of TRACK_PEBBLES) {
     ctx.globalAlpha = p.a;
     ctx.fillStyle = p.col;
@@ -124,13 +120,10 @@ function drawTrack() {
   ctx.restore();
   ctx.globalAlpha = 1;
 
-  // 5. Decales (Sangre y astillas en el suelo)
   drawGroundMarks();
   drawPersistentLances();
 
-  // 6. Zonas de Entrega (Respetando bordes irregulares)
   ctx.save();
-  // Usar el mismo path irregular para recortar las zonas de entrega
   ctx.beginPath();
   for (let i = 0; i <= EDGE_SAMPLES; i++) {
     ctx.lineTo(TRACK_X + LEFT_EDGE_NOISE[i], (i / EDGE_SAMPLES) * H);
@@ -147,7 +140,6 @@ function drawTrack() {
   ctx.fillRect(TRACK_X - 20, TRACK_TOP, TRACK_W + 40, zoneH);
   ctx.fillRect(TRACK_X - 20, TRACK_BOT - zoneH, TRACK_W + 40, zoneH);
   
-  // Líneas divisorias de zona (Horizontales)
   ctx.globalAlpha = 0.4;
   ctx.strokeStyle = '#ffd54f';
   ctx.setLineDash([5, 5]);
@@ -159,35 +151,30 @@ function drawTrack() {
   ctx.stroke();
   ctx.restore();
 
-  // 7. Valla / palizada Mejorada
   ctx.save();
   ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.fillRect(LANE_X + 2, 0, 6, H); // Sombra valla central
+  ctx.fillRect(LANE_X + 2, 0, 6, H); 
 
-  // Valla central (Recta por construcción)
   ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 5;
   ctx.beginPath(); ctx.moveTo(LANE_X, 0); ctx.lineTo(LANE_X, H); ctx.stroke();
 
   ctx.fillStyle = '#3e2723';
   for (let py = 24; py < H; py += 50) {
     ctx.fillRect(LANE_X - 7, py - 4, 14, 8);
-    ctx.fillStyle = '#7f8c8d'; ctx.fillRect(LANE_X - 1, py - 1, 2, 2); // Clavo
+    ctx.fillStyle = '#7f8c8d'; ctx.fillRect(LANE_X - 1, py - 1, 2, 2); 
     ctx.fillStyle = '#3e2723';
   }
 
-  // Rieles laterales IRREGULARES (Siguen el ruido del borde)
   ctx.setLineDash([]);
   ctx.lineWidth = 3;
   ctx.strokeStyle = '#8b6914';
   
-  // Riel Izquierdo
   ctx.beginPath();
   for (let i = 0; i <= EDGE_SAMPLES; i++) {
     ctx.lineTo(TRACK_X + LEFT_EDGE_NOISE[i], (i / EDGE_SAMPLES) * H);
   }
   ctx.stroke();
 
-  // Riel Derecho
   ctx.beginPath();
   for (let i = 0; i <= EDGE_SAMPLES; i++) {
     ctx.lineTo(TRACK_X + TRACK_W + RIGHT_EDGE_NOISE[i], (i / EDGE_SAMPLES) * H);
@@ -221,25 +208,14 @@ function drawPersistentLances() {
     ctx.save();
     ctx.translate(l.x, l.y);
     ctx.rotate(l.angle);
-    
-    // Sombra sutil de la pieza
     ctx.fillStyle = 'rgba(0,0,0,0.15)';
     ctx.fillRect(-2, 2, l.len, 4);
-
-    // Pieza de madera
     const grad = ctx.createLinearGradient(0, 0, 0, 4);
     grad.addColorStop(0, '#5d4037');
     grad.addColorStop(0.5, '#8d6e63');
     grad.addColorStop(1, '#5d4037');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, l.len, 4);
-    
-    // Detalles de rotura (puntas astilladas)
-    ctx.fillStyle = '#3e2723';
-    ctx.beginPath();
-    ctx.moveTo(0, 0); ctx.lineTo(3, 2); ctx.lineTo(0, 4); ctx.fill();
-    ctx.moveTo(l.len, 0); ctx.lineTo(l.len-3, 2); ctx.lineTo(l.len, 4); ctx.fill();
-    
     ctx.restore();
   }
 }
@@ -310,12 +286,9 @@ function drawJoustUI() {
       if (maxPts >= 10) { txt = '¡DESMONTADO!'; col = '#ff4444'; }
       else if (maxPts >= 3) { txt = '¡GRAN GOLPE!'; col = '#e67e22'; }
       
-      // Shadow layer
       ctx.font = 'bold 56px MedievalSharp';
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
       ctx.fillText(txt, W/2 + 4, H/2 + 4);
-      
-      // Main text
       ctx.fillStyle = col;
       ctx.fillText(txt, W/2, H/2);
       
@@ -367,20 +340,17 @@ function drawDeliveryIndicators(k) {
   ctx.save();
   const cx = k.x;
   const cy = k.y - 45;
-  const radius = 12; // Larger radius
+  const radius = 12;
 
-  // Outer Glow / Pulse
   const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
   ctx.shadowBlur = 10 * pulse;
   ctx.shadowColor = '#ffd54f';
 
-  // Background Circle (High Contrast)
   ctx.beginPath();
   ctx.arc(cx, cy, radius + 2, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
   ctx.fill();
 
-  // Progress Arc (Thick and Bright)
   ctx.beginPath();
   ctx.arc(cx, cy, radius, -Math.PI/2, -Math.PI/2 + (Math.PI * 2 * k.lanceLoading));
   ctx.strokeStyle = '#ffd54f';
@@ -388,7 +358,6 @@ function drawDeliveryIndicators(k) {
   ctx.lineCap = 'round';
   ctx.stroke();
 
-  // "Sun" rays effect when loading
   ctx.globalAlpha = 0.4 * pulse;
   ctx.strokeStyle = '#d4a017';
   ctx.lineWidth = 1;

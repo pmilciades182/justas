@@ -362,9 +362,11 @@ export function showMatchResult() {
   } else if (!isDraw) {
     spawnRoses('right', 17);
     spawnTrash('left', 14);
+    audio.playFanfareDefeat();
   } else {
     spawnTrash('left', 7);
     spawnTrash('right', 7);
+    audio.playFanfareDraw();
   }
 
   const isLast = joust.matchIdx >= joust.totalMatches - 1;
@@ -429,7 +431,10 @@ export function showTourneyResult() {
     spawnConfetti(150);
     audio.playFanfareTourney();
   }
-  else if (!draw) player.losses++;
+  else if (!draw) {
+    player.losses++;
+    audio.playFanfareDefeat();
+  }
 
   const goldReward = won ? 150 + pWins * 50 : 30 + pWins * 20;
   player.gold += goldReward;

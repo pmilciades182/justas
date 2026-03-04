@@ -7,30 +7,88 @@ class AudioManager {
     this.ctx = null;
     this.masterVolume = 0.8;
     this._nextGallop = 0;
-    this.lastSpeed = 0;
+    
+    // Music State
+    this.currentMusic = null;
+    this.musicGain = null;
+    this.limiter = null;
+    this.tracks = {
+      menu: '/music/menu.mp3',
+      combat: '/music/combat.mp3'
+    };
   }
 
   async init() {
     if (!this.ctx) {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-      console.log("Audio Engine Created");
+      
+      // Configure Limiter (Compressor) to reduce dynamic range
+      this.limiter = this.ctx.createDynamicsCompressor();
+      this.limiter.threshold.setValueAtTime(-12, this.ctx.currentTime);
+      this.limiter.knee.setValueAtTime(30, this.ctx.currentTime);
+      this.limiter.ratio.setValueAtTime(12, this.ctx.currentTime);
+      this.limiter.attack.setValueAtTime(0.003, this.ctx.currentTime);
+      this.limiter.release.setValueAtTime(0.25, this.ctx.currentTime);
+      
+      this.limiter.connect(this.ctx.destination);
+      
+      console.log("Audio Engine Created with Limiter");
     }
     if (this.ctx.state === 'suspended') {
       await this.ctx.resume();
-      console.log("Audio Engine Resumed");
     }
   }
 
-  // Asegura que el contexto esté activo antes de sonar
   async _checkContext() {
-    if (!this.ctx) return false;
+    if (!this.ctx) await this.init();
     if (this.ctx.state === 'suspended') await this.ctx.resume();
     return true;
   }
 
+  // ── MUSIC SYSTEM ──
+
+  async playMusic(trackKey) {
+    await this._checkContext();
+    const url = this.tracks[trackKey];
+    if (!url) return;
+
+    // If already playing this track, don't restart
+    if (this.currentMusic && this.currentMusic.dataset.track === trackKey) return;
+
+    this.stopMusic();
+
+    const audioEl = new Audio(url);
+    audioEl.loop = true;
+    audioEl.dataset.track = trackKey;
+    
+    const source = this.ctx.createMediaElementSource(audioEl);
+    this.musicGain = this.ctx.createGain();
+    this.musicGain.gain.value = 0.4 * this.masterVolume;
+
+    source.connect(this.musicGain);
+    this.musicGain.connect(this.limiter); // Pass through limiter
+
+    audioEl.play().catch(e => console.warn("Music auto-play blocked", e));
+    this.currentMusic = audioEl;
+  }
+
+  stopMusic() {
+    if (this.currentMusic) {
+      this.currentMusic.pause();
+      this.currentMusic = null;
+    }
+  }
+
+  setMusicVolume(vol, fadeSeconds = 0.5) {
+    if (!this.musicGain || !this.ctx) return;
+    const target = vol * this.masterVolume;
+    this.musicGain.gain.exponentialRampToValueAtTime(Math.max(0.001, target), this.ctx.currentTime + fadeSeconds);
+  }
+
+  // ── SFX ──
+
   playClick() {
     if (!this.ctx) return;
-    this._checkContext();
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -40,7 +98,7 @@ class AudioManager {
     gain.gain.setValueAtTime(0.12 * this.masterVolume, now);
     gain.gain.linearRampToValueAtTime(0, now + 0.05);
     osc.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(this.limiter);
     osc.start();
     osc.stop(now + 0.05);
   }
@@ -65,7 +123,7 @@ class AudioManager {
     modulator.connect(modGain);
     modGain.connect(carrier.frequency);
     carrier.connect(carrierGain);
-    carrierGain.connect(this.ctx.destination);
+    carrierGain.connect(this.limiter);
 
     carrier.start(); modulator.start();
     carrier.stop(now + 0.2); modulator.stop(now + 0.2);
@@ -87,18 +145,14 @@ class AudioManager {
     gain.gain.setValueAtTime(0.5 * intensity * this.masterVolume, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
     noise.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(this.limiter);
     noise.start();
   }
 
   updateGallop(speed) {
     if (!this.ctx || speed < 0.3) return;
-    this._checkContext();
-    
     const now = this.ctx.currentTime;
-    // Cadencia de galope: más rápido cuanto más velocidad
     const interval = 0.35 / (0.4 + speed * 0.3);
-    
     if (now > this._nextGallop) {
       this.playGallopStep(speed);
       this._nextGallop = now + interval;
@@ -109,19 +163,14 @@ class AudioManager {
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    
-    // El "thump" del casco
     osc.type = 'sine';
     osc.frequency.setValueAtTime(70, now);
     osc.frequency.exponentialRampToValueAtTime(20, now + 0.12);
-    
-    // Volumen basado en velocidad (más fuerte al correr más)
     const vol = Math.min(0.4, (speed / 6) * 0.3) * this.masterVolume;
     gain.gain.setValueAtTime(vol, now);
     gain.gain.linearRampToValueAtTime(0, now + 0.12);
-    
     osc.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(this.limiter);
     osc.start();
     osc.stop(now + 0.12);
   }
@@ -148,6 +197,20 @@ class AudioManager {
     mel.forEach(n => this._note(n.f, now + n.t, 0.5, 'sawtooth', 0.15));
   }
 
+  playFanfareDefeat() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const mel = [{f: 392.00, t: 0}, {f: 349.23, t: 0.2}, {f: 311.13, t: 0.4}, {f: 261.63, t: 0.7}];
+    mel.forEach(n => this._note(n.f, now + n.t, 0.6, 'sawtooth', 0.15));
+  }
+
+  playFanfareDraw() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const mel = [{f: 440.00, t: 0}, {f: 440.00, t: 0.2}, {f: 440.00, t: 0.4}];
+    mel.forEach(n => this._note(n.f, now + n.t, 0.3, 'square', 0.12));
+  }
+
   _note(freq, start, duration, type = 'sine', vol = 0.1) {
     if (!this.ctx) return;
     const st = Math.max(this.ctx.currentTime, start);
@@ -159,7 +222,7 @@ class AudioManager {
     gain.gain.linearRampToValueAtTime(vol * this.masterVolume, st + 0.02);
     gain.gain.linearRampToValueAtTime(0, st + duration);
     osc.connect(gain);
-    gain.connect(this.ctx.destination);
+    gain.connect(this.limiter);
     osc.start(st);
     osc.stop(st + duration + 0.1);
   }
