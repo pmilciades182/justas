@@ -118,7 +118,9 @@ function handleAbilityTrigger(id) {
 }
 
 function updateAbilityUI() {
-  if (!joust.active) return; // Stop loop if match ends (will restart on initAbilities)
+  // Keep loop running if joust screen is active, even if match logic is paused/ended
+  const joustScreen = document.getElementById('screen-joust');
+  if (!joustScreen || !joustScreen.classList.contains('active')) return;
 
   const k = joust.k1;
   if (k) {
@@ -142,6 +144,10 @@ function updateButtonState(id, current, max) {
                        (id === 'btn-espolear' && k.abilityHorseT > 0) ||
                        (id === 'btn-especial' && k.abilitySpecialT > 0);
 
+  // NEW: Check if any UI overlay is active (Menu, Selection, Intro, Result)
+  const uiOverlay = document.getElementById('joust-overlay');
+  const isUIActive = (uiOverlay && uiOverlay.innerHTML.trim() !== "") || joust.subPhase === 'result';
+
   if (current > 0) {
     btn.classList.add('cooldown');
     btn.classList.remove('locked');
@@ -155,8 +161,8 @@ function updateButtonState(id, current, max) {
     if (overlay) overlay.style.transform = 'translateY(100%)';
 
     // If NOT on cooldown, check if we should be locked
-    // Locked if: ANY other ability is active, but I am NOT the active one
-    if (isAnyAbilityActive() && !isThisActive) {
+    // Locked if: ANY other ability is active OR any UI menu is open
+    if (isUIActive || (isAnyAbilityActive() && !isThisActive)) {
        btn.classList.add('locked');
     } else {
        btn.classList.remove('locked');

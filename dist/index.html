@@ -129,47 +129,89 @@
       align-self: center;
     }
 
-    /* ===== CARDS ===== */
+    /* ===== SHOP & CARDS REFINED ===== */
     .card {
-      background: var(--card); /* Solid Royal Parchment */
-      color: var(--card-text);
+      background: #1a110a;
+      color: #e8d5b5;
       border: 1px solid #8b6b10;
-      padding: 16px;
+      padding: 0; 
       margin-bottom: 16px;
       box-shadow: 4px 4px 0px rgba(0,0,0,0.4);
       position: relative;
-      border-radius: 0;
+      overflow: hidden;
     }
-    .card::before {
-      content: ''; position: absolute; inset: 2px;
-      border: 1px solid rgba(139, 107, 16, 0.2);
-      pointer-events: none;
-    }
+    .card-content { padding: 15px; }
     
-    .card-row { display: flex; align-items: center; gap: 16px; }
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
     .card-icon {
-      width: 48px; height: 48px;
-      background: #1a110a; /* Solid dark background */
+      width: 54px; height: 54px;
+      background: #000; 
       border: 2px solid var(--gold-dim);
       display: flex; align-items: center; justify-content: center;
-      font-size: 24px;
+      font-size: 28px;
       flex-shrink: 0;
-      box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
     }
-    .card-name { font-family: 'MedievalSharp', cursive; font-size: 18px; color: var(--red); line-height: 1.2; }
-    .card-desc { font-size: 13px; color: var(--card-text-dim); font-weight: 700; margin-top: 2px; }
+    .card-title-group { flex: 1; }
+    .card-name { font-family: 'MedievalSharp', cursive; font-size: 19px; color: var(--gold-bright); margin-bottom: 2px; }
+    .card-tier { font-size: 10px; color: var(--gold-dim); text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+    
+    .card-desc { 
+      font-size: 12px; 
+      color: var(--text-dim); 
+      line-height: 1.4; 
+      background: rgba(0,0,0,0.2); 
+      padding: 8px; 
+      border-radius: 2px;
+      margin-bottom: 12px;
+      border-left: 2px solid rgba(212,160,23,0.2);
+    }
+    
+    .card-stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0,0,0,0.3);
+      padding: 10px 15px;
+      border-top: 1px solid rgba(212,160,23,0.1);
+    }
+    
+    .price-tag {
+      font-family: 'MedievalSharp';
+      color: var(--gold-bright);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
     
     .stat-badge {
-      font-size: 11px;
-      padding: 4px 8px;
-      background: #e0d0b0; /* Solid background for badges */
-      border: 1px solid rgba(0,0,0,0.2);
+      font-size: 10px;
+      padding: 3px 8px;
+      background: #2d1e16;
+      border: 1px solid rgba(212,160,23,0.3);
       font-weight: bold;
       font-family: 'MedievalSharp';
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
-    .stat-badge.str { color: #8e1616; }
-    .stat-badge.def { color: #1a3a5f; }
-    .stat-badge.hor { color: #1a4018; }
+    .stat-badge.str { color: #ff4444; border-color: #8e1616; }
+    .stat-badge.def { color: #44aaff; border-color: #1a3a5f; }
+    .stat-badge.hor { color: #44ff44; border-color: #1a4018; }
 
     .section-label {
       font-family: 'MedievalSharp';
@@ -177,7 +219,7 @@
       font-size: 13px;
       margin-bottom: 12px;
       padding: 4px 10px;
-      background: #1a110a; /* Solid background for labels */
+      background: #1a110a; 
       border-left: 3px solid var(--gold);
       display: flex;
       align-items: center;
@@ -212,7 +254,7 @@
     .btn-gold:active { box-shadow: 0 1px 0 #6d4c0a; }
     
     .btn-ghost {
-      background: #2d1e16; /* Solid background instead of transparent */
+      background: #2d1e16; 
       color: var(--gold-bright);
       border: 1px solid var(--gold-dim);
       box-shadow: 0 4px 0 rgba(0,0,0,0.5);
@@ -232,7 +274,6 @@
     .btn-lg { width: 100%; padding: 18px; font-size: 18px; }
     .btn:disabled { opacity: 0.4; filter: grayscale(0.8); pointer-events: none; }
     
-    /* Solid wrapper for miscellaneous help text */
     .help-text {
       background: rgba(0,0,0,0.35);
       color: var(--text-dim);
@@ -262,58 +303,222 @@
 
     /* ===== HOME SCREEN ===== */
     .house-banner {
-      background: #4a0a0b;
-      background-image: linear-gradient(45deg, #3d0809 25%, transparent 25%), linear-gradient(-45deg, #3d0809 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #3d0809 75%), linear-gradient(-45deg, transparent 75%, #3d0809 75%);
-      background-size: 20px 20px;
-      border: 2px solid var(--gold);
-      padding: 30px 20px;
+      background: #1a110a;
+      border: 2px solid var(--gold-dim);
+      padding: 35px 20px;
       text-align: center;
-      margin-bottom: 24px;
-      box-shadow: inset 0 0 40px rgba(0,0,0,0.8), var(--shadow);
+      margin-bottom: 12px;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.6);
+      position: relative;
+      overflow: hidden;
+    }
+    .house-banner::after {
+      content: '⚔'; position: absolute; font-size: 120px; opacity: 0.05; top: -20px; right: -20px; color: var(--gold);
     }
     .house-banner h2 { 
       font-family: 'MedievalSharp', cursive; 
-      font-size: 30px; color: var(--gold-bright); 
-      margin-bottom: 4px; 
+      font-size: 32px; color: var(--gold-bright); 
+      margin-bottom: 2px; 
       text-shadow: 2px 2px 0 #000;
     }
-    .house-banner p { font-style: italic; color: #e8d5b5; opacity: 0.9; font-size: 14px; }
+    .house-banner p { font-style: italic; color: var(--text-dim); font-size: 14px; letter-spacing: 1px; }
     
-    .house-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    .house-stat-card {
-      background: #1a110a; /* Solid background for stats */
+    .house-stats-bar {
+      display: flex;
+      justify-content: space-around;
+      background: #000;
       border: 1px solid var(--gold-dim);
-      padding: 15px 8px;
-      text-align: center;
-      box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+      padding: 10px 5px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
-    .house-stat-card .val { font-family: 'MedievalSharp', cursive; font-size: 28px; color: var(--gold-bright); }
-    .house-stat-card .label { font-size: 11px; text-transform: uppercase; color: var(--text-dim); font-weight: bold; }
+    .stat-item { text-align: center; }
+    .stat-item .val { font-family: 'MedievalSharp'; font-size: 20px; color: #fff; display: block; }
+    .stat-item .label { font-size: 9px; text-transform: uppercase; color: var(--gold-dim); font-weight: bold; }
+
+    .team-preview-mini {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding: 5px 0;
+    }
+    .mini-knight-card {
+      background: #1a110a;
+      border: 1px solid var(--gold-dim);
+      padding: 8px;
+      min-width: 80px;
+      text-align: center;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    }
+    .mini-knight-card .icon { font-size: 24px; margin-bottom: 4px; }
+    .mini-knight-card .name { font-size: 9px; font-family: 'MedievalSharp'; color: var(--gold-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ===== SHOP TABS ===== */
     .shop-tabs {
       display: flex;
-      gap: 4px;
+      flex-wrap: wrap;
+      gap: 6px;
       margin-bottom: 16px;
-      overflow-x: auto;
-      padding-bottom: 4px;
+      justify-content: center;
     }
     .shop-tab {
-      padding: 8px 12px;
-      background: var(--surface);
+      padding: 8px 14px;
+      background: #1a110a;
       color: var(--text-dim);
       border: 1px solid var(--gold-dim);
       font-family: 'MedievalSharp', cursive;
-      font-size: 13px;
+      font-size: 12px;
       cursor: pointer;
       white-space: nowrap;
+      transition: all 0.2s;
     }
-    .shop-tab.active { background: var(--gold); color: var(--surface); }
+    .shop-tab.active { background: var(--gold); color: #000; border-color: #fff; }
+
+    /* ===== ROSTER & EQUIP GRID ===== */
+    .equip-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .equip-item {
+      background: #000;
+      border: 1px solid var(--gold-dim);
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+      overflow: hidden;
+      color: #e8d5b5;
+    }
+    .equip-item.selected {
+      border: 2px solid #fff;
+      box-shadow: 0 0 15px rgba(212, 160, 23, 0.4);
+    }
+    .equip-item.disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+    
+    .equip-item .item-header {
+      padding: 8px;
+      background: rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(212,160,23,0.1);
+    }
+    .equip-item .item-name { 
+      font-weight: bold; 
+      font-size: 12px; 
+      font-family: 'MedievalSharp'; 
+      color: var(--gold-bright);
+      line-height: 1.2;
+    }
+    .equip-item .item-tier { font-size: 8px; color: var(--gold-dim); text-transform: uppercase; margin-top: 2px; font-weight: bold; }
+    
+    .equip-item .item-body { padding: 8px; flex: 1; }
+    .equip-item .item-stats { display: flex; flex-wrap: wrap; gap: 4px; }
+    
+    .equip-item .item-footer {
+      padding: 4px 8px;
+      background: rgba(0,0,0,0.5);
+      font-size: 9px;
+      text-align: right;
+      min-height: 18px;
+      color: var(--gold-bright);
+    }
+    .equip-item .item-check {
+      position: absolute; top: 5px; right: 5px;
+      background: var(--gold); color: #000;
+      width: 16px; height: 16px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 10px;
+    }
+
+    .roster-equip-preview {
+      display: flex;
+      justify-content: space-around;
+      gap: 5px;
+      margin-top: 15px;
+      padding: 12px 5px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(212,160,23,0.15);
+    }
+    .mini-slot {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+    }
+    .mini-slot .icon-frame {
+      width: 36px; height: 36px;
+      background: #000;
+      border: 1px solid var(--gold-dim);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    .mini-slot .label { 
+      font-size: 8px; 
+      text-transform: uppercase; 
+      font-weight: bold; 
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* ===== TEAM SELECT SCREEN ===== */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .team-slot {
+      aspect-ratio: 1/1.2;
+      background: #000;
+      border: 1px solid var(--gold-dim);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+      box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+    }
+    .team-slot.filled {
+      border: 2px solid var(--gold);
+      background: #1a110a;
+    }
+    .team-slot.empty { border-style: dashed; opacity: 0.6; }
+    
+    .team-slot .slot-icon { font-size: 32px; margin-bottom: 4px; }
+    .team-slot .slot-name { 
+      font-size: 9px; 
+      font-family: 'MedievalSharp'; 
+      text-transform: uppercase;
+      text-align: center;
+      color: var(--gold-bright);
+      padding: 0 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+    }
+    .team-slot .slot-remove {
+      position: absolute; top: -6px; right: -6px;
+      background: var(--red); color: #fff;
+      width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: bold; border: 1.5px solid #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      z-index: 5;
+    }
 
     /* ===== DESIGNER SCREEN ===== */
     #screen-designer {
@@ -365,7 +570,6 @@
     }
     .slider-row input[type=range] { flex: 1; }
     
-    /* Utility for designer button in home */
     .btn-designer {
       position: absolute;
       top: 10px; left: 10px;
@@ -373,76 +577,6 @@
       font-size: 12px;
       z-index: 20;
     }
-
-    /* ===== TEAM SELECT SCREEN ===== */
-    .team-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .team-slot {
-      aspect-ratio: 1/1.2;
-      background: rgba(0,0,0,0.15);
-      border: 2px dashed var(--gold-dim);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      position: relative;
-      transition: all 0.2s;
-    }
-    .team-slot.filled {
-      background: var(--card);
-      border: 2px solid var(--gold);
-      border-image: none;
-    }
-    .team-slot .slot-icon { font-size: 32px; }
-    .team-slot .slot-name { 
-      font-size: 10px; 
-      font-family: 'MedievalSharp'; 
-      text-transform: uppercase;
-      margin-top: 5px;
-      text-align: center;
-      padding: 0 4px;
-    }
-    .team-slot .slot-remove {
-      position: absolute; top: -5px; right: -5px;
-      background: var(--red); color: #fff;
-      width: 20px; height: 20px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: bold; border: 1px solid #fff;
-    }
-    
-    .section-label {
-      font-family: 'MedievalSharp';
-      color: var(--gold);
-      font-size: 14px;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--gold-dim); opacity: 0.3; }
-
-    #pick-knight-list {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-    .pick-item {
-      background: #fff;
-      border: 1px solid #d4c4a8;
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      cursor: pointer;
-    }
-    .pick-item:hover { border-color: var(--gold); background: #fff9e6; }
-    .pick-item .pick-name { font-size: 11px; font-weight: bold; margin-top: 5px; }
 
     /* ===== HUD RIBBON EFFECTS ===== */
     .jhud-ribbon {
@@ -484,6 +618,94 @@
       flex-direction: column;
     }
 
+    /* ── ABILITIES BAR ── */
+    #joust-abilities {
+      height: 85px;
+      background: #1a110a;
+      border-top: 3px solid #d4a017;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 5px;
+      z-index: 40;
+      flex-shrink: 0;
+      box-shadow: 0 -10px 20px rgba(0,0,0,0.5);
+      
+      /* Animation */
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transform: translateY(100%);
+    }
+    #joust-abilities.show {
+      transform: translateY(0);
+    }
+    .ability-btn {
+      width: 23%;
+      height: 65px;
+      border: 2px solid var(--gold-dim);
+      background: #2d1e16;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      user-select: none;
+      padding: 5px;
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+    }
+    .ability-btn:active:not(.cooldown):not(.locked) {
+      transform: scale(0.85);
+      background: #3d2b1f;
+      border-color: #fff !important;
+    }
+    .ability-btn.cooldown {
+      cursor: not-allowed;
+      filter: grayscale(1) brightness(0.7);
+    }
+    .ability-btn.locked {
+      cursor: not-allowed;
+      filter: brightness(0.5);
+      opacity: 0.8;
+    }
+    .ability-btn.locked::after {
+      content: '🔒';
+      position: absolute;
+      font-size: 20px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-shadow: 0 0 10px #000;
+      z-index: 10;
+    }
+    .ability-icon { font-size: 24px; margin-bottom: 2px; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
+    .ability-name { font-size: 9px; font-family: 'MedievalSharp'; text-transform: uppercase; color: var(--gold-bright); }
+    .ability-cooldown-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      transform: translateY(100%);
+      pointer-events: none;
+      border-top: 1px solid rgba(255,255,255,0.3);
+    }
+    .ability-btn.cooldown .ability-cooldown-overlay {
+      animation: cooldown-anim 3s linear forwards;
+    }
+    @keyframes cooldown-anim {
+      0% { transform: translateY(0%); }
+      100% { transform: translateY(100%); }
+    }
+
+    /* Button colors */
+    #btn-defensa { border-color: #3498db; box-shadow: inset 0 0 10px rgba(52, 152, 219, 0.2); }
+    #btn-ataque { border-color: #e74c3c; box-shadow: inset 0 0 10px rgba(231, 76, 60, 0.2); }
+    #btn-espolear { border-color: #f1c40f; box-shadow: inset 0 0 10px rgba(241, 196, 15, 0.2); }
+    #btn-especial { border-color: #9b59b6; box-shadow: inset 0 0 10px rgba(155, 89, 182, 0.2); }
+
     /* ── HUD separado del campo ── */
     #joust-hud {
       flex-shrink: 0;
@@ -494,7 +716,7 @@
       padding: 8px 10px;
       height: 95px;
       position: relative;
-      z-index: 30; /* Above arena and its overlays */
+      z-index: 30; 
     }
     .jhud-knight { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
     .jhud-top-row { display: flex; align-items: center; gap: 6px; }
@@ -591,61 +813,6 @@
     }
     .joust-overlay > * { pointer-events: auto; }
 
-    /* ===== ROSTER & EQUIP GRID ===== */
-    .equip-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .equip-item {
-      background: #fff;
-      border: 1px solid var(--card-border);
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      cursor: pointer;
-      position: relative;
-      transition: all 0.2s;
-    }
-    .equip-item.selected {
-      border: 2px solid var(--red);
-      background: #fff9e6;
-      box-shadow: inset 0 0 10px rgba(142, 22, 22, 0.1);
-    }
-    .equip-item.disabled { opacity: 0.4; cursor: not-allowed; grayscale: 1; }
-    .equip-item .item-name { font-weight: bold; font-size: 13px; color: var(--surface); }
-    .equip-item .item-stats { display: flex; gap: 4px; flex-wrap: wrap; }
-    .equip-item .item-avail { 
-      font-size: 10px; color: var(--card-text-dim); 
-      position: absolute; top: 5px; right: 5px;
-      background: rgba(0,0,0,0.05); padding: 1px 4px;
-    }
-    .equip-item .item-check {
-      position: absolute; bottom: 5px; right: 5px;
-      color: var(--red); font-weight: bold; font-size: 14px;
-    }
-
-    .roster-equip-preview {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px dashed rgba(0,0,0,0.1);
-    }
-    .mini-slot {
-      flex: 1;
-      background: rgba(0,0,0,0.05);
-      border: 1px solid rgba(0,0,0,0.1);
-      padding: 4px;
-      text-align: center;
-      font-size: 10px;
-      display: flex; flex-direction: column; align-items: center;
-    }
-    .mini-slot .icon { font-size: 16px; margin-bottom: 2px; }
-    .mini-slot .label { color: var(--card-text-dim); font-weight: bold; text-transform: uppercase; font-size: 8px; }
-
     /* ===== MODAL ===== */
     .modal-backdrop {
       display: none;
@@ -682,7 +849,7 @@
     .mt-16 { margin-top: 16px; }
     .mt-8 { margin-top: 8px; }
   </style>
-  <script type="module" crossorigin src="/assets/index-Dmplkv_h.js"></script>
+  <script type="module" crossorigin src="/assets/index-BiKSjBPT.js"></script>
 </head>
 <body>
   <div id="app">
@@ -695,32 +862,38 @@
     <!-- ===== SCREEN: HOME ===== -->
     <div id="screen-home" class="screen active">
       <div class="house-banner">
-        <h2 id="house-name">Casa del Dragón</h2>
-        <p>Tu casa real de justas</p>
+        <h2 id="house-name">Tu Linaje</h2>
+        <p>Honor y Acero</p>
       </div>
-      <div class="house-stats">
-        <div class="house-stat-card">
-          <div class="val" id="stat-knights">2</div>
-          <div class="label">Caballeros</div>
+      
+      <div class="house-stats-bar">
+        <div class="stat-item">
+          <span class="label">Caballeros</span>
+          <span class="val" id="stat-knights">0</span>
         </div>
-        <div class="house-stat-card">
-          <div class="val" id="stat-wins">0</div>
-          <div class="label">Victorias</div>
+        <div class="stat-item">
+          <span class="label">Victorias</span>
+          <span class="val" id="stat-wins">0</span>
         </div>
-        <div class="house-stat-card">
-          <div class="val" id="stat-losses">0</div>
-          <div class="label">Derrotas</div>
+        <div class="stat-item">
+          <span class="label">Derrotas</span>
+          <span class="val" id="stat-losses">0</span>
         </div>
       </div>
-      <div class="section-label">Tu Equipo</div>
-      <div id="home-team-preview"></div>
-      <div class="mt-16 text-center" style="display: flex; flex-direction: column; gap: 12px;">
-        <button class="btn btn-gold btn-lg" id="btn-quick-joust">🏇 A JUSTAR</button>
-        <button class="btn btn-ghost" id="btn-story-mode" style="width: 100%; border: 1px solid var(--gold-dim); color: var(--gold-dim)">📖 MODO HISTORIA</button>
-        <button class="btn btn-ghost" id="btn-go-designer" style="width: 100%; border: 1px solid var(--gold-dim);">🎨 DISEÑO DE CABALLERO</button>
-        <button class="btn btn-red" id="btn-reset-game" style="font-size: 11px; padding: 8px; margin-top: 20px; opacity: 0.7;">⚠️ RESETEAR DATOS (DEBUG)</button>
+
+      <div class="section-label">Escuadrón Activo</div>
+      <div id="home-team-preview" class="team-preview-mini"></div>
+
+      <div class="mt-16 text-center" style="display: flex; flex-direction: column; gap: 14px;">
+        <button class="btn btn-gold btn-lg" id="btn-quick-joust">🏇 ¡A JUSTAR!</button>
+        <button class="btn btn-gold btn-lg" id="btn-story-mode" style="filter: hue-rotate(-40deg) brightness(0.9);">📖 MODO HISTORIA</button>
+        
+        <div style="display: grid; grid-template-columns: 1fr; margin-top: 5px;">
+          <button class="btn btn-ghost btn-sm" id="btn-go-designer" style="padding: 12px; font-size: 13px;">🎨 DISEÑADOR DE CABALLEROS</button>
+        </div>
+
+        <button class="btn btn-red" id="btn-reset-game" style="font-size: 10px; padding: 6px; margin-top: 15px; opacity: 0.4; border: none; background: none; box-shadow: none;">⚠️ RESETEAR DATOS</button>
       </div>
-      <p class="text-center text-dim text-sm mt-8">Selecciona tu equipo y enfrenta a una casa rival</p>
     </div>
 
     <!-- ===== SCREEN: ROSTER ===== -->
@@ -736,8 +909,10 @@
       <div class="screen-subtitle">Recluta caballeros y compra equipo</div>
       <div class="shop-tabs" id="shop-tabs">
         <button class="shop-tab active" data-tab="knights">Caballeros</button>
+        <button class="shop-tab" data-tab="lances">Lanzas</button>
         <button class="shop-tab" data-tab="armors">Armaduras</button>
         <button class="shop-tab" data-tab="horses">Caballos</button>
+        <button class="shop-tab" data-tab="shields">Escudos</button>
         <button class="shop-tab" data-tab="squires">Escuderos</button>
       </div>
       <div id="shop-list"></div>
@@ -747,7 +922,7 @@
     <div id="screen-team" class="screen">
       <div class="screen-title">👥 Equipo de Justa</div>
       <div class="screen-subtitle">Selecciona hasta 4 caballeros para tu escuadrón</div>
-      <div class="team-slots" id="team-slots"></div>
+      <div id="team-slots"></div>
     </div>
 
     <!-- ===== SCREEN: JOUST ===== -->
@@ -804,6 +979,30 @@
         <canvas id="canvas"></canvas>
         <div class="joust-overlay" id="joust-overlay"></div>
       </div>
+
+      <!-- Barra de habilidades -->
+      <div id="joust-abilities">
+        <button class="ability-btn" id="btn-defensa">
+          <span class="ability-icon">🛡️</span>
+          <span class="ability-name">Defensa</span>
+          <div class="ability-cooldown-overlay"></div>
+        </button>
+        <button class="ability-btn" id="btn-ataque">
+          <span class="ability-icon">⚔️</span>
+          <span class="ability-name">Ataque</span>
+          <div class="ability-cooldown-overlay"></div>
+        </button>
+        <button class="ability-btn" id="btn-espolear">
+          <span class="ability-icon">🏇</span>
+          <span class="ability-name">Espolear</span>
+          <div class="ability-cooldown-overlay"></div>
+        </button>
+        <button class="ability-btn" id="btn-especial">
+          <span class="ability-icon">⭐</span>
+          <span class="ability-name">Especial</span>
+          <div class="ability-cooldown-overlay"></div>
+        </button>
+      </div>
     </div>
 
     <!-- BOTTOM NAV -->
@@ -831,7 +1030,9 @@
         <button class="modal-close" id="modal-equip-close">✕</button>
       </div>
       <div class="shop-tabs" id="equip-tabs">
-        <button class="shop-tab active" data-etab="armor">Armadura</button>
+        <button class="shop-tab active" data-etab="lance">Lanza</button>
+        <button class="shop-tab" data-etab="shield">Escudo</button>
+        <button class="shop-tab" data-etab="armor">Armadura</button>
         <button class="shop-tab" data-etab="horse">Caballo</button>
         <button class="shop-tab" data-etab="squire">Escudero</button>
       </div>

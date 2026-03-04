@@ -12,7 +12,16 @@ import { audio } from '../audio.js';
 
 export function updateJoust() {
   const k1 = joust.k1, k2 = joust.k2;
-  updateParticles(); // Always update particles (confetti, blood, etc)
+  updateParticles(); 
+
+  // Toggle UI Bar visibility (Run even if not active to allow hiding/showing transitions)
+  const bar = document.getElementById('joust-abilities');
+  if (bar) {
+    // Keep visible during the whole match AND result screen
+    // Only hide if we are NOT in the joust screen at all (handled by nav usually) or specific cases
+    const shouldShow = joust.active || joust.subPhase === 'result';
+    bar.classList.toggle('show', !!shouldShow);
+  }
   
   if (!joust.active) return;
   joust.t++;
@@ -70,18 +79,9 @@ export function updateJoust() {
     if (k.frozenT > 0) k.frozenT = Math.max(0, k.frozenT - 16.6);
   });
 
-  // Toggle UI Bar visibility
-  const bar = document.getElementById('joust-abilities');
-  if (bar) {
-    // Show during the whole match, only hide when results overlay is shown or match is inactive
-    const isResult = joust.subPhase === 'result';
-    const shouldShow = joust.active && !isResult;
-    bar.classList.toggle('show', shouldShow);
-  }
-  
   // Robustness: Fallen knights stop speaking
-  if (k1.fallen) k1.speechText = '';
-  if (k2.fallen) k2.speechText = '';
+  if (k1 && k1.fallen) k1.speechText = '';
+  if (k2 && k2.fallen) k2.speechText = '';
   
   updateKnightSpeech(k1);
   updateKnightSpeech(k2);

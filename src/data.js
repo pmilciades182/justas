@@ -30,11 +30,11 @@ export const DB_SHIELDS = [
 
 // 3. CABALLOS (Espolear/Velocidad - Yellow)
 export const DB_HORSES = [
-  { id: 'h1', name: 'Rocín Viejo',       tier: 1, cost: 0,   spd: 0,  cd: 4000, dur: 1000, desc: 'Lento pero noble.' },
-  { id: 'h2', name: 'Corcel de Caza',    tier: 2, cost: 200, spd: 1,  cd: 3300, dur: 1500, desc: 'Ágil en distancias cortas.' },
-  { id: 'h3', name: 'Destrero de Guerra',tier: 3, cost: 450, spd: 3,  cd: 2600, dur: 2000, desc: 'Entrenado para el choque.' },
-  { id: 'h4', name: 'Purasangre Real',   tier: 4, cost: 800, spd: 5,  cd: 2000, dur: 2500, desc: 'Velocidad inigualable.' },
-  { id: 'h5', name: 'Sombra Veloz',      tier: 5, cost: 1500, spd: 8, cd: 1600, dur: 3000, desc: 'Ni se le ve pasar.' },
+  { id: 'h1', name: 'Rocín Viejo',       tier: 1, cost: 0,   spd: 0,  cd: 2000, dur: 1000, desc: 'Lento pero noble.' },
+  { id: 'h2', name: 'Corcel de Caza',    tier: 2, cost: 200, spd: 1,  cd: 1600, dur: 1500, desc: 'Ágil en distancias cortas.' },
+  { id: 'h3', name: 'Destrero de Guerra',tier: 3, cost: 450, spd: 3,  cd: 1300, dur: 2000, desc: 'Entrenado para el choque.' },
+  { id: 'h4', name: 'Purasangre Real',   tier: 4, cost: 800, spd: 5,  cd: 1000, dur: 2500, desc: 'Velocidad inigualable.' },
+  { id: 'h5', name: 'Sombra Veloz',      tier: 5, cost: 1500, spd: 8, cd: 800,  dur: 3000, desc: 'Ni se le ve pasar.' },
 ];
 
 // 4. ARMADURAS (Especial/Resistencia - Purple)
