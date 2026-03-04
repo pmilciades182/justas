@@ -49,5 +49,5 @@ function gameLoop() {
 }
 
 // Init
-renderHome();
+switchScreen('home'); // Now use switchScreen to ensure music starts
 gameLoop();

@@ -63,7 +63,7 @@ class AudioManager {
     
     const source = this.ctx.createMediaElementSource(audioEl);
     this.musicGain = this.ctx.createGain();
-    this.musicGain.gain.value = 0.4 * this.masterVolume;
+    this.musicGain.gain.setValueAtTime(0.4 * this.masterVolume, this.ctx.currentTime);
 
     source.connect(this.musicGain);
     this.musicGain.connect(this.limiter); // Pass through limiter
