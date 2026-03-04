@@ -21,7 +21,7 @@ export function renderRoster() {
     const eq = player.equip[kid] || {};
     const arm = getArmorData(eq.armor || 'a1');
     const hrs = getHorseData(eq.horse || 'h1');
-    const sqr = eq.squire ? getSquireData(eq.squire) : null;
+    const sqr = getSquireData(eq.squire || 'sq1');
     const shd = getShieldData(eq.shield || 's1');
     const lnc = getLanceData(eq.lance || 'l1');
 
@@ -61,8 +61,8 @@ export function renderRoster() {
             <div class="label">${hrs.name}</div>
           </div>
           <div class="mini-slot">
-            <div class="icon-frame" style="border-color:#555">${sqr ? '🧑' : '❌'}</div>
-            <div class="label">${sqr ? sqr.name : 'Libre'}</div>
+            <div class="icon-frame" style="border-color:#555">🧑</div>
+            <div class="label">${sqr.name}</div>
           </div>
         </div>
       </div>
@@ -93,7 +93,7 @@ export function renderEquipTab() {
   container.innerHTML = '';
   
   if (!player.equip[equipKnightId]) {
-      player.equip[equipKnightId] = { lance: 'l1', armor: 'a1', horse: 'h1', shield: 's1', squire: null };
+      player.equip[equipKnightId] = { lance: 'l1', armor: 'a1', horse: 'h1', shield: 's1', squire: 'sq1' };
   }
   
   const eq = player.equip[equipKnightId];
@@ -119,24 +119,7 @@ export function renderEquipTab() {
   const grid = document.createElement('div');
   grid.className = 'equip-grid';
 
-  if (currentEquipTab === 'squire') {
-      const noneDiv = document.createElement('div');
-      noneDiv.className = `equip-item ${currentId === null ? 'selected' : ''}`;
-      noneDiv.innerHTML = `
-        <div class="item-header">
-          <div class="item-name">Ninguno</div>
-        </div>
-        <div class="item-body" style="text-align:center; font-size:24px; padding:20px">❌</div>
-        <div class="item-footer">VACÍO</div>
-      `;
-      noneDiv.onclick = () => {
-        player.equip[equipKnightId][currentEquipTab] = null;
-        saveGame();
-        renderEquipTab();
-      };
-      grid.appendChild(noneDiv);
-  }
-
+  // No "Unequip" for anyone now - all slots mandatory Tier 1+
   db.forEach(item => {
     const invKey = currentEquipTab + 's';
     const avail = countAvailable(invKey, item.id);
@@ -155,11 +138,12 @@ export function renderEquipTab() {
     if (item.def) statsHtml += `<span class="stat-badge" style="border-color:${TYPE_COLORS.shield}">🛡️ ${item.def}</span>`;
     if (item.spd) statsHtml += `<span class="stat-badge" style="border-color:${TYPE_COLORS.horse}">🏇 ${item.spd}</span>`;
     if (item.hp)  statsHtml += `<span class="stat-badge" style="border-color:${TYPE_COLORS.armor}">❤️ ${item.hp}</span>`;
+    if (item.eff) statsHtml += `<span class="stat-badge" style="border-color:var(--gold-dim)">⭐ ${item.eff}</span>`;
 
     div.innerHTML = `
       <div class="item-header">
         <div class="item-name">${item.name}</div>
-        <div class="item-tier">${item.tier ? 'TIER ' + item.tier : ''}</div>
+        <div class="item-tier">${item.tier ? 'TIER ' + item.tier : (currentEquipTab === 'squire' ? 'Personal' : '')}</div>
       </div>
       <div class="item-body">
         <div class="item-stats">${statsHtml}</div>
