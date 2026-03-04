@@ -1,180 +1,95 @@
 // ══════════════════════════════════════
-// BASE DE DATOS DE ITEMS + helpers de búsqueda
+// BASE DE DATOS DE ITEMS Y CONFIGURACIÓN
 // ══════════════════════════════════════
 
-export const DB_KNIGHTS = [
-  { id: 'roland',   name: 'Sir Roland',   str: 6, def: 6, hor: 6, cost: 0,   icon: '🔴', colorIdx: 0 },
-  { id: 'dorian',   name: 'Sir Dorian',   str: 5, def: 8, hor: 5, cost: 0,   icon: '🔵', colorIdx: 1 },
-  { id: 'pelayo',   name: 'Don Pelayo',   str: 8, def: 4, hor: 6, cost: 200, icon: '🟤', colorIdx: 2 },
-  { id: 'gawain',   name: 'Sir Gawain',   str: 5, def: 5, hor: 9, cost: 250, icon: '🟢', colorIdx: 3 },
-  { id: 'cid',      name: 'El Cid',       str: 8, def: 7, hor: 8, cost: 400, icon: '🟡', colorIdx: 4 },
-  { id: 'lancelot', name: 'Sir Lancelot', str: 9, def: 6, hor: 9, cost: 500, icon: '🟣', colorIdx: 5 },
-  { id: 'baron',    name: 'Barón Rojo',   str: 9, def: 3, hor: 7, cost: 300, icon: '🔶', colorIdx: 6 },
-  { id: 'percival', name: 'Sir Percival', str: 7, def: 7, hor: 7, cost: 350, icon: '⚪', colorIdx: 7 },
+// COLORES DE HABILIDAD / TIPO
+export const TYPE_COLORS = {
+  lance:  '#e74c3c', // Rojo (Ataque)
+  shield: '#3498db', // Azul (Defensa)
+  horse:  '#f1c40f', // Amarillo (Espolear)
+  armor:  '#9b59b6'  // Violeta (Especial)
+};
+
+// 1. LANZAS (Ataque - Red)
+export const DB_LANCES = [
+  { id: 'l1', name: 'Lanza de Práctica', tier: 1, cost: 0,   str: 1,  cd: 8000, dur: 1000, desc: 'Punta roma, recarga lenta.' },
+  { id: 'l2', name: 'Lanza de Torneo',   tier: 2, cost: 150, str: 2,  cd: 7000, dur: 1200, desc: 'Equilibrada y fiable.' },
+  { id: 'l3', name: 'Lanza de Guerra',   tier: 3, cost: 350, str: 4,  cd: 6000, dur: 1500, desc: 'Punta de acero reforzado.' },
+  { id: 'l4', name: 'Lanza Real',        tier: 4, cost: 600, str: 6,  cd: 5000, dur: 1800, desc: 'Ligera como pluma, dura como diamante.' },
+  { id: 'l5', name: 'Perforadora',       tier: 5, cost: 1000, str: 9, cd: 4000, dur: 2500, desc: 'Rompe cualquier defensa.' },
 ];
 
-export const DB_ARMORS = [
-  { id: 'malla',    name: 'Cota de Malla',     defB: 1, spdB: 0,  cost: 0,   desc: 'Protección básica' },
-  { id: 'cuero',    name: 'Armadura de Cuero',  defB: 2, spdB: 0,  cost: 80,  desc: 'Ligera y resistente' },
-  { id: 'placas',   name: 'Placas de Acero',    defB: 3, spdB: -1, cost: 150, desc: 'Protección sólida' },
-  { id: 'milanes',  name: 'Arnés Milanés',      defB: 4, spdB: -1, cost: 250, desc: 'Artesanía italiana' },
-  { id: 'justa',    name: 'Arnés de Justa',     defB: 5, spdB: -2, cost: 400, desc: 'La mejor protección' },
-];
-
-export const DB_HORSES = [
-  { id: 'rocin',    name: 'Rocín',       spdB: 0, sta: 3, cost: 0,   desc: 'Caballo humilde' },
-  { id: 'corcel',   name: 'Corcel',      spdB: 1, sta: 4, cost: 120, desc: 'Rápido y ágil' },
-  { id: 'destrero', name: 'Destrero',    spdB: 2, sta: 5, cost: 250, desc: 'Caballo de guerra' },
-  { id: 'andaluz',  name: 'Andaluz',     spdB: 3, sta: 6, cost: 400, desc: 'Nobleza española' },
-];
-
-export const DB_SQUIRES = [
-  { id: 'novato',  name: 'Novato',        eff: 1, cost: 0,   desc: 'Lento pero cumple' },
-  { id: 'aprend',  name: 'Aprendiz',      eff: 2, cost: 100, desc: 'Va aprendiendo' },
-  { id: 'experto', name: 'Experimentado', eff: 3, cost: 200, desc: 'Rápido y fiable' },
-  { id: 'vetera',  name: 'Veterano',      eff: 4, cost: 350, desc: 'El mejor del reino' },
-];
-
+// 2. ESCUDOS (Defensa - Blue)
 export const DB_SHIELDS = [
-  { id: 'madera',  name: 'Escudo de Madera', defB: 1, duration: 1500, cost: 0,   desc: 'Protección mínima' },
-  { id: 'reforz',  name: 'Escudo Reforzado', defB: 2, duration: 2000, cost: 100, desc: 'Bordes de metal' },
-  { id: 'acero',   name: 'Escudo de Acero',  defB: 3, duration: 2500, cost: 200, desc: 'Sólido y pesado' },
-  { id: 'pavon',   name: 'Pavés Real',       defB: 4, duration: 3000, cost: 350, desc: 'Cobertura total' },
-  { id: 'leyenda', name: 'Escudo de Leyenda', defB: 6, duration: 4000, cost: 600, desc: 'Forjado por dioses' },
+  { id: 's1', name: 'Escudo de Madera',  tier: 1, cost: 0,   def: 1,  cd: 10000, dur: 1500, desc: 'Protección básica.' },
+  { id: 's2', name: 'Escudo Reforzado',  tier: 2, cost: 150, def: 2,  cd: 9000,  dur: 2000, desc: 'Bordes de hierro.' },
+  { id: 's3', name: 'Escudo de Acero',   tier: 3, cost: 350, def: 4,  cd: 8000,  dur: 2500, desc: 'Sólido y pesado.' },
+  { id: 's4', name: 'Pavés Real',        tier: 4, cost: 600, def: 6,  cd: 7000,  dur: 3000, desc: 'Cobertura total.' },
+  { id: 's5', name: 'Égida Divina',      tier: 5, cost: 1000, def: 9, cd: 6000,  dur: 4000, desc: 'Forjado por los dioses.' },
 ];
 
+// 3. CABALLOS (Espolear/Velocidad - Yellow)
+export const DB_HORSES = [
+  { id: 'h1', name: 'Rocín Viejo',       tier: 1, cost: 0,   spd: 0,  cd: 12000, dur: 1000, desc: 'Lento pero noble.' },
+  { id: 'h2', name: 'Corcel de Caza',    tier: 2, cost: 200, spd: 1,  cd: 10000, dur: 1500, desc: 'Ágil en distancias cortas.' },
+  { id: 'h3', name: 'Destrero de Guerra',tier: 3, cost: 450, spd: 3,  cd: 8000,  dur: 2000, desc: 'Entrenado para el choque.' },
+  { id: 'h4', name: 'Purasangre Real',   tier: 4, cost: 800, spd: 5,  cd: 6000,  dur: 2500, desc: 'Velocidad inigualable.' },
+  { id: 'h5', name: 'Sombra Veloz',      tier: 5, cost: 1500, spd: 8, cd: 5000,  dur: 3000, desc: 'Ni se le ve pasar.' },
+];
+
+// 4. ARMADURAS (Especial/Resistencia - Purple)
+export const DB_ARMORS = [
+  { id: 'a1', name: 'Cota de Malla',     tier: 1, cost: 0,   hp: 0,   cd: 15000, dur: 2000, desc: 'Eslabones oxidados.' },
+  { id: 'a2', name: 'Placas Parciales',  tier: 2, cost: 250, hp: 10,  cd: 13000, dur: 3000, desc: 'Protege zonas vitales.' },
+  { id: 'a3', name: 'Armadura Completa', tier: 3, cost: 500, hp: 25,  cd: 11000, dur: 4000, desc: 'Acero pulido.' },
+  { id: 'a4', name: 'Armadura de Justa', tier: 4, cost: 900, hp: 40,  cd: 9000,  dur: 5000, desc: 'Optimizada para el impacto.' },
+  { id: 'a5', name: 'Baluarte Titán',    tier: 5, cost: 1600, hp: 60, cd: 7000,  dur: 7000, desc: 'Invulnerable.' },
+];
+
+// ESCUDEROS (Pasivos - Extra)
+export const DB_SQUIRES = [
+  { id: 'sq1', name: 'Novato',        eff: 1, cost: 0,   desc: 'Lento pero cumple' },
+  { id: 'sq2', name: 'Aprendiz',      eff: 2, cost: 100, desc: 'Va aprendiendo' },
+  { id: 'sq3', name: 'Experto',       eff: 3, cost: 200, desc: 'Rápido y fiable' },
+  { id: 'sq4', name: 'Maestro',       eff: 4, cost: 350, desc: 'El mejor del reino' },
+];
+
+// CABALLEROS (Personajes base)
 export const KNIGHT_COLORS = [
-  { armor: '#b0bec5', plume: '#e74c3c', shield: '#c0392b', horse: '#5c3317' },
-  { armor: '#546e7a', plume: '#3498db', shield: '#2471a3', horse: '#4a2810' },
-  { armor: '#8d6e63', plume: '#ff9800', shield: '#e65100', horse: '#3b1f0a' },
-  { armor: '#66bb6a', plume: '#2e7d32', shield: '#1b5e20', horse: '#5c3317' },
-  { armor: '#fdd835', plume: '#f9a825', shield: '#f57f17', horse: '#3e2723' },
-  { armor: '#ab47bc', plume: '#7b1fa2', shield: '#4a148c', horse: '#4a2810' },
-  { armor: '#ef5350', plume: '#b71c1c', shield: '#d32f2f', horse: '#5c3317' },
-  { armor: '#e0e0e0', plume: '#bdbdbd', shield: '#757575', horse: '#3b1f0a' },
-  // Enemy Dark Themes
-  { armor: '#1a1a1a', plume: '#333333', shield: '#000000', horse: '#2b1a0a' }, // Black
-  { armor: '#1b3022', plume: '#2e7d32', shield: '#0a2b10', horse: '#3b1f0a' }, // Dark Green
-  { armor: '#1a237e', plume: '#3949ab', shield: '#0d1440', horse: '#2b1a0a' }, // Dark Blue
-  { armor: '#4a0a0b', plume: '#8e1616', shield: '#260505', horse: '#3b1f0a' }, // Dark Red
+  { id: 0, name: 'Azul Real', plume: '#3498db', armor: '#bdc3c7', shield: '#2980b9', horse: '#ecf0f1' },
+  { id: 1, name: 'Rojo Sangre', plume: '#e74c3c', armor: '#7f8c8d', shield: '#c0392b', horse: '#2c3e50' },
+  { id: 2, name: 'Verde Bosque', plume: '#2ecc71', armor: '#95a5a6', shield: '#27ae60', horse: '#7f8c8d' },
+  { id: 3, name: 'Oro Viejo', plume: '#f1c40f', armor: '#f39c12', shield: '#d35400', horse: '#8e44ad' },
+  { id: 4, name: 'Negro Noche', plume: '#8e44ad', armor: '#2c3e50', shield: '#8e44ad', horse: '#000000' },
 ];
 
-export function getKnightData(id) { return DB_KNIGHTS.find(k => k.id === id); }
-export function getArmorData(id)  { return DB_ARMORS.find(a => a.id === id); }
-export function getHorseData(id)  { return DB_HORSES.find(h => h.id === id); }
-export function getSquireData(id) { return DB_SQUIRES.find(s => s.id === id); }
-export function getShieldData(id) { return DB_SHIELDS.find(sh => sh.id === id); }
-
-export const WAR_CRIES = [
-  "¡POR EL HONOR Y LA GLORIA!", "¡DEUS VULT!", "¡POR MI ESTIRPE!", "¡SENTID EL ACERO!",
-  "¡A LA CARGA!", "¡PARA MÍ LA VICTORIA!", "¡MORID CON HONOR!", "¡POR EL REY!",
-  "¡SANGRE Y HIERRO!", "¡TIEMBLA ANTE MÍ!", "¡POR LA CORONA!", "¡NO HABRÁ PIEDAD!",
-  "¡MI LANZA OS ENCONTRARÁ!", "¡VALHALLA ME ESPERA!", "¡POR LA PATRIA!", "¡FUERZA Y HONOR!",
-  "¡QUE DIOS JUZGUE!", "¡AL SUELO, GUSANO!", "¡POR MI CASA!", "¡SOY LA TORMENTA!",
-  "¡MI NOMBRE SERÁ LEYENDA!", "¡MUERTE O VICTORIA!", "¡POR EL SOL PONIENTE!", "¡SENTID MI FURIA!",
-  "¡EL TRONO ES MÍO!", "¡POR LOS ANCESTROS!", "¡NI UN PASO ATRÁS!", "¡POR LA JUSTICIA!",
-  "¡MI VALOR ES ETERNO!", "¡QUE COMIENCE LA LIZA!"
+export const DB_KNIGHTS = [
+  { id: 'k1', name: 'Sir Roland',   str: 5, def: 5, hor: 5, icon: '🦁', colorIdx: 0 },
+  { id: 'k2', name: 'Sir Dorian',   str: 4, def: 6, hor: 5, icon: '🦅', colorIdx: 1 },
+  { id: 'k3', name: 'Lady Elara',   str: 6, def: 4, hor: 6, icon: '🦄', colorIdx: 2 },
+  { id: 'k4', name: 'Barón Valen',  str: 7, def: 3, hor: 4, icon: '🐗', colorIdx: 3 },
+  { id: 'k5', name: 'Sir Kael',     str: 5, def: 5, hor: 5, icon: '🐺', colorIdx: 4 },
 ];
 
+// Helpers
+export function getLanceData(id)  { return DB_LANCES.find(i => i.id === id) || DB_LANCES[0]; }
+export function getShieldData(id) { return DB_SHIELDS.find(i => i.id === id) || DB_SHIELDS[0]; }
+export function getHorseData(id)  { return DB_HORSES.find(i => i.id === id) || DB_HORSES[0]; }
+export function getArmorData(id)  { return DB_ARMORS.find(i => i.id === id) || DB_ARMORS[0]; }
+export function getSquireData(id) { return DB_SQUIRES.find(i => i.id === id) || DB_SQUIRES[0]; }
+export function getKnightData(id) { return DB_KNIGHTS.find(i => i.id === id) || DB_KNIGHTS[0]; }
+
+// Enemigos por defecto
 export const ENEMY_SQUADS = [
   {
-    name: 'La Orden de Calatrava',
-    origin: 'Española',
+    name: 'Los Cuervos', origin: 'Norte',
     knights: [
-      { name: 'García de Paredes', str: 9, def: 7, hor: 6, icon: '🛡️', colorIdx: 2, armor: 'milanes', horse: 'destrero', squire: 'experto' },
-      { name: 'Suero de Quiñones', str: 7, def: 8, hor: 7, icon: '⚔️', colorIdx: 0, armor: 'justa', horse: 'corcel', squire: 'vetera' },
-      { name: 'Diego García', str: 8, def: 6, hor: 8, icon: '🐎', colorIdx: 1, armor: 'placas', horse: 'andaluz', squire: 'novato' },
-      { name: 'Pero Niño', str: 6, def: 9, hor: 5, icon: '🔥', colorIdx: 4, armor: 'milanes', horse: 'destrero', squire: 'experto' }
-    ]
-  },
-  {
-    name: 'Die Tevtonischen Ritter',
-    origin: 'Alemana',
-    knights: [
-      { name: 'Ulrich von Jungingen', str: 8, def: 8, hor: 6, icon: '🦅', colorIdx: 7, armor: 'justa', horse: 'destrero', squire: 'vetera' },
-      { name: 'Wolfram von Eschenbach', str: 6, def: 7, hor: 9, icon: '🏰', colorIdx: 6, armor: 'milanes', horse: 'corcel', squire: 'experto' },
-      { name: 'Götz von Berlichingen', str: 9, def: 5, hor: 7, icon: '🦾', colorIdx: 3, armor: 'placas', horse: 'destrero', squire: 'aprend' },
-      { name: 'Hermann von Salza', str: 7, def: 9, hor: 6, icon: '⚖️', colorIdx: 5, armor: 'justa', horse: 'rocin', squire: 'vetera' }
-    ]
-  },
-  {
-    name: 'Escuadrón Zarista Nevsky',
-    origin: 'Rusa',
-    knights: [
-      { name: 'Alexander Nevsky', str: 9, def: 9, hor: 7, icon: '❄️', colorIdx: 1, armor: 'justa', horse: 'destrero', squire: 'vetera' },
-      { name: 'Dmitry Donskoy', str: 8, def: 7, hor: 8, icon: '🐻', colorIdx: 7, armor: 'milanes', horse: 'corcel', squire: 'experto' },
-      { name: 'Ilya Muromets', str: 10, def: 5, hor: 6, icon: '🏔️', colorIdx: 2, armor: 'placas', horse: 'destrero', squire: 'novato' },
-      { name: 'Dobrynya Nikitich', str: 7, def: 8, hor: 9, icon: '🐉', colorIdx: 3, armor: 'milanes', horse: 'andaluz', squire: 'aprend' }
-    ]
-  },
-  {
-    name: 'Karantanski Vitezi',
-    origin: 'Eslovena',
-    knights: [
-      { name: 'Erasmus Lueger', str: 7, def: 9, hor: 6, icon: '⛰️', colorIdx: 0, armor: 'justa', horse: 'destrero', squire: 'vetera' },
-      { name: 'Jurij Dalmatin', str: 6, def: 6, hor: 8, icon: '📖', colorIdx: 4, armor: 'placas', horse: 'corcel', squire: 'experto' },
-      { name: 'Andrej Turjaški', str: 8, def: 7, hor: 7, icon: '🏹', colorIdx: 6, armor: 'milanes', horse: 'corcel', squire: 'aprend' },
-      { name: 'Nikola Jurišić', str: 9, def: 8, hor: 5, icon: '🛡️', colorIdx: 5, armor: 'justa', horse: 'destrero', squire: 'experto' }
-    ]
-  },
-  {
-    name: 'Guardia de Hierro Ming',
-    origin: 'China',
-    knights: [
-      { name: 'General Qi Jiguang', str: 8, def: 9, hor: 7, icon: '🐉', colorIdx: 4, armor: 'justa', horse: 'destrero', squire: 'vetera' },
-      { name: 'Lu Bu', str: 10, def: 4, hor: 10, icon: '👹', colorIdx: 6, armor: 'milanes', horse: 'destrero', squire: 'experto' },
-      { name: 'Guan Yu', str: 9, def: 8, hor: 8, icon: '👺', colorIdx: 2, armor: 'justa', horse: 'corcel', squire: 'vetera' },
-      { name: 'Yue Fei', str: 7, def: 10, hor: 6, icon: '🦅', colorIdx: 3, armor: 'milanes', horse: 'andaluz', squire: 'experto' }
-    ]
-  },
-  {
-    name: 'Orden del León Dorado',
-    origin: 'Inglesa',
-    knights: [
-      { name: 'Sir Richard Lionheart', str: 9, def: 8, hor: 7, icon: '🦁', colorIdx: 0, armor: 'justa', horse: 'destrero', squire: 'vetera' },
-      { name: 'Sir William Marshall', str: 8, def: 10, hor: 8, icon: '⚔️', colorIdx: 1, armor: 'milanes', horse: 'andaluz', squire: 'experto' },
-      { name: 'Sir Edward Woodstock', str: 10, def: 6, hor: 9, icon: '🛡️', colorIdx: 2, armor: 'placas', horse: 'corcel', squire: 'aprend' },
-      { name: 'Sir John Hawkwood', str: 7, def: 7, hor: 10, icon: '🏹', colorIdx: 3, armor: 'cuero', horse: 'rocin', squire: 'novato' }
-    ]
-  },
-  {
-    name: 'Shogunato Ashikaga',
-    origin: 'Japonesa',
-    knights: [
-      { name: 'Musashi Miyamoto', str: 10, def: 5, hor: 8, icon: '🌙', colorIdx: 4, armor: 'cuero', horse: 'corcel', squire: 'experto' },
-      { name: 'Tadakatsu Honda', str: 9, def: 10, hor: 6, icon: '👹', colorIdx: 5, armor: 'milanes', horse: 'destrero', squire: 'vetera' },
-      { name: 'Yukimura Sanada', str: 8, def: 7, hor: 10, icon: '🔥', colorIdx: 6, armor: 'placas', horse: 'andaluz', squire: 'aprend' },
-      { name: 'Masamune Date', str: 9, def: 8, hor: 7, icon: '🦅', colorIdx: 7, armor: 'justa', horse: 'corcel', squire: 'experto' }
-    ]
-  },
-  {
-    name: 'Húsares Alados de Varsovia',
-    origin: 'Polaca',
-    knights: [
-      { name: 'Jan Sobieski III', str: 9, def: 9, hor: 10, icon: '🪶', colorIdx: 0, armor: 'justa', horse: 'andaluz', squire: 'vetera' },
-      { name: 'Stanislaw Zolkiewski', str: 8, def: 8, hor: 9, icon: '🛡️', colorIdx: 1, armor: 'milanes', horse: 'destrero', squire: 'experto' },
-      { name: 'Stefan Czarniecki', str: 7, def: 10, hor: 8, icon: '⚔️', colorIdx: 2, armor: 'placas', horse: 'corcel', squire: 'aprend' },
-      { name: 'Jerzy Lubomirski', str: 9, def: 7, hor: 9, icon: '🦅', colorIdx: 3, armor: 'milanes', horse: 'destrero', squire: 'novato' }
-    ]
-  },
-  {
-    name: 'Clan del Lobo Gélido',
-    origin: 'Nórdica',
-    knights: [
-      { name: 'Ragnar Lodbrok', str: 10, def: 6, hor: 7, icon: '🐺', colorIdx: 4, armor: 'cuero', horse: 'rocin', squire: 'experto' },
-      { name: 'Bjorn Ironside', str: 8, def: 10, hor: 6, icon: '⚓', colorIdx: 5, armor: 'placas', horse: 'destrero', squire: 'aprend' },
-      { name: 'Ivar the Boneless', str: 10, def: 4, hor: 9, icon: '🪓', colorIdx: 6, armor: 'cuero', horse: 'corcel', squire: 'novato' },
-      { name: 'Harald Hardrada', str: 9, def: 8, hor: 8, icon: '🏔️', colorIdx: 7, armor: 'milanes', horse: 'andaluz', squire: 'vetera' }
-    ]
-  },
-  {
-    name: 'Guardia de los Inmortales',
-    origin: 'Persa',
-    knights: [
-      { name: 'Ciro el Grande', str: 9, def: 9, hor: 8, icon: '☀️', colorIdx: 0, armor: 'justa', horse: 'andaluz', squire: 'vetera' },
-      { name: 'Darío I el Grande', str: 8, def: 10, hor: 7, icon: '🦁', colorIdx: 1, armor: 'milanes', horse: 'destrero', squire: 'experto' },
-      { name: 'Jerjes I', str: 10, def: 5, hor: 9, icon: '🏹', colorIdx: 2, armor: 'placas', horse: 'corcel', squire: 'aprend' },
-      { name: 'Artajerjes', str: 7, def: 8, hor: 10, icon: '💎', colorIdx: 3, armor: 'justa', horse: 'corcel', squire: 'vetera' }
+      { name: 'Cuervo 1', str: 4, def: 4, hor: 4, icon: '🐦', colorIdx: 1, equip: { lance:'l1', shield:'s1', horse:'h1', armor:'a1', squire:'sq1' } },
+      { name: 'Cuervo 2', str: 5, def: 5, hor: 5, icon: '🦅', colorIdx: 1, equip: { lance:'l1', shield:'s1', horse:'h1', armor:'a1', squire:'sq1' } },
+      { name: 'Líder Cuervo', str: 6, def: 5, hor: 5, icon: '🦅', colorIdx: 4, equip: { lance:'l2', shield:'s2', horse:'h2', armor:'a2', squire:'sq2' } },
+      { name: 'Veterano', str: 5, def: 6, hor: 4, icon: '🗡️', colorIdx: 1, equip: { lance:'l2', shield:'s2', horse:'h2', armor:'a2', squire:'sq2' } }
     ]
   }
 ];
+
+export const WAR_CRIES = ['¡Por el honor!', '¡Gloria!', '¡A la carga!', '¡Sin piedad!'];

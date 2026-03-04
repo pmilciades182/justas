@@ -21,7 +21,9 @@ export function initAbilities() {
       // Allow in all phases except results, as long as k1 exists and is not fallen
       if (joust.subPhase === 'result' || !joust.k1 || joust.k1.fallen) return;
 
-      if (newBtn.classList.contains('cooldown')) return;
+      // Logic check: Is this ability on cooldown?
+      // Logic check: Is ANY ability currently active? (Mutual exclusion)
+      if (isAbilityOnCooldown(newBtn.id) || isAnyAbilityActive()) return;
 
       // Start cooldown
       newBtn.classList.add('cooldown');
@@ -32,31 +34,122 @@ export function initAbilities() {
 
       // TRIGGER GAME MECHANIC
       handleAbilityTrigger(newBtn.id);
-
-      // Remove cooldown after 3 seconds
-      setTimeout(() => {
-        newBtn.classList.remove('cooldown');
-      }, 3000);
     });
   });
+
+  // Start the UI update loop for cooldowns
+  requestAnimationFrame(updateAbilityUI);
+}
+
+function isAbilityOnCooldown(btnId) {
+  const k = joust.k1;
+  if (!k) return true;
+  if (btnId === 'btn-defensa') return k.cdShield > 0;
+  if (btnId === 'btn-ataque') return k.cdAttack > 0;
+  if (btnId === 'btn-espolear') return k.cdHorse > 0;
+  if (btnId === 'btn-especial') return k.cdSpecial > 0;
+  return false;
+}
+
+function isAnyAbilityActive() {
+  const k = joust.k1;
+  if (!k) return false;
+  return k.abilityActive; // This flag is true if ANY duration > 0
 }
 
 function handleAbilityTrigger(id) {
-  console.log(`[Abilities] Triggering: ${id}`);
+  const k = joust.k1;
+  if (!k) return;
+
   if (id === 'btn-defensa') {
-    if (joust.k1) {
-      if (joust.k1.shield) {
-        // Activate shield
-        joust.k1.abilityShieldT = joust.k1.shield.duration || 2000;
-        console.log(`[Abilities] Shield activated for ${joust.k1.name}. Duration: ${joust.k1.abilityShieldT}ms`);
-      } else {
-        console.warn(`[Abilities] Knight ${joust.k1.name} has no shield equipped!`);
-        // Fallback for testing
-        joust.k1.abilityShieldT = 2000;
-        console.log(`[Abilities] Shield activated (FALLBACK) for 2000ms`);
-      }
+    if (k.equipStats.shield) {
+      k.abilityShieldT = k.equipStats.shield.dur;
+      k.cdShield = k.equipStats.shield.cd;
+      k.abilityActive = true;
+      console.log(`[Abilities] Shield Active: ${k.abilityShieldT}ms`);
+    }
+  } 
+  else if (id === 'btn-ataque') {
+    if (k.equipStats.lance) {
+      k.abilityAttackT = k.equipStats.lance.dur;
+      k.cdAttack = k.equipStats.lance.cd;
+      k.abilityActive = true;
+      console.log(`[Abilities] Attack Active: ${k.abilityAttackT}ms`);
+    }
+  }
+  else if (id === 'btn-espolear') {
+    if (k.equipStats.horse) {
+      k.abilityHorseT = k.equipStats.horse.dur;
+      k.cdHorse = k.equipStats.horse.cd;
+      k.abilityActive = true;
+      console.log(`[Abilities] Horse Active: ${k.abilityHorseT}ms`);
+    }
+  }
+  else if (id === 'btn-especial') {
+    if (k.equipStats.armor) {
+      k.abilitySpecialT = k.equipStats.armor.dur;
+      k.cdSpecial = k.equipStats.armor.cd;
+      k.abilityActive = true;
+      console.log(`[Abilities] Special Active: ${k.abilitySpecialT}ms`);
+    }
+  }
+}
+
+function updateAbilityUI() {
+  if (!joust.active) return; // Stop loop if match ends (will restart on initAbilities)
+
+  const k = joust.k1;
+  if (k) {
+    updateButtonState('btn-defensa', k.cdShield, k.equipStats.shield?.cd);
+    updateButtonState('btn-ataque', k.cdAttack, k.equipStats.lance?.cd);
+    updateButtonState('btn-espolear', k.cdHorse, k.equipStats.horse?.cd);
+    updateButtonState('btn-especial', k.cdSpecial, k.equipStats.armor?.cd);
+  }
+
+  requestAnimationFrame(updateAbilityUI);
+}
+
+function updateButtonState(id, current, max) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  
+  const overlay = btn.querySelector('.ability-cooldown-overlay');
+  
+  if (current > 0) {
+    btn.classList.add('cooldown');
+    if (overlay && max > 0) {
+      // Calculate percentage
+      const pct = (current / max) * 100;
+      overlay.style.transform = `translateY(${100 - pct}%)`; 
+      // Note: CSS animation was 'from 0 to 100', here we manually set it
+      // actually, let's just set height or transform manually to match the remaining CD
+      // translateY(0%) covers full button (100% waiting)
+      // translateY(100%) covers nothing (0% waiting)
+      
+      // If CD is full (just started), we want full cover -> translateY(0)
+      // If CD is near 0, we want no cover -> translateY(100)
+      
+      // So pct is % remaining (e.g. 90%). We want 90% cover.
+      // translate 0% is full cover. translate 100% is no cover.
+      // So translate = 100 - pct? 
+      // If 100% remaining -> translate 0%. Correct.
+      // If 0% remaining -> translate 100%. Correct.
+      
+      // Disable CSS animation if we are controlling it manually
+      overlay.style.animation = 'none';
+    }
+  } else {
+    // If not on cooldown, check if we are locked by another active ability
+    if (isAnyAbilityActive()) {
+       // Visual feedback for "Locked but ready"? 
+       // Maybe just gray it out slightly or keep regular pointer-events-none?
+       // For now, let's just rely on the click handler doing nothing, 
+       // but maybe add a 'locked' class for visual dimming.
+       btn.classList.add('locked');
     } else {
-      console.error("[Abilities] No player knight (k1) found in joust state!");
+       btn.classList.remove('cooldown');
+       btn.classList.remove('locked');
+       if (overlay) overlay.style.transform = 'translateY(100%)';
     }
   }
 }

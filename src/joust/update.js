@@ -51,9 +51,20 @@ export function updateJoust() {
 
   // Update Ability Timers (assuming ~60fps, so ~16.6ms per frame)
   [k1, k2].forEach(k => {
-    if (k.abilityShieldT > 0) {
-      k.abilityShieldT = Math.max(0, k.abilityShieldT - 16.6);
-    }
+    // Decrease Active Durations
+    if (k.abilityShieldT > 0) k.abilityShieldT = Math.max(0, k.abilityShieldT - 16.6);
+    if (k.abilityAttackT > 0) k.abilityAttackT = Math.max(0, k.abilityAttackT - 16.6);
+    if (k.abilityHorseT > 0)  k.abilityHorseT  = Math.max(0, k.abilityHorseT - 16.6);
+    if (k.abilitySpecialT > 0) k.abilitySpecialT = Math.max(0, k.abilitySpecialT - 16.6);
+
+    // Decrease Cooldowns
+    if (k.cdShield > 0) k.cdShield = Math.max(0, k.cdShield - 16.6);
+    if (k.cdAttack > 0) k.cdAttack = Math.max(0, k.cdAttack - 16.6);
+    if (k.cdHorse > 0)  k.cdHorse  = Math.max(0, k.cdHorse - 16.6);
+    if (k.cdSpecial > 0) k.cdSpecial = Math.max(0, k.cdSpecial - 16.6);
+
+    // Update global active flag
+    k.abilityActive = (k.abilityShieldT > 0 || k.abilityAttackT > 0 || k.abilityHorseT > 0 || k.abilitySpecialT > 0);
   });
 
   // Toggle UI Bar visibility

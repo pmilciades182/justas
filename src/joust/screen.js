@@ -304,7 +304,29 @@ export function startMatch() {
   knightSay(joust.k2, 'war_cry');
 
   initAbilities();
+  resetAbilityCooldowns(); // Force cooldowns at start of match
   setSubPhase('charge');
+}
+
+function resetAbilityCooldowns() {
+  const k1 = joust.k1;
+  const k2 = joust.k2;
+  
+  // Set cooldowns to max for all equipped abilities
+  [k1, k2].forEach(k => {
+    if (!k) return;
+    if (k.equipStats.shield) k.cdShield = k.equipStats.shield.cd;
+    if (k.equipStats.lance)  k.cdAttack = k.equipStats.lance.cd;
+    if (k.equipStats.horse)  k.cdHorse  = k.equipStats.horse.cd;
+    if (k.equipStats.armor)  k.cdSpecial = k.equipStats.armor.cd;
+    
+    // Reset active states
+    k.abilityShieldT = 0;
+    k.abilityAttackT = 0;
+    k.abilityHorseT = 0;
+    k.abilitySpecialT = 0;
+    k.abilityActive = false;
+  });
 }
 
 export function showMatchResult() {

@@ -3,42 +3,41 @@
 // ══════════════════════════════════════
 
 import { player } from '../state.js';
-import { getKnightData, getArmorData, getHorseData, KNIGHT_COLORS } from '../data.js';
+import { getKnightData, KNIGHT_COLORS } from '../data.js';
 import { $, switchScreen, refreshGold } from './nav.js';
 
 export function renderHome() {
   refreshGold();
+  
+  // Update stats bar
   $('#stat-knights').textContent = player.knights.length;
   $('#stat-wins').textContent = player.wins;
   $('#stat-losses').textContent = player.losses;
 
+  // Update Mini Team Preview
   const container = $('#home-team-preview');
   container.innerHTML = '';
+  
   if (player.team.length === 0) {
-    container.innerHTML = '<div class="help-text">No hay equipo seleccionado. ¡Ve a la pestaña Equipo!</div>';
+    container.innerHTML = '<div class="help-text" style="width:100%">No hay escuadrón activo.</div>';
   } else {
     player.team.forEach(kid => {
       const kd = getKnightData(kid);
       if (!kd) return;
       const c = KNIGHT_COLORS[kd.colorIdx];
-      const eq = player.equip[kid] || {};
-      const arm = eq.armor ? getArmorData(eq.armor) : null;
-      const hrs = eq.horse ? getHorseData(eq.horse) : null;
-      container.innerHTML += `
-        <div class="card" style="border-left: 4px solid ${c.plume}">
-          <div class="card-row">
-            <div class="card-icon" style="background:${c.shield}; color:#fff">${kd.icon}</div>
-            <div class="card-info">
-              <div class="card-name">${kd.name}</div>
-              <div class="card-desc">${arm ? arm.name : 'Sin armadura'} · ${hrs ? hrs.name : 'Sin caballo'}</div>
-            </div>
-          </div>
-        </div>`;
+      
+      const div = document.createElement('div');
+      div.className = 'mini-knight-card';
+      div.innerHTML = `
+        <div class="icon">${kd.icon}</div>
+        <div class="name">${kd.name}</div>
+      `;
+      container.appendChild(div);
     });
   }
 
+  // Joust Button Logic
   const btnJoust = $('#btn-quick-joust');
-  btnJoust.disabled = player.team.length < 1;
   if (player.team.length < 1) {
     btnJoust.innerHTML = '⚔ FORMAR ESCUADRÓN';
     btnJoust.onclick = () => switchScreen('team');
@@ -50,11 +49,11 @@ export function renderHome() {
   $('#btn-go-designer').onclick = () => switchScreen('designer');
 
   $('#btn-story-mode').onclick = () => {
-    alert("📖 Modo Historia: PRÓXIMAMENTE\n\nEn desarrollo. Prepárate para forjar la leyenda de tu propia casa real en el lore de las Tierras de Hierro.");
+    alert("📖 Modo Historia: PRÓXIMAMENTE\n\nEn desarrollo. Prepárate para forjar la leyenda de tu propia casa real.");
   };
 
   $('#btn-reset-game').onclick = () => {
-    if (confirm('¿Estás seguro de que quieres borrar todos los datos? Esta acción no se puede deshacer.')) {
+    if (confirm('¿Estás seguro de que quieres borrar todos los datos?')) {
       localStorage.clear();
       location.reload();
     }
