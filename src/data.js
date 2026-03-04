@@ -12,38 +12,38 @@ export const TYPE_COLORS = {
 
 // 1. LANZAS (Ataque - Red)
 export const DB_LANCES = [
-  { id: 'l1', name: 'Lanza de Práctica', tier: 1, cost: 0,   str: 1,  cd: 8000, dur: 1000, desc: 'Punta roma, recarga lenta.' },
-  { id: 'l2', name: 'Lanza de Torneo',   tier: 2, cost: 150, str: 2,  cd: 7000, dur: 1200, desc: 'Equilibrada y fiable.' },
-  { id: 'l3', name: 'Lanza de Guerra',   tier: 3, cost: 350, str: 4,  cd: 6000, dur: 1500, desc: 'Punta de acero reforzado.' },
-  { id: 'l4', name: 'Lanza Real',        tier: 4, cost: 600, str: 6,  cd: 5000, dur: 1800, desc: 'Ligera como pluma, dura como diamante.' },
-  { id: 'l5', name: 'Perforadora',       tier: 5, cost: 1000, str: 9, cd: 4000, dur: 2500, desc: 'Rompe cualquier defensa.' },
+  { id: 'l1', name: 'Lanza de Práctica', tier: 1, cost: 0,   str: 1,  cd: 2600, dur: 1000, desc: 'Punta roma, recarga rápida.' },
+  { id: 'l2', name: 'Lanza de Torneo',   tier: 2, cost: 150, str: 2,  cd: 2300, dur: 1200, desc: 'Equilibrada y fiable.' },
+  { id: 'l3', name: 'Lanza de Guerra',   tier: 3, cost: 350, str: 4,  cd: 2000, dur: 1500, desc: 'Punta de acero reforzado.' },
+  { id: 'l4', name: 'Lanza Real',        tier: 4, cost: 600, str: 6,  cd: 1600, dur: 1800, desc: 'Ligera como pluma, dura como diamante.' },
+  { id: 'l5', name: 'Perforadora',       tier: 5, cost: 1000, str: 9, cd: 1300, dur: 2500, desc: 'Rompe cualquier defensa.' },
 ];
 
 // 2. ESCUDOS (Defensa - Blue)
 export const DB_SHIELDS = [
-  { id: 's1', name: 'Escudo de Madera',  tier: 1, cost: 0,   def: 1,  cd: 10000, dur: 1500, desc: 'Protección básica.' },
-  { id: 's2', name: 'Escudo Reforzado',  tier: 2, cost: 150, def: 2,  cd: 9000,  dur: 2000, desc: 'Bordes de hierro.' },
-  { id: 's3', name: 'Escudo de Acero',   tier: 3, cost: 350, def: 4,  cd: 8000,  dur: 2500, desc: 'Sólido y pesado.' },
-  { id: 's4', name: 'Pavés Real',        tier: 4, cost: 600, def: 6,  cd: 7000,  dur: 3000, desc: 'Cobertura total.' },
-  { id: 's5', name: 'Égida Divina',      tier: 5, cost: 1000, def: 9, cd: 6000,  dur: 4000, desc: 'Forjado por los dioses.' },
+  { id: 's1', name: 'Escudo de Madera',  tier: 1, cost: 0,   def: 1,  cd: 3300, dur: 1500, desc: 'Protección básica.' },
+  { id: 's2', name: 'Escudo Reforzado',  tier: 2, cost: 150, def: 2,  cd: 3000, dur: 2000, desc: 'Bordes de hierro.' },
+  { id: 's3', name: 'Escudo de Acero',   tier: 3, cost: 350, def: 4,  cd: 2600, dur: 2500, desc: 'Sólido y pesado.' },
+  { id: 's4', name: 'Pavés Real',        tier: 4, cost: 600, def: 6,  cd: 2300, dur: 3000, desc: 'Cobertura total.' },
+  { id: 's5', name: 'Égida Divina',      tier: 5, cost: 1000, def: 9, cd: 2000, dur: 4000, desc: 'Forjado por los dioses.' },
 ];
 
 // 3. CABALLOS (Espolear/Velocidad - Yellow)
 export const DB_HORSES = [
-  { id: 'h1', name: 'Rocín Viejo',       tier: 1, cost: 0,   spd: 0,  cd: 12000, dur: 1000, desc: 'Lento pero noble.' },
-  { id: 'h2', name: 'Corcel de Caza',    tier: 2, cost: 200, spd: 1,  cd: 10000, dur: 1500, desc: 'Ágil en distancias cortas.' },
-  { id: 'h3', name: 'Destrero de Guerra',tier: 3, cost: 450, spd: 3,  cd: 8000,  dur: 2000, desc: 'Entrenado para el choque.' },
-  { id: 'h4', name: 'Purasangre Real',   tier: 4, cost: 800, spd: 5,  cd: 6000,  dur: 2500, desc: 'Velocidad inigualable.' },
-  { id: 'h5', name: 'Sombra Veloz',      tier: 5, cost: 1500, spd: 8, cd: 5000,  dur: 3000, desc: 'Ni se le ve pasar.' },
+  { id: 'h1', name: 'Rocín Viejo',       tier: 1, cost: 0,   spd: 0,  cd: 4000, dur: 1000, desc: 'Lento pero noble.' },
+  { id: 'h2', name: 'Corcel de Caza',    tier: 2, cost: 200, spd: 1,  cd: 3300, dur: 1500, desc: 'Ágil en distancias cortas.' },
+  { id: 'h3', name: 'Destrero de Guerra',tier: 3, cost: 450, spd: 3,  cd: 2600, dur: 2000, desc: 'Entrenado para el choque.' },
+  { id: 'h4', name: 'Purasangre Real',   tier: 4, cost: 800, spd: 5,  cd: 2000, dur: 2500, desc: 'Velocidad inigualable.' },
+  { id: 'h5', name: 'Sombra Veloz',      tier: 5, cost: 1500, spd: 8, cd: 1600, dur: 3000, desc: 'Ni se le ve pasar.' },
 ];
 
 // 4. ARMADURAS (Especial/Resistencia - Purple)
 export const DB_ARMORS = [
-  { id: 'a1', name: 'Cota de Malla',     tier: 1, cost: 0,   hp: 0,   cd: 15000, dur: 2000, desc: 'Eslabones oxidados.' },
-  { id: 'a2', name: 'Placas Parciales',  tier: 2, cost: 250, hp: 10,  cd: 13000, dur: 3000, desc: 'Protege zonas vitales.' },
-  { id: 'a3', name: 'Armadura Completa', tier: 3, cost: 500, hp: 25,  cd: 11000, dur: 4000, desc: 'Acero pulido.' },
-  { id: 'a4', name: 'Armadura de Justa', tier: 4, cost: 900, hp: 40,  cd: 9000,  dur: 5000, desc: 'Optimizada para el impacto.' },
-  { id: 'a5', name: 'Baluarte Titán',    tier: 5, cost: 1600, hp: 60, cd: 7000,  dur: 7000, desc: 'Invulnerable.' },
+  { id: 'a1', name: 'Cota de Malla',     tier: 1, cost: 0,   hp: 0,   cd: 5000, dur: 2000, desc: 'Eslabones oxidados.' },
+  { id: 'a2', name: 'Placas Parciales',  tier: 2, cost: 250, hp: 10,  cd: 4300, dur: 3000, desc: 'Protege zonas vitales.' },
+  { id: 'a3', name: 'Armadura Completa', tier: 3, cost: 500, hp: 25,  cd: 3600, dur: 4000, desc: 'Acero pulido.' },
+  { id: 'a4', name: 'Armadura de Justa', tier: 4, cost: 900, hp: 40,  cd: 3000, dur: 5000, desc: 'Optimizada para el impacto.' },
+  { id: 'a5', name: 'Baluarte Titán',    tier: 5, cost: 1600, hp: 60, cd: 2300, dur: 7000, desc: 'Invulnerable.' },
 ];
 
 // ESCUDEROS (Pasivos - Extra)

@@ -19,7 +19,7 @@ export function initJoustScreen() {
 
   joust.playerTeam = player.team.map(kid => ({
     knightId: kid,
-    equip: player.equip[kid] || { armor: null, horse: null, squire: null, shield: 'madera' },
+    equip: player.equip[kid] || { armor: 'a1', horse: 'h1', squire: 'sq1', shield: 's1', lance: 'l1' },
     hp: 100,
     maxHp: 100,
     fatigue: 0,
@@ -35,7 +35,7 @@ export function initJoustScreen() {
   joust.enemyMatchWins = 0;
   joust.totalMatches = 4;
 
-  // Reset ground marks ONLY at the start of the tournament
+  // Reset ground marks
   joust.groundBlood = [];
   joust.groundSplinters = [];
   joust.hoofPrints = [];
@@ -59,74 +59,65 @@ export function showKnightSelection() {
   const overlay = document.getElementById('joust-overlay');
   overlay.style.pointerEvents = 'auto';
 
-  // Check if any side has no HP left to continue
   const playerHasHp = joust.playerTeam.some(k => k.hp > 0);
   const enemyHasHp = joust.enemyTeam.some(k => k.hp > 0);
 
-  if (!playerHasHp) {
-    handleWalkover('player');
-    return;
-  }
-  if (!enemyHasHp) {
-    handleWalkover('enemy');
-    return;
-  }
-
-  // Check for walkover: if one side doesn't have 4 knights it's handled by selection or game start.
-  // Actually, the user says if they don't have enough knights "pierde por walkover ese punto".
-  // This means if joust.matchIdx < 4 but we can't fulfill it.
+  if (!playerHasHp) { handleWalkover('player'); return; }
+  if (!enemyHasHp) { handleWalkover('enemy'); return; }
 
   let html = `
-    <div class="card text-center" style="padding:20px; border: 4px double var(--gold); background-color: var(--card); max-width: 420px; width: 95%;">
-      <div style="font-family:MedievalSharp; font-size:18px; color:var(--red); margin-bottom:10px">
-        COMBATE ${joust.matchIdx + 1} DE ${joust.totalMatches}
+    <div class="card text-center" style="padding:20px; border: 4px double var(--gold); background:#1a110a; color:#e8d5b5; max-width: 440px; width: 95%; box-shadow: 0 0 50px rgba(0,0,0,0.9);">
+      <div style="font-family:MedievalSharp; font-size:14px; color:var(--gold-dim); margin-bottom:15px; letter-spacing:2px">
+        COMBATE ${joust.matchIdx + 1} / ${joust.totalMatches}
       </div>
-      <div style="font-family:Almendra; font-size:13px; color:var(--gold-bright); margin-bottom:15px; background:rgba(0,0,0,0.4); padding:6px; border:1px solid var(--gold-dim)">
-        Selecciona un caballero para este duelo. Los que no tengan HP no pueden luchar.
+      
+      <div style="font-family:MedievalSharp; font-size:22px; color:#fff; margin-bottom:20px; text-transform:uppercase">
+        Selecciona un caballero
       </div>
 
-      <div style="display:flex; gap:10px; margin-bottom:20px;">
-        <div style="flex:1; background:rgba(0,0,0,0.05); padding:10px; border-radius:4px;">
-          <div style="font-size:11px; font-weight:bold; margin-bottom:5px">TU ESCUADRÓN</div>
-          <div id="selection-player-list" style="display:flex; flex-direction:column; gap:5px">`;
+      <!-- PLAYER GRID (Top 2x2) -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px">`;
 
   joust.playerTeam.forEach((k, idx) => {
     const kd = getKnightData(k.knightId);
     const disabled = k.hp <= 0;
     html += `
-      <div class="selection-item ${disabled ? 'disabled' : ''}" data-idx="${idx}" style="display:flex; align-items:center; gap:8px; padding:5px; border:1px solid ${disabled ? '#ccc' : 'var(--gold)'}; background:${disabled ? '#eee' : '#fff'}; cursor:${disabled ? 'default' : 'pointer'}; border-radius:4px; opacity:${disabled ? 0.6 : 1}">
-        <span style="font-size:20px">${kd.icon}</span>
-        <div style="text-align:left; flex:1">
-          <div style="font-size:11px; font-weight:bold">${kd.name}</div>
-          <div style="font-size:9px">HP: ${k.hp}/100</div>
+      <div class="selection-item ${disabled ? 'disabled' : ''}" data-idx="${idx}" 
+           style="background:#000; border:1px solid ${disabled ? '#333' : 'var(--gold-dim)'}; padding:8px; display:flex; align-items:center; gap:10px; cursor:${disabled ? 'default' : 'pointer'}; opacity:${disabled ? 0.4 : 1}; transition:all 0.2s">
+        <span style="font-size:24px">${kd.icon}</span>
+        <div style="text-align:left; flex:1; overflow:hidden">
+          <div style="font-size:11px; font-weight:bold; color:var(--gold-bright); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${kd.name}</div>
+          <div style="font-size:9px; color:#aaa">HP: ${k.hp}%</div>
         </div>
       </div>`;
   });
 
-  html += `</div>
-        </div>
-        <div style="flex:1; background:rgba(0,0,0,0.05); padding:10px; border-radius:4px;">
-          <div style="font-size:11px; font-weight:bold; margin-bottom:5px">RIVALES</div>
-          <div style="display:flex; flex-direction:column; gap:5px">`;
+  html += `
+      </div>
+
+      <div style="font-family:MedievalSharp; font-size:24px; color:var(--red); font-style:italic; margin:10px 0; text-shadow:0 0 10px rgba(142,22,22,0.5)">VS</div>
+
+      <!-- ENEMY GRID (Bottom 2x2 - Informational only) -->
+      <div style="font-size:10px; color:#888; margin-bottom:8px; letter-spacing:1px; text-align:left">RIVALES:</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px">`;
 
   joust.enemyTeam.forEach((k, idx) => {
-    const kd = k.customData; // Use predefined data for enemies
+    const kd = k.customData;
     const disabled = k.hp <= 0;
     html += `
-      <div style="display:flex; align-items:center; gap:8px; padding:5px; border:1px solid #ccc; background:${disabled ? '#eee' : '#fff'}; border-radius:4px; opacity:${disabled ? 0.6 : 1}">
-        <span style="font-size:20px">${kd.icon}</span>
-        <div style="text-align:left; flex:1">
-          <div style="font-size:11px; font-weight:bold; color:#2c1e16">${kd.name}</div>
-          <div style="font-size:9px; color:#5d4037">HP: ${k.hp}/100</div>
+      <div style="display:flex; align-items:center; gap:10px; padding:4px; opacity:${disabled ? 0.2 : 0.6}; border-bottom: 1px solid rgba(255,255,255,0.05)">
+        <span style="font-size:20px; filter: grayscale(0.5)">${kd.icon}</span>
+        <div style="text-align:left; flex:1; overflow:hidden">
+          <div style="font-size:10px; font-weight:bold; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${kd.name}</div>
+          <div style="font-size:8px; color:#666">HP: ${k.hp}%</div>
         </div>
       </div>`;
   });
 
-  html += `</div>
-        </div>
+  html += `
       </div>
-      <div id="selection-error" style="color:var(--red); font-size:12px; margin-bottom:10px; min-height:1.2em"></div>
-      <button class="btn btn-gold btn-lg" id="btn-confirm-selection" disabled>¡A LA LIZA!</button>
+
+      <button class="btn btn-gold btn-lg" id="btn-confirm-selection" disabled style="width:100%">¡A LA LIZA!</button>
     </div>`;
 
   overlay.innerHTML = html;
@@ -136,9 +127,14 @@ export function showKnightSelection() {
   items.forEach(item => {
     if (item.classList.contains('disabled')) return;
     item.addEventListener('click', () => {
-      items.forEach(i => i.style.borderColor = 'var(--gold)');
-      item.style.borderColor = 'var(--red)';
-      item.style.backgroundColor = '#fff9e6';
+      items.forEach(i => {
+          i.style.borderColor = 'var(--gold-dim)';
+          i.style.background = '#000';
+          i.style.boxShadow = 'none';
+      });
+      item.style.borderColor = '#fff';
+      item.style.background = 'rgba(212,160,23,0.15)';
+      item.style.boxShadow = '0 0 15px rgba(255,255,255,0.2)';
       selectedIdx = parseInt(item.dataset.idx);
       document.getElementById('btn-confirm-selection').disabled = false;
     });
@@ -147,12 +143,9 @@ export function showKnightSelection() {
   document.getElementById('btn-confirm-selection').addEventListener('click', () => {
     joust.selectedPlayerKnightIdx = selectedIdx;
     
-    // Enemy AI selection: pick a random one with HP
+    // Enemy selection logic
     const validEnemies = joust.enemyTeam.map((k, i) => k.hp > 0 ? i : -1).filter(i => i !== -1);
-    if (validEnemies.length === 0) {
-      handleWalkover('enemy'); // Enemy has no one left
-      return;
-    }
+    if (validEnemies.length === 0) { handleWalkover('enemy'); return; }
     joust.selectedEnemyKnightIdx = validEnemies[Math.floor(Math.random() * validEnemies.length)];
 
     overlay.innerHTML = '';
@@ -167,7 +160,7 @@ function handleWalkover(side) {
   if (side === 'enemy') {
     joust.playerMatchWins++;
     winnerText = '¡VICTORIA POR WALKOVER!';
-    winnerColor = 'var(--green)';
+    winnerColor = '#27ae60';
   } else {
     joust.enemyMatchWins++;
     winnerText = '¡DERROTA POR WALKOVER!';
@@ -179,19 +172,15 @@ function handleWalkover(side) {
   const btnText = isLast ? '🏆 VER VERDICTO FINAL' : '➡ SIGUIENTE DUELO';
 
   overlay.innerHTML = `
-    <div class="card text-center" style="padding:25px; border: 4px double var(--gold); background-color: var(--card);">
+    <div class="card text-center" style="padding:25px; border: 4px double var(--gold); background:#1a110a; color:#e8d5b5">
       <div style="font-family:MedievalSharp; font-size:24px; color:${winnerColor}; margin-bottom:15px">${winnerText}</div>
       <p style="font-family:Almendra; margin-bottom:20px">El oponente no tiene caballeros aptos para luchar.</p>
       <button class="btn btn-gold btn-lg" id="btn-next-walkover">${btnText}</button>
     </div>`;
   
   document.getElementById('btn-next-walkover').addEventListener('click', () => {
-    if (isLast) {
-      showTourneyResult();
-    } else {
-      joust.matchIdx++;
-      showKnightSelection();
-    }
+    if (isLast) { showTourneyResult(); } 
+    else { joust.matchIdx++; showKnightSelection(); }
   });
 }
 
@@ -200,54 +189,54 @@ export function showMatchIntro() {
   const pkData = joust.playerTeam[joust.selectedPlayerKnightIdx];
   const ekData = joust.enemyTeam[joust.selectedEnemyKnightIdx];
   const pkd = getKnightData(pkData.knightId);
-  const ekd = ekData.customData; // Using customData for enemy knights
+  const ekd = ekData.customData;
   const pc = KNIGHT_COLORS[pkd.colorIdx];
   const ec = KNIGHT_COLORS[ekd.colorIdx];
 
   overlay.style.pointerEvents = 'auto';
   overlay.innerHTML = `
-    <div class="card text-center" style="padding:30px 20px; border: 4px double var(--gold); background-color: var(--card); max-width: 360px; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
-      <div style="font-family:MedievalSharp; font-size:12px; color:var(--red); margin-bottom:5px; text-transform:uppercase; letter-spacing:1px">
+    <div class="card text-center" style="padding:30px 20px; border: 4px double var(--gold); background:#1a110a; color:#e8d5b5; max-width: 360px; box-shadow: 0 0 50px rgba(0,0,0,0.9);">
+      <div style="font-family:MedievalSharp; font-size:12px; color:var(--gold-dim); margin-bottom:5px; text-transform:uppercase; letter-spacing:1px">
         Enfrentando a:
       </div>
-      <div style="font-family:MedievalSharp; font-size:22px; color:#2c1e16; margin-bottom:2px">
+      <div style="font-family:MedievalSharp; font-size:22px; color:#fff; margin-bottom:2px">
         ${joust.enemySquadData.name}
       </div>
       <div style="font-family:Almendra; font-size:14px; color:var(--gold-dim); margin-bottom:15px; font-style:italic">
         — Casa Real ${joust.enemySquadData.origin} —
       </div>
 
-      <div style="font-family:MedievalSharp; font-size:11px; color:var(--text-dim); margin-bottom:15px; letter-spacing: 1px; border-top: 1px solid rgba(0,0,0,0.1); padding-top:10px">
+      <div style="font-family:MedievalSharp; font-size:11px; color:#aaa; margin-bottom:15px; letter-spacing: 1px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:10px">
         DUELO ${joust.matchIdx + 1} / ${joust.totalMatches}
       </div>
 
       <div style="display:flex; align-items:flex-start; justify-content:center; gap:15px; margin:20px 0">
         <div style="flex: 1;">
-          <div style="font-size:55px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2))">${pkd.icon}</div>
+          <div style="font-size:55px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5))">${pkd.icon}</div>
           <div style="font-family:MedievalSharp; font-size:16px; color:${pc.plume}; margin-top:8px; font-weight:bold">${pkd.name}</div>
-          <div style="font-family:Almendra; font-size:11px; color:#5d4037; margin-top:4px">
-            HP: ${pkData.hp}/100 | Cansancio: ${pkData.fatigue || 0}%<br>
+          <div style="font-family:Almendra; font-size:11px; color:#aaa; margin-top:4px">
+            HP: ${pkData.hp}% | Fatiga: ${pkData.fatigue || 0}%<br>
             FUE ${pkd.str} · DEF ${pkd.def}
           </div>
         </div>
 
-        <div style="align-self: center; font-family:MedievalSharp; font-size:28px; color:var(--red); font-style: italic; text-shadow: 1px 1px 0 #fff">VS</div>
+        <div style="align-self: center; font-family:MedievalSharp; font-size:28px; color:var(--red); font-style: italic; text-shadow: 0 0 10px rgba(142,22,22,0.5)">VS</div>
 
         <div style="flex: 1;">
-          <div style="font-size:55px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2))">${ekd.icon}</div>
+          <div style="font-size:55px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5))">${ekd.icon}</div>
           <div style="font-family:MedievalSharp; font-size:16px; color:${ec.plume}; margin-top:8px; font-weight:bold">${ekd.name}</div>
-          <div style="font-family:Almendra; font-size:11px; color:#5d4037; margin-top:4px">
-            HP: ${ekData.hp}/100 | Cansancio: ${ekData.fatigue || 0}%<br>
+          <div style="font-family:Almendra; font-size:11px; color:#aaa; margin-top:4px">
+            HP: ${ekData.hp}% | Fatiga: ${ekData.fatigue || 0}%<br>
             FUE ${ekd.str} · DEF ${ekd.def}
           </div>
         </div>
       </div>
 
-      <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 4px; margin-bottom: 20px; font-family: Almendra; font-size: 13px; color: #2c1e16;">
+      <div style="background: rgba(0,0,0,0.3); padding: 10px; border:1px solid rgba(212,160,23,0.2); border-radius: 2px; margin-bottom: 20px; font-family: Almendra; font-size: 13px; color: #fff;">
         ${joust.playerMatchWins} victorias para tu casa — ${joust.enemyMatchWins} para el rival
       </div>
 
-      <button class="btn btn-gold btn-lg" id="btn-start-match" style="width: 100%; box-shadow: 0 4px 0 #8b6b10;">
+      <button class="btn btn-gold btn-lg" id="btn-start-match" style="width: 100%;">
         ⚔ ¡A LA LIZA!
       </button>
     </div>`;
@@ -266,14 +255,13 @@ export function startMatch() {
   joust.k1 = makeJoustKnight(pk.knightId, 'left', pk.equip);
   joust.k1.hp = pk.hp; 
   joust.k1.fatigue = pk.fatigue || 0;
-  joust.k1.lanceIntact = true; // Start with lance
+  joust.k1.lanceIntact = true; 
   joust.k1.lanceLoading = 0;
   
-  // For enemy, pass ek.customData
   joust.k2 = makeJoustKnight(ek.knightId, 'right', ek.equip, ek.customData);
   joust.k2.hp = ek.hp;
   joust.k2.fatigue = ek.fatigue || 0;
-  joust.k2.lanceIntact = true; // Start with lance
+  joust.k2.lanceIntact = true; 
   joust.k2.lanceLoading = 0;
   
   joust.squire1 = makeSquire('left', joust.k1.squireEff);
@@ -290,7 +278,6 @@ export function startMatch() {
   joust.splinters = [];
   joust.blood = [];
   joust.confetti = [];
-  // groundBlood, groundSplinters, hoofPrints, roses, and trash are NOT reset here to persist across matches
   joust.shakeAmt = 0;
   joust.flashAlpha = 0;
   joust.t = 0;
@@ -299,12 +286,11 @@ export function startMatch() {
   joust.k1.speed = 0;
   joust.k2.speed = 0;
   
-  // WAR CRIES at start
   knightSay(joust.k1, 'war_cry');
   knightSay(joust.k2, 'war_cry');
 
   initAbilities();
-  resetAbilityCooldowns(); // Force cooldowns at start of match
+  resetAbilityCooldowns(); 
   setSubPhase('charge');
 }
 
@@ -312,7 +298,6 @@ function resetAbilityCooldowns() {
   const k1 = joust.k1;
   const k2 = joust.k2;
   
-  // Set cooldowns to max for all equipped abilities
   [k1, k2].forEach(k => {
     if (!k) return;
     if (k.equipStats.shield) k.cdShield = k.equipStats.shield.cd;
@@ -320,7 +305,6 @@ function resetAbilityCooldowns() {
     if (k.equipStats.horse)  k.cdHorse  = k.equipStats.horse.cd;
     if (k.equipStats.armor)  k.cdSpecial = k.equipStats.armor.cd;
     
-    // Reset active states
     k.abilityShieldT = 0;
     k.abilityAttackT = 0;
     k.abilityHorseT = 0;
@@ -333,14 +317,12 @@ export function showMatchResult() {
   joust.active = false;
   const k1 = joust.k1, k2 = joust.k2;
 
-  // Persist HP and Fatigue back to the teams
   const pkData = joust.playerTeam[joust.selectedPlayerKnightIdx];
   const ekData = joust.enemyTeam[joust.selectedEnemyKnightIdx];
   
   pkData.hp = k1.hp;
   ekData.hp = k2.hp;
   
-  // Increase fatigue (15% per duel)
   pkData.fatigue = Math.min(100, (pkData.fatigue || 0) + 15);
   ekData.fatigue = Math.min(100, (ekData.fatigue || 0) + 15);
 
@@ -372,12 +354,11 @@ export function showMatchResult() {
 
   updateGlobalHUD();
 
-  // FEEDBACK EFFECTS (Roses, Trash, Confetti) - Reduced count by 30%
   if (playerWon) {
-    spawnConfetti(56); // 80 * 0.7
-    spawnRoses('left', 17); // 25 * 0.7
-    spawnTrash('right', 14); // 20 * 0.7
-    audio.playFanfareMatch(); // Triumphant point sound
+    spawnConfetti(56);
+    spawnRoses('left', 17);
+    spawnTrash('right', 14);
+    audio.playFanfareMatch();
   } else if (!isDraw) {
     spawnRoses('right', 17);
     spawnTrash('left', 14);
@@ -392,33 +373,32 @@ export function showMatchResult() {
   const overlay = document.getElementById('joust-overlay');
   overlay.style.pointerEvents = 'auto';
   
-  // Decide main title based on player outcome
   let mainTitle = '¡EMPATE!';
   let titleColor = '#666';
   if (playerWon) {
     mainTitle = '¡VICTORIA!';
-    titleColor = '#2d4a22';
+    titleColor = '#27ae60';
   } else if (!isDraw) {
     mainTitle = '¡DERROTA!';
     titleColor = 'var(--red)';
   }
 
   overlay.innerHTML = `
-    <div class="card text-center" style="padding:25px; border: 4px double var(--gold); background-color: var(--card); max-width: 340px;">
-      <div style="font-family:MedievalSharp; font-size:14px; color:var(--text-dim); margin-bottom:10px">${statusText}</div>
+    <div class="card text-center" style="padding:25px; border: 4px double var(--gold); background:#1a110a; color:#e8d5b5; max-width: 340px;">
+      <div style="font-family:MedievalSharp; font-size:14px; color:#aaa; margin-bottom:10px">${statusText}</div>
       <div style="font-family:MedievalSharp; font-size:36px; color:${titleColor}; margin-bottom:15px">
         ${mainTitle}
       </div>
 
-      <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin:15px 0; background:rgba(0,0,0,0.05); padding:15px; border-radius:4px;">
+      <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin:15px 0; background:rgba(0,0,0,0.3); padding:15px; border:1px solid rgba(255,255,255,0.1);">
         <div style="text-align:center">
-          <div style="font-family:Almendra; font-size:12px; color:var(--text-dim)">TU PUNTUACIÓN</div>
-          <div style="font-family:MedievalSharp; font-size:32px; color:#2c1e16">${joust.k1Points}</div>
+          <div style="font-family:Almendra; font-size:12px; color:#aaa">TUS PUNTOS</div>
+          <div style="font-family:MedievalSharp; font-size:32px; color:#fff">${joust.k1Points}</div>
         </div>
         <div style="font-size:24px; color:var(--gold)">—</div>
         <div style="text-align:center">
-          <div style="font-family:Almendra; font-size:12px; color:var(--text-dim)">RIVAL</div>
-          <div style="font-family:MedievalSharp; font-size:32px; color:#2c1e16">${joust.k2Points}</div>
+          <div style="font-family:Almendra; font-size:12px; color:#aaa">RIVAL</div>
+          <div style="font-family:MedievalSharp; font-size:32px; color:#fff">${joust.k2Points}</div>
         </div>
       </div>
 
@@ -428,9 +408,8 @@ export function showMatchResult() {
     </div>`;
 
   document.getElementById('btn-next-match').addEventListener('click', () => {
-    if (isLast) {
-      showTourneyResult();
-    } else {
+    if (isLast) { showTourneyResult(); } 
+    else {
       joust.matchIdx++;
       overlay.innerHTML = '';
       overlay.style.pointerEvents = 'none';
@@ -448,7 +427,7 @@ export function showTourneyResult() {
   if (won) {
     player.wins++;
     spawnConfetti(150);
-    audio.playFanfareTourney(); // Epic championship sound
+    audio.playFanfareTourney();
   }
   else if (!draw) player.losses++;
 
@@ -458,18 +437,18 @@ export function showTourneyResult() {
 
   const overlay = document.getElementById('joust-overlay');
   overlay.innerHTML = `
-    <div class="card text-center" style="padding:30px 20px; border: 4px double var(--gold); background-color: var(--card);">
+    <div class="card text-center" style="padding:30px 20px; border: 4px double var(--gold); background:#1a110a; color:#e8d5b5; max-width:360px">
       <div style="font-size:60px; margin-bottom:10px">${won ? '🏆' : draw ? '⚖️' : '💀'}</div>
       <div style="font-family:MedievalSharp; font-size:32px; color:${won ? 'var(--gold)' : draw ? '#666' : 'var(--red)'}">
         ${won ? '¡CAMPEÓN!' : draw ? 'EMPATE' : 'DERROTA'}
       </div>
-      <div style="font-family:Almendra; font-size:18px; color:var(--surface); margin:8px 0">
+      <div style="font-family:Almendra; font-size:18px; color:#aaa; margin:8px 0">
         ${pWins} combates ganados — ${eWins} perdidos
       </div>
-      <div style="font-family:MedievalSharp; font-size:20px; color:var(--gold-dim); margin:12px 0">
+      <div style="font-family:MedievalSharp; font-size:20px; color:var(--gold-bright); margin:12px 0">
         +${goldReward} 🪙
       </div>
-      <button class="btn btn-red btn-lg" id="btn-back-home">🏰 VOLVER AL CASTILLO</button>
+      <button class="btn btn-gold btn-lg" id="btn-back-home">🏰 VOLVER AL CASTILLO</button>
     </div>`;
   overlay.style.pointerEvents = 'auto';
 
